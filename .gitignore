@@ -20,3 +20,6 @@ playwright-report/
 # OS / editor
 .DS_Store
 *.log
+
+# Machine-specific MCP config (absolute paths); add to git when pushing
+automation/.mcp.json

@@ -1,0 +1,9 @@
+.env
+auth/*
+!auth/.gitkeep
+reports/*
+!reports/.gitkeep
+test-results/
+node_modules/
+test-data/*
+!test-data/.gitkeep

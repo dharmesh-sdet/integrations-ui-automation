@@ -1,0 +1,28 @@
+{
+  "name": "integration-automation",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "test": "playwright test --project=chromium",
+    "test:edge": "playwright test --project=edge",
+    "login:saleshandy": "node scripts/login.ts saleshandy chromium",
+    "login:saleshandy:edge": "node scripts/login.ts saleshandy edge",
+    "login:hubspot": "node scripts/login.ts hubspot chromium",
+    "login:hubspot:edge": "node scripts/login.ts hubspot edge",
+    "data:generate": "node scripts/generate-data.ts",
+    "typecheck": "tsc --noEmit",
+    "report": "node scripts/render-report.ts",
+    "mcp:open": "node scripts/open-mcp-browser.ts",
+    "jira": "node --env-file-if-exists=.env jira/server/server.ts",
+    "jira:check": "node --env-file-if-exists=.env jira/server/server.ts --check"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.63.0",
+    "@types/node": "24.19.1",
+    "typescript": "7.0.2"
+  }
+}

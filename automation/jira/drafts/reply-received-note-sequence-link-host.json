@@ -1,0 +1,29 @@
+{
+  "type": "bug",
+  "project": "AL",
+  "summary": "Reply is Received in Saleshandy: Create a Note in HubSpot activity adds a Sequence link with the production host (my.saleshandy.com) on Staging",
+  "description": "**Prerequisites:**\n- Staging account (pyxis.lifeisgoodforlearner.com) connected to HubSpot.\n- Reply is Received in Saleshandy trigger enabled with the \"Create a Contact in HubSpot\" and \"Create a Note in HubSpot\" activities only.\n- Create a Contact in HubSpot: Extra Configuration left empty.\n- An active sequence with a prospect that is not a contact in HubSpot.\n\n**Steps to Reproduce:**\n1. Add the prospect to the active sequence and wait until the step 1 email is sent.\n2. Open the sequence > Emails, open the menu on the prospect's Step 1 email and click Mark as replied.\n3. Open API & Integrations > Integrations > HubSpot > Logs and wait for the new \"Reply is Received in Saleshandy\" entry to show Success.\n4. Open the created contact in HubSpot > Activities and read the note \"Note created via Saleshandy\".\n\n**Actual Result:**\n- The workflow shows Success and the note is created on the contact.\n- The note's Sequence line is `Sequence: https://my.saleshandy.com/sequence/196293/steps`. It uses the production host (my.saleshandy.com) although the note was created from the Staging account.\n- A screenshot will be attached to the ticket manually.\n\n**Expected Result:**\n- The Sequence link in the note should use the host of the environment the note was created from.\n\n",
+  "priority": "Medium",
+  "environment": "Staging",
+  "epic": "AL-3982",
+  "assignee": {
+    "name": "Darshan",
+    "accountId": "5af5d8dd244bc90a10605d4f"
+  },
+  "qa": {
+    "name": "Dharmesh Patel",
+    "accountId": "712020:c7dedb58-9cb3-4450-a98f-5b5b56f6556b"
+  },
+  "links": [
+    "AL-4011",
+    "AL-3984"
+  ],
+  "attachments": [],
+  "waitingFor": "Screenshot of the note: none exists yet. Send now and attach it by hand, or wait for the next run that creates a note.",
+  "sent": {
+    "key": "AL-4118",
+    "url": "https://saleshandy.atlassian.net/browse/AL-4118",
+    "problems": [],
+    "at": "2026-10-09T11:51:27.168Z"
+  }
+}

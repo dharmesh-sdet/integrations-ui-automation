@@ -1,0 +1,382 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Test Run Report</title>
+<style>
+  :root {
+    --bg: #f6f7f9; --card: #ffffff; --text: #1d2330; --muted: #5d6677; --line: #e2e5ea;
+    --pass: #13795b; --pass-bg: #e3f5ee; --fail: #c62a2a; --fail-bg: #fdecec;
+    --skip: #6b7280; --skip-bg: #eef0f3; --flaky: #9a6700; --flaky-bg: #fff4d6;
+    --accent: #1f5fd6; --accent-text: #ffffff;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #12151b; --card: #1b2029; --text: #e6e9ef; --muted: #9aa3b2; --line: #2c3340;
+      --pass: #4cc49a; --pass-bg: #163328; --fail: #ff7b7b; --fail-bg: #3a1c1f;
+      --skip: #a3abb8; --skip-bg: #252b35; --flaky: #f0c34e; --flaky-bg: #3a3017;
+      --accent: #6f9cff; --accent-text: #0d1220;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  main { max-width: 1040px; margin: 0 auto; padding: 24px 16px 64px; }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  h2 { font-size: 18px; margin: 0; }
+  .muted { color: var(--muted); }
+  .summary { font-size: 16px; margin: 12px 0 24px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+  .chip { padding: 2px 10px; border-radius: 999px; font-size: 13px; font-weight: 600; }
+  .passed { color: var(--pass); background: var(--pass-bg); }
+  .failed { color: var(--fail); background: var(--fail-bg); }
+  .did-not-run { color: var(--skip); background: var(--skip-bg); }
+  .flaky { color: var(--flaky); background: var(--flaky-bg); }
+  section.integration { margin-top: 32px; }
+  section.integration > h2 { font-size: 20px; padding-bottom: 6px; border-bottom: 2px solid var(--line); }
+  section.workflow { margin-top: 20px; padding-left: 12px; border-left: 3px solid var(--line); }
+  h3 { font-size: 17px; margin: 0; }
+  section.activity { margin-top: 14px; }
+  h4 { font-size: 15px; margin: 0 0 8px; color: var(--muted); }
+  .wf-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 16px; margin-bottom: 12px; }
+  .card.is-failed { border-left: 4px solid var(--fail); }
+  .card-head { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
+  .card-head .title { font-weight: 600; flex: 1 1 300px; }
+  dl { display: grid; grid-template-columns: max-content 1fr; gap: 4px 14px; margin: 12px 0 0; }
+  dt { color: var(--muted); }
+  dd { margin: 0; }
+  ol.steps { margin: 4px 0 0; padding-left: 20px; }
+  ol.steps li.failed { color: var(--fail); font-weight: 600; background: none; }
+  ol.steps li.passed::marker { color: var(--pass); }
+  .shots { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
+  .shots a { display: block; width: 220px; max-width: 100%; }
+  .shots img { width: 100%; border: 1px solid var(--line); border-radius: 6px; display: block; }
+  .shots span { font-size: 12px; color: var(--muted); }
+  code { font: 12px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; background: var(--bg); padding: 2px 6px; border-radius: 4px; word-break: break-all; }
+  .review { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line); }
+  button { font: inherit; font-size: 14px; border: 1px solid var(--line); background: var(--card); color: var(--text); border-radius: 6px; padding: 5px 12px; cursor: pointer; }
+  button:hover:not(:disabled) { border-color: var(--accent); }
+  button:disabled { opacity: .45; cursor: not-allowed; }
+  button.primary { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
+  button.on { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); font-weight: 600; }
+  input.note { flex: 1 1 200px; font: inherit; font-size: 14px; padding: 5px 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--card); color: var(--text); }
+  details summary { cursor: pointer; color: var(--muted); margin-top: 10px; }
+  dialog { width: min(720px, calc(100vw - 32px)); border: 1px solid var(--line); border-radius: 10px; background: var(--card); color: var(--text); padding: 20px; }
+  dialog::backdrop { background: rgba(0,0,0,.45); }
+  dialog label { display: block; font-size: 13px; color: var(--muted); margin: 10px 0 4px; }
+  dialog input, dialog textarea { width: 100%; font: inherit; font-size: 14px; padding: 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); color: var(--text); }
+  dialog textarea { min-height: 300px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; }
+  .dialog-actions { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; margin-top: 14px; }
+  .hint { font-size: 13px; color: var(--muted); margin-top: 8px; }
+</style>
+</head>
+<body>
+<main id="jira-drafts" style="padding-bottom:0"></main>
+<main id="app"></main>
+
+<dialog id="draft">
+  <h2 id="draft-title"></h2>
+  <label for="draft-key" id="draft-key-label"></label>
+  <input id="draft-key">
+  <label for="draft-summary" id="draft-summary-label">Summary</label>
+  <input id="draft-summary">
+  <label for="draft-body">Description</label>
+  <textarea id="draft-body"></textarea>
+  <p class="hint">Review and edit, then copy. To send with one click, ask Claude to draft it: after you confirm it is a bug, it appears under "Jira drafts" at the top (page opened with npm run jira).</p>
+  <div class="dialog-actions">
+    <button id="draft-copy">Copy text</button>
+    <button id="draft-send" class="primary" disabled title="Use the Jira drafts section at the top">Send to Jira</button>
+    <button id="draft-close">Close</button>
+  </div>
+</dialog>
+
+<script id="report-data" type="application/json">/*__REPORT_DATA__*/null</script>
+<script>
+(() => {
+  const data = JSON.parse(document.getElementById('report-data').textContent);
+  const app = document.getElementById('app');
+  const storeKey = 'report-review:' + data.runId;
+  const cls = (outcome) => outcome.replace(/\s+/g, '-');
+  const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const plural = (n, word) => n + ' ' + word + (n === 1 ? '' : 's');
+
+  // Review marks live only in this browser (per run), so a reload keeps them.
+  let review = {};
+  try { review = JSON.parse(localStorage.getItem(storeKey) || '{}'); } catch {}
+  const saveReview = () => { try { localStorage.setItem(storeKey, JSON.stringify(review)); } catch {} };
+
+  const count = (tests, outcome) => tests.filter((t) => t.outcome === outcome).length;
+
+  function summaryText(tests) {
+    const parts = [];
+    for (const o of ['passed', 'failed', 'flaky', 'did not run']) {
+      const n = count(tests, o);
+      if (n) parts.push(n + ' ' + o);
+    }
+    let text = plural(tests.length, 'test') + ': ' + parts.join(', ') + '.';
+    if (count(tests, 'did not run') && count(tests, 'failed')) {
+      text += ' Tests in a workflow run in order, so the ones after a failure do not run.';
+    }
+    return text;
+  }
+
+  function testCard(t) {
+    const r = review[t.id] || {};
+    const failed = t.outcome === 'failed';
+    const steps = t.steps.length
+      ? '<ol class="steps">' + t.steps.map((s) => `<li class="${s.status}">${esc(s.title)}${s.status === 'failed' ? ' (failed here)' : ''}</li>`).join('') + '</ol>'
+      : '<span class="muted">No steps ran.</span>';
+    const shots = t.shots.length
+      ? '<div class="shots">' + t.shots.map((s, i) => `<a href="${esc(s.path)}" target="_blank" rel="noopener"><img loading="lazy" src="${esc(s.path)}" alt="Screenshot ${i + 1}"><span>${s.failed ? 'At failure' : 'At the end'}, page ${i + 1}</span></a>`).join('') + '</div>'
+      : '';
+    const fields = [
+      ['Expected', t.expected || '<span class="muted">Not found in the scenarios file</span>'],
+      t.ticket ? ['Ticket', esc(t.ticket)] : null,
+      ['Result', esc(t.outcome)],
+      failed ? ['Failed at step', esc(t.failedStep)] : null,
+      failed ? ['What happened', esc(t.whatHappened)] : null,
+      failed ? ['Likely reason', t.likelyReason ? esc(t.likelyReason) : '<span class="muted">Not written yet</span>'] : null,
+    ].filter(Boolean).map(([k, v]) => `<dt>${k}</dt><dd>${k === 'Expected' && t.expected ? esc(v) : v}</dd>`).join('');
+    const reviewBar = failed ? `
+      <div class="review" data-id="${esc(t.id)}">
+        <span class="muted">Your review:</span>
+        ${['Bug', 'Not a bug', 'Retest'].map((m) => `<button data-mark="${m}" class="${r.mark === m ? 'on' : ''}">${m}</button>`).join('')}
+        <input class="note" placeholder="Note (optional)" value="${esc(r.note || '')}">
+        <button data-bug ${r.mark === 'Bug' ? '' : 'disabled title="Mark it as Bug first"'}>Create Jira bug</button>
+      </div>` : '';
+    return `
+      <article class="card ${failed ? 'is-failed' : ''}">
+        <div class="card-head">
+          <span class="chip ${cls(t.outcome)}">${esc(t.outcome)}</span>
+          <span class="title">${esc(t.title)}</span>
+          <span class="muted">${t.durationSec}s · ${esc(t.browser)}</span>
+        </div>
+        <dl>${fields}</dl>
+        <div style="margin-top:10px"><span class="muted">Steps</span>${steps}</div>
+        ${shots}
+        ${t.trace ? `<p class="muted" style="margin:10px 0 0">Step-by-step replay: <code>${esc(t.trace)}</code></p>` : ''}
+        ${reviewBar}
+      </article>`;
+  }
+
+  const unique = (list) => [...new Set(list)];
+
+  // Integration > Workflow > Activity > test cards (QA, 2026-10-09).
+  function render() {
+    const html = [`
+      <h1>Test run report</h1>
+      <div class="muted">Latest run of each workflow, most recent first</div>
+      <p class="summary">${esc(summaryText(data.tests))}</p>`];
+    for (const integration of unique(data.workflows.map((w) => w.integration))) {
+      const wfs = data.workflows.filter((w) => w.integration === integration);
+      const all = data.tests.filter((t) => wfs.some((w) => w.file === t.file));
+      html.push(`<section class="integration"><h2>${esc(integration)}</h2><div class="muted">${esc(summaryText(all))}</div>`);
+      for (const wf of wfs) {
+        const tests = data.tests.filter((t) => t.file === wf.file);
+        const unreviewed = tests.filter((t) => t.outcome === 'failed' && !(review[t.id] || {}).mark).length;
+        const label = unreviewed ? `Review ${plural(unreviewed, 'failure')} first` : '';
+        html.push(`
+          <section class="workflow">
+            <div class="wf-head">
+              <div>
+                <h3>${esc(wf.title)}</h3>
+                <div class="muted">Run ${esc(wf.startedAt)} · took ${wf.durationMin} min</div>
+                <div class="muted">${esc(summaryText(tests))}${wf.ticket ? ' · Ticket ' + esc(wf.ticket) : ''}</div>
+              </div>
+              <button class="primary" data-comment="${esc(wf.file)}" ${unreviewed ? `disabled title="${label}"` : ''}>Draft tested comment</button>
+            </div>`);
+        for (const activity of unique(tests.map((t) => t.activity))) {
+          const cards = tests.filter((t) => t.activity === activity);
+          html.push(`
+            <section class="activity">
+              <h4>${esc(activity)} · ${esc(summaryText(cards))}</h4>
+              ${cards.map(testCard).join('')}
+            </section>`);
+        }
+        html.push('</section>');
+      }
+      html.push('</section>');
+    }
+    app.innerHTML = html.join('');
+  }
+
+  // ---- Drafts ----
+
+  const dialog = document.getElementById('draft');
+  const $ = (id) => document.getElementById(id);
+
+  function openDraft({ title, keyLabel, key, summary, body }) {
+    $('draft-title').textContent = title;
+    $('draft-key-label').textContent = keyLabel;
+    $('draft-key').value = key;
+    $('draft-summary').value = summary;
+    $('draft-summary').hidden = $('draft-summary-label').hidden = summary === null;
+    $('draft-body').value = body;
+    $('draft-copy').textContent = 'Copy text';
+    dialog.showModal();
+  }
+
+  function bugDraft(t) {
+    const r = review[t.id] || {};
+    const wf = data.workflows.find((w) => w.file === t.file);
+    const body = [
+      `Workflow: ${t.workflow}`,
+      `Scenario: ${t.title}`,
+      `Browser: ${t.browser}`,
+      `Run: ${wf.startedAt}`,
+      '',
+      'Steps:',
+      ...t.steps.map((s, i) => `${i + 1}. ${s.title}`),
+      '',
+      `Expected: ${t.expected || '(fill in)'}`,
+      `Actual: Failed at "${t.failedStep}". ${t.whatHappened}`,
+      r.note ? `\nQA note: ${r.note}` : '',
+      '',
+      'Screenshots:',
+      ...t.shots.map((s) => `- reports/${s.path}`),
+      t.trace ? `\nReplay: ${t.trace}` : '',
+    ].filter((l) => l !== null).join('\n').replace(/\n{3,}/g, '\n\n');
+    openDraft({
+      title: 'Jira bug draft',
+      keyLabel: 'Related ticket',
+      key: t.ticket || (wf && wf.ticket) || '',
+      summary: `${t.workflow}: ${t.title.replace(/^.*?:\s*/, '')} fails at "${t.failedStep}"`,
+      body,
+    });
+  }
+
+  function commentDraft(file) {
+    const wf = data.workflows.find((w) => w.file === file);
+    const tests = data.tests.filter((t) => t.file === file);
+    const line = (t) => {
+      const r = review[t.id] || {};
+      const mark = t.outcome === 'failed' ? ` (review: ${r.mark}${r.note ? ', ' + r.note : ''})` : '';
+      return `- ${t.title}: ${t.outcome}${mark}`;
+    };
+    const body = [
+      `Tested "${wf.title}" on staging, ${tests[0] ? tests[0].browser : ''}, ${wf.startedAt}.`,
+      '',
+      summaryText(tests),
+      '',
+      ...tests.map(line),
+    ].join('\n');
+    openDraft({ title: 'Tested comment draft', keyLabel: 'Ticket to comment on', key: wf.ticket, summary: null, body });
+  }
+
+  // ---- Events ----
+
+  app.addEventListener('click', (e) => {
+    const btn = e.target.closest('button');
+    if (!btn) return;
+    const bar = btn.closest('.review');
+    if (bar && btn.dataset.mark) {
+      const id = bar.dataset.id;
+      const cur = review[id] || {};
+      review[id] = { ...cur, mark: cur.mark === btn.dataset.mark ? undefined : btn.dataset.mark };
+      saveReview();
+      render();
+    } else if (bar && 'bug' in btn.dataset) {
+      bugDraft(data.tests.find((t) => t.id === bar.dataset.id));
+    } else if (btn.dataset.comment) {
+      commentDraft(btn.dataset.comment);
+    }
+  });
+
+  app.addEventListener('change', (e) => {
+    const bar = e.target.closest('.review');
+    if (!bar || !e.target.classList.contains('note')) return;
+    review[bar.dataset.id] = { ...(review[bar.dataset.id] || {}), note: e.target.value };
+    saveReview();
+  });
+
+  $('draft-close').addEventListener('click', () => dialog.close());
+  $('draft-copy').addEventListener('click', async () => {
+    const summary = $('draft-summary').hidden ? '' : $('draft-summary').value + '\n\n';
+    const text = `${$('draft-key-label').textContent}: ${$('draft-key').value}\n${summary}${$('draft-body').value}`;
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch {
+      const area = $('draft-body');
+      area.select();
+      document.execCommand('copy');
+    }
+    $('draft-copy').textContent = 'Copied';
+  });
+  // ---- Jira drafts (jira/drafts/*.json), only when the page is served by `npm run jira` ----
+  // Claude writes a draft after QA confirmed the bug or asked for the comment;
+  // the button here sends it. One click, no retry on failure.
+
+  const draftsBox = $('jira-drafts');
+  const people = (d) => [['Project / Type', d.project + ' / Bug'], ['Priority', d.priority], ['Environment', d.environment], ['Epic Link', d.epic],
+    ['Assignee', d.assignee.name], ['QA', d.qa.name], ['Linked Work Items', d.links.length ? 'Relates to ' + d.links.join(', ') : 'None'],
+    ['Attachments', d.attachments.length ? d.attachments.join(', ') : 'None']];
+
+  function draftCard(d, site) {
+    const bug = d.type === 'bug';
+    const fields = (bug ? people(d) : [['Ticket', d.ticket]]).map(([k, v]) => `<dt>${k}</dt><dd>${esc(v)}</dd>`).join('');
+    return `
+      <article class="card" data-draft="${esc(d.id)}">
+        <div class="card-head"><span class="chip ${d.sent ? 'passed' : 'flaky'}">${bug ? 'Bug' : 'Comment'}</span>
+          <span class="title">${esc(bug ? d.summary : 'Comment on ' + d.ticket)}</span></div>
+        ${d.sent ? `<p style="font-size:16px;margin:10px 0"><span class="chip passed">${bug ? 'Created in Jira' : 'Posted in Jira'}</span> <a href="${esc(d.sent.url)}" target="_blank" rel="noopener"><b>${esc(d.sent.key)}</b></a> <span class="muted">on ${esc(new Date(d.sent.at).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' }))}</span>${d.live ? ` · Jira status: <b>${esc(d.live.status)}</b> · ${esc(d.live.assignee)}` : ''}${d.sent.problems.map((p) => `<br><span class="chip failed">Not done</span> ${esc(p)}`).join('')}</p>` : ''}
+        ${d.waitingFor && !d.sent ? `<p class="hint">${esc(d.waitingFor)}</p>` : ''}
+        ${bug ? `<label class="muted">Summary<input class="note" style="width:100%" data-summary value="${esc(d.summary)}" ${d.sent ? 'disabled' : ''}></label>` : ''}
+        <textarea data-text style="width:100%;min-height:260px;margin-top:8px;font:13px/1.4 ui-monospace,monospace;padding:8px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--text)" ${d.sent ? 'disabled' : ''}>${esc(bug ? d.description : d.body)}</textarea>
+        <dl>${fields}</dl>
+        ${d.sent ? '' : `<div class="review"><button class="primary" data-send>${bug ? 'Create bug in Jira' : 'Post comment in Jira'}</button>
+          <span class="muted" data-status>One click sends it to ${esc(site)}.</span></div>`}
+      </article>`;
+  }
+
+  let lastDrafts = '';
+  async function loadDrafts(force) {
+    if (!location.protocol.startsWith('http')) return;
+    let res;
+    try { res = await (await fetch('/api/drafts')).json(); } catch { return; }
+    if (!res.drafts) return;
+    // Live: asked again every 5 s, redrawn only when something changed (a new
+    // draft, a send, a new Jira status) and never while QA is typing in a draft.
+    const snapshot = JSON.stringify(res.drafts);
+    if (snapshot === lastDrafts) return;
+    if (!force && draftsBox.contains(document.activeElement) && /INPUT|TEXTAREA/.test(document.activeElement.tagName)) return;
+    lastDrafts = snapshot;
+    if (!res.drafts.length) { draftsBox.innerHTML = ''; return; }
+    // Waiting drafts first; sent ones stay below as a record.
+    const waiting = res.drafts.filter((d) => !d.sent);
+    const done = res.drafts.filter((d) => d.sent);
+    draftsBox.innerHTML = `<h1>Jira drafts</h1><div class="muted">${waiting.length ? plural(waiting.length, 'draft') + ' waiting for one click' : 'Nothing waiting'}${done.length ? ' · ' + done.length + ' sent' : ''}</div>`
+      + [...waiting, ...done].map((d) => draftCard(d, res.site)).join('');
+  }
+
+  draftsBox.addEventListener('click', async (e) => {
+    const btn = e.target.closest('button[data-send]');
+    if (!btn) return;
+    const card = btn.closest('[data-draft]');
+    const status = card.querySelector('[data-status]');
+    btn.disabled = true;
+    status.textContent = 'Sending...';
+    const summary = card.querySelector('[data-summary]');
+    try {
+      const res = await fetch(`/api/drafts/${card.dataset.draft}/send`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ summary: summary ? summary.value : undefined, text: card.querySelector('[data-text]').value }),
+      });
+      const out = await res.json();
+      if (!res.ok) throw new Error(out.error);
+      await loadDrafts(true);
+    } catch (err) {
+      // Not sent again on its own: the reviewer decides what to do.
+      status.textContent = 'Not sent. ' + err.message;
+      status.style.color = 'var(--fail)';
+    }
+  });
+
+  loadDrafts();
+  setInterval(loadDrafts, 5000);
+
+  render();
+})();
+</script>
+</body>
+</html>

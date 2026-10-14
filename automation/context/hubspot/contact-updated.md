@@ -39,7 +39,6 @@ This trigger has no activities to select. There is no activity dropdown for this
 ## Activity-specific execution notes
 
 - Repeat check: update a mapped field a second time on the same contact and check that the prospect reflects the latest value.
-- Post-deploy: watch Settings > Integrations > HubSpot > Logs for a short window afterwards for new errors on this trigger.
 
 ## Where to verify
 

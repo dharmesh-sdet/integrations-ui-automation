@@ -12,6 +12,7 @@ Read the page you need, not all of them.
 | HubSpot integration: workflows, activities, intended behavior, field mapping | [../automation/context/hubspot/00-overview.md](../automation/context/hubspot/00-overview.md) (single source, not copied here) |
 | How we test: environments, data, timing, verification, false failures | [testing/how-to-test.md](testing/how-to-test.md) |
 | Reusable test code and the checklist for a new integration (Salesforce next) | [testing/reusable-building-blocks.md](testing/reusable-building-blocks.md) |
+| Production smoke: scope, rules, setup, checklists per workflow | [../automation/notes/production-testing/README.md](../automation/notes/production-testing/README.md) (single source, not copied) |
 | UI traps that broke tests or walkthroughs | [testing/ui-gotchas.md](testing/ui-gotchas.md) |
 | Mistakes made and the rule each one produced | [lessons.md](lessons.md) |
 

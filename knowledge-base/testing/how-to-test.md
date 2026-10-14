@@ -9,7 +9,9 @@ over this page.
   checks go through the UI, e.g. create a contact in HubSpot, then find the
   prospect in Saleshandy [project].
 - Staging only for automation: `pyxis.lifeisgoodforlearner.com`. Production
-  smoke tests use a new user account on production (no URL documented) [project].
+  smoke tests run on production, my.saleshandy.com, with the account
+  `emailopenedprod` [QA, 2026-10-14]. Scope and setup:
+  [../../automation/notes/production-testing/README.md](../../automation/notes/production-testing/README.md).
 - Two modes [project: test-cases/_SCENARIO_TEMPLATE.md]:
   - **Smoke** (production): 1 to 3 rows per activity, confirms fixes hold.
   - **Regression** (staging): every variation in the template's coverage checklist.

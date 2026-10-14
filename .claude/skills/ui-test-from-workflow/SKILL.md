@@ -54,6 +54,8 @@ Files for it:
 Follow the template's sections 3 to 7 exactly. In short:
 
 1. Confirm the mode (Smoke or Regression) if QA did not say it.
+   For Smoke, read `automation/notes/production-testing/README.md` first
+   (scope, production setup, timing, file naming).
 2. List the activities in product UI order.
 3. Go through the template's coverage checklist. Collect every gap, missing
    Expected result, unclear setup or conflict, and ask them **all in one

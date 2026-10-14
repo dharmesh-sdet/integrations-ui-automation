@@ -88,8 +88,3 @@ failures.
   contact with 3 deals.
 - Confirm the email is logged on the latest created deal only and its header
   names the prospect, not "Unknown Contact" (AL-4123).
-
-## Post-deploy monitoring
-
-- Watch Integrations > HubSpot > Logs for a short window after this smoke
-  test, confirm no new errors appear for this trigger.

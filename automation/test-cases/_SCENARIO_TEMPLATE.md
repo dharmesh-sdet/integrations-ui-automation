@@ -99,7 +99,7 @@ list.
 | Goal | Confirm the fixes hold after deploy | Cover every relevant variation of each activity |
 | Rows per activity | 1 to 3 | As many as the coverage checklist needs |
 | Built from | Fixed tickets for the workflow | Coverage checklist, existing notes, fixed tickets |
-| Ends with | Post-deploy monitoring | Open questions (only if the user leaves any open) |
+| Ends with | The last activity's rows (no post-deploy log monitoring, QA 2026-10-14) | Open questions (only if the user leaves any open) |
 
 ## 6. Output shape
 
@@ -134,11 +134,6 @@ Extra Configuration: <values used, or "None">.
 | 1 | <precondition / variation> | <one action> | <one observable result> | <AL-XXXX or None> |
 
 (Repeat for each activity, in product UI order.)
-
-## Post-deploy monitoring   (Smoke only)
-
-- Watch Settings > Integrations > HubSpot > Logs for a short window after
-  the smoke test, and confirm no new errors appear for this trigger.
 ```
 
 Column meaning:

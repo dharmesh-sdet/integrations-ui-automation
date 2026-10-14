@@ -1,0 +1,18 @@
+{
+  "enabledPlugins": {
+    "superpowers@claude-plugins-official": true
+  },
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "printf '%s' '{\"hookSpecificOutput\": {\"hookEventName\": \"UserPromptSubmit\", \"additionalContext\": \"superpowers: before responding to this prompt, check the skill list and invoke superpowers:using-superpowers and any skill that applies (process skills first: brainstorming for new features or design, systematic-debugging for failures, verification-before-completion before claiming done), even if the user did not name superpowers. Say in one line which skill you are using. Scale to the task: a routine run, status or lookup needs only the skill check, not a design round. Project rules in CLAUDE.md still win.\"}}'",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  }
+}

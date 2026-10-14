@@ -37,6 +37,14 @@ over this page.
 
 ## Test data
 
+- Every run starts with all-new people [QA, 2026-10-13]: before the tests,
+  `src/data/global-setup.ts` replaces every row of the CSV of each workflow
+  being run (and its -deals and -companies files) with new people from about 60
+  countries. Nothing to run by hand. Every email ever made is kept in
+  `test-data/_generated-emails.txt` and never repeated. `KEEP_TEST_DATA=1`
+  replaces used rows only (use it when a walkthrough is using the CSV's people);
+  `TEST_DATA_ONLY=hubspot/<slug>` limits it to one workflow.
+
 - From a QA CSV in `automation/test-data/<integration>/`, used exactly as
   written, no name prefix [QA, 2026-10-08].
 - Records are created one at a time through the UI, never bulk-imported,
@@ -47,6 +55,34 @@ over this page.
   Claude creates in a walkthrough are deleted by Claude afterwards and the
   rows replaced [QA, 2026-10-09].
 - Never edit or delete data a test did not create [project].
+- Re-running a CSV row collides with the contact the first attempt created.
+  Add the row's email to the `.used.txt` file first; the next run's setup
+  replaces the row [staging, 2026-10-12].
+- Delete test contacts in HubSpot with normal Delete, not "Permanently
+  delete". A permanent delete blocks that email for good [staging,
+  2026-10-12].
+- Each run empties its `test-results` folder: give every run a unique
+  `--output` and copy screenshots out before the next row. `TaskStop` does
+  not kill a test that already started; check with
+  `pgrep -f '[r]eply-received.spec'` from a separate command, because inside
+  a command that contains the spec name it matches its own shell [staging,
+  2026-10-12].
+- Trigger settings are per Saleshandy account, so two sessions cannot share
+  one account; one account per workflow [staging, 2026-10-12].
+- Sender daily cap: a step 1 email showing "Scheduled, Tomorrow" with the
+  sender at 50/50 means the cap is used up. Rows that fail then are not
+  product bugs. Do not change sender settings; tell QA [staging,
+  2026-10-13].
+- Never set a Closing Date on the prospect. The Saleshandy to HubSpot date
+  conversion is invalid (bug filed, found through other tickets). From
+  HubSpot to Saleshandy the same date arrives in a different format. Closing
+  Date rows use the Extra Configuration's Days only, and the CSV Closing
+  Date column stays empty [QA, 2026-10-12].
+- Bounce tests: a plain `name@mailinator.com` never bounces by itself, so it
+  is safe for manual "Mark as bounced" rows [QA, 2026-10-12]. A real bounce
+  uses `name@<company>.mailinator.com` (not yet seen on staging) and goes
+  through the real sender accounts, so real bounces are capped per plan, a
+  few rows only [QA, 2026-10-12].
 - When a workflow starts in Saleshandy (Email Sent, Reply, Outcome), ask QA
   how the prospects get in before assuming an import [project].
 - Salesforce: standard duplicate rules match Contact against Lead and
@@ -58,6 +94,10 @@ over this page.
 - Logs: refresh 15 seconds after the action, then every 10 seconds until the
   new entries show Success; give up after 3 minutes [QA, 2026-10-08]. Do not
   open log entries.
+- A Logs entry is the custom workflow's run, not one activity's result
+  [QA, 2026-10-13]. Success does not prove a note, task, contact or deal was
+  written: check the record in HubSpot. An activity selected alone (Create a
+  Note, Record (log) an email) still gives a Success log and writes nothing.
 - Sending sequence emails [QA, 2026-10-09]: a single prospect added to step 1
   is sent by Saleshandy on its own; wait for "Sent", no Send now. Use Send now
   only when step 1 emails are queued (first runs after setup, many prospects
@@ -65,7 +105,10 @@ over this page.
   "Email has already been sent" after Send now means it is out: carry on and
   look for the email. Code: `SaleshandySequencePage.ensureSent()` (step 1
   single: waits for "Sent" and fails after 3 minutes with a setup hint; bulk
-  or step 2+: Send now).
+  or step 2+: Send now). A step 2 that starts on Day 3 has no row to Send now
+  until the prospect is moved to it: `SaleshandySequencePage.moveToStep()`
+  (Prospects tab > Add to Sequence, see `product/saleshandy.md`) [QA,
+  2026-10-13].
 - Before the first send test on an account, check the sender email account's
   time between emails. If it is 300 to 1200 seconds, emails queue for minutes:
   stop and ask QA to make sure the setup is right before testing; do not work
@@ -75,6 +118,14 @@ over this page.
   emails per day 50, time between emails 30-45 s; email account 2: 50, 50,
   45-55 s. Defaults are 15, 5, 300-1200. Saleshandy warns that Gmail may block
   above 30 a day; QA chose 50.
+- Account `emailopened`, sender dharmesh@saleshandy.com: emails per day 150,
+  inbox placement test emails per day 70, time between emails 45-55 s
+  [QA, 2026-10-13]; Saleshandy shows the same Gmail warning above 30.
+- Data check against HubSpot (`tests/hubspot/email-opened-data-check.spec.ts`,
+  [project]): reads the contacts list footer count for each CSV email and marks
+  any that already exist as used. It has a sanity test (a known existing
+  contact and a made-up address) because a first version looked for the email
+  as a link, could never find anything, and "passed" [staging, 2026-10-13].
 - Link Clicked: open the email in Mailinator (mailinator.com, type the
   prospect email, Go) and click the link right away. The click takes 1 to
   1.5 min to show in Saleshandy (developer's max); check Logs only after the
@@ -91,6 +142,11 @@ over this page.
 - Salesforce: a step can show Success while its sub-request failed and
   nothing was created. Always check the record in Salesforce [dev kit:
   common-bugs #49].
+- An Expected Result that no QA answer or staging run has confirmed is not a
+  verdict: report what happened and ask QA before calling it a product issue
+  or scripting it. When QA answers with several behaviors in one message,
+  list each as expected or bug and get a yes before writing any of them into
+  a scenario or test [lessons.md 2026-10-13].
 - "Nothing should happen" checks wait out a window (15 s, then 10 s steps,
   about 45 s total) and confirm no new log entry and no change.
 - No fixed sleeps anywhere else; use the wait helpers in
@@ -146,5 +202,11 @@ not failures.
   common-bugs #31].
 - Results are recorded in the scenario's Expected cell: " - Pass" or
   " - Fail, AL-XXXX".
+- To see why a Success log did nothing, read the entry's execution detail
+  after the run (Logs > click the entry > View Details on a step > expand the
+  Request and Response JSON). It shows which HubSpot calls ran and what they
+  returned: a Search step with `total: 0` and no update call means the record
+  was never found [staging, 2026-10-14, AL-4128]. Read only; never during a
+  test.
 - Jira bugs and comments only through `automation/jira/CLAUDE.md`, with QA's
   confirmation before any write.

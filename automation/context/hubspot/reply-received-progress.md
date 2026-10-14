@@ -324,3 +324,217 @@ alert "Email has been marked as replied".
   TEST_DATA_ONLY=hubspot/reply-received REPORT_OPEN=never npm test --
   tests/hubspot/reply-received.spec.ts --project=chromium --workers=1`, detached,
   log in the fork's scratchpad (reply-run.log). Results: reports/reply/results.json.
+
+## First full run and diagnosis, 2026-10-12 (about 11:50 IST)
+
+- Full run (chromium, 22 tests, 24 min, started 10:57): 11 passed, 2 failed,
+  9 skipped (all remaining Create a deal and Update a deal rows, not run).
+- Failure 1, Create a company 3 (Contact not in HubSpot): the log entry
+  6acc72f34355a2070a0fa733 (11:11) was still RUNNING after 180 s. Checked
+  later on the Logs page: it is Success. The other entries finished in 2.5 to
+  11 s, so this one was slow, not failed. Same pattern as the 7.5 minute
+  Update a Deal logs. Script fix: this row now waits up to 10 min (test timeout
+  15 min). Product question for QA, not decided: is a log RUNNING for more
+  than 3 min a bug? Nothing filed.
+- Failure 2, Update a deal 3 second reply: script error. The test expected the
+  close date to be today after Closing Date 0 Days, but 0 Days sets no close
+  date (Create a deal 1 expects '--'); the deal created by the test has
+  HubSpot's default end-of-month close date (10/31/2026), which stayed. Fix:
+  the first-reply step now checks the close date is unchanged; the second
+  reply still checks today + 51.
+- Both changed, tsc clean. Re-run of those two rows started ~11:50 (log in the
+  session scratchpad). Skipped Create a deal 1, 2, 4, 5 and Update a deal 1,
+  2, 4, 5, 6 still need a run.
+
+## Session saved 2026-10-12 evening (session local-project-ac)
+
+Rule for the reader: "Seen" = read from a run log, results file or screenshot.
+"Unverified" = my interpretation, not confirmed. Nothing below was checked in the
+Saleshandy Logs node details; no log detail was read today.
+
+### Results (chromium only, account replyreceived, 45 scripted tests, 46 scenario rows)
+
+Passed (28): Trigger 1; Create a Contact 1, 2, 3, 5; Update a Contact 1, 2, 3;
+Create a deal 1 to 5; Update a deal 1 to 6; Create a company 1, 3, 4;
+Update a company 3, 4; Create a Task 3, 4; Record (log) 1, 2.
+Failed (4): Create a Contact 4, Update a Contact 4, Create a Task 1, Create a Task 2.
+Not run (13): Create a Contact 6 (not in the Reply scenarios, copied from Link
+Clicked), Create a company 2, Update a company 1, 2, Note 1, 2, 3, 4, 6,
+Record 3, 4, 5, 6.
+Not scripted (2): Create a Note 5, Record (log) 7 (second-reply rows; they go in
+src/flows/activity-rows.ts, owned by the Link Clicked session, tell it first).
+
+### The 4 failures (seen = screenshots in context/hubspot/evidence/reply-2026-10-12/)
+
+- Create a Task 1 (re-run, same failure twice): error "Task not found on the HubSpot
+  record ... (gave up after 180 seconds)". The failure screenshot SHOWS the task
+  "Follow up from the workflow" under Upcoming on the contact, due Oct 15, 2026.
+  Unverified: the script's `expectOnRecord`/`activitiesText` does not read that
+  section or its date text (the code comment says the date format is "not walked
+  yet"). Create a Task 2 failed with the same error; not re-run, no screenshot kept.
+- Create a Contact 4: first attempt failed at `setDropdownProperty` (Lifecycle
+  stage combobox not found, contacts.page.ts:61). Unverified guess: exact name
+  "Lifecycle stage" vs the page label "Lifecycle Stage". Re-run failed earlier,
+  at contact creation: HubSpot said the email (quinn.garrison@mailinator.com)
+  already belongs to a contact (left by the first attempt).
+- Update a Contact 4: the check expected City "--" and Lead status "--" on the
+  contact. Screenshot shows City Kobe, Lifecycle Stage Sales Qualified Lead, Lead
+  Status Connected. The meaning of the scenario "details not changed" is NOT
+  decided (QA question below). Not called a bug.
+
+### Earlier today (all seen)
+
+- Update a deal 3 (second reply) failed once, AL-4119 filed by QA (sent). Retest with a
+  new contact passed (4.1 min). Update a deal 1 failed once (deal stayed Proposal Sent,
+  Existing Business, Medium, log Success 6.4 s), then failed twice at contact creation
+  (data collision: the contact was permanently deleted in HubSpot, so the email is
+  blocked), then passed with a new contact (2.3 min). Update a deal 2 and 4 failed in an
+  earlier run (reason not read), passed on re-run. Cause of the intermittent Update a
+  Deal behavior is NOT known (search delay is only a guess).
+- AL-4119 comment ("could not reproduce", Staging, Pass) was sent by QA from
+  jira/drafts/al-4119-retest-comment.json.
+- Create a company 3 once failed: log RUNNING over 3 min, later Success (5 min 28 s);
+  script wait raised to 10 min, passed.
+
+### Data and run rules learned today
+
+- Tests do not record used emails. A re-run on the same CSV row collides with the
+  contact the first attempt created. Before a re-run, append the row's email to
+  test-data/hubspot/reply-received.used.txt (one email per line); the next run's setup
+  replaces the row. Used today: graham.thornbury, mio.kuroda, caio.damasceno,
+  baptiste.bonnet, hina.ishikawa.
+- Delete test contacts with normal Delete in HubSpot, not "Permanently delete"
+  (permanent delete blocks the email for good).
+- Each run empties reports/reply/test-results: copy screenshots out before the next
+  row. Run rows one by one (-g "<Activity> in HubSpot > N:"), not in one command.
+- TaskStop does not kill a test process already started; check with
+  pgrep -f '[r]eply-received.spec' before and after.
+- Two sessions cannot share the replyreceived account (trigger settings are per
+  account). A second account (replyreceived2) would be needed to split the work; it
+  was proposed, not decided, nothing created.
+- "Email Sent from Saleshandy" log entries appeared on this account at about 4 pm
+  (cause not known).
+
+### Next steps (in order)
+
+1. QA decides: what does Update a Contact 4 "details not changed" mean (contact already
+   has the same values as the prospect, Extra Configuration empty)?
+2. Fix the Task reading (Create a Task 1, 2) and the Lifecycle dropdown (Create a
+   Contact 4), after telling the Link Clicked session (shared file).
+3. Mark used emails, re-run the 4 failed rows one by one.
+4. Run the 13 not-run rows (medium group first: Note 1 to 4, 6; Record 3 to 5;
+   Create a company 2; Update a company 1, 2). Drop Create a Contact 6 if QA agrees.
+5. Script Create a Note 5 and Record 7.
+6. Open QA items: is a log RUNNING for 3 to 7.5 min a bug; OK to make createContact
+   handle an existing contact; "Fail, AL-xxxx" marks in test-cases; edge run;
+   attach screenshots to AL-4118 and AL-4119; KB update.
+
+## Scripted 2026-10-13 (background)
+
+All three rows passed on the replyreceived account (chromium, one run each, REPORT_OPEN=never).
+
+- Update a Contact 4: PASS, 4.0 min. QA's meaning (2026-10-13): the HubSpot contact
+  is created with first name, last name, email and Job title, then City, Lead
+  status and Lifecycle stage are added so it matches the prospect and the saved
+  Extra Configuration (Connected, Sales Qualified Lead); after Mark as Replied the
+  log is Success and nothing on the contact changes. The shared row in
+  `src/flows/activity-rows.ts` was replaced (the old City "--" / Lead status "--"
+  check is gone); Link Clicked's Update a Contact 4 uses the same row. Scenario row
+  4 in `test-cases/hubspot/reply-received.md` rewritten. First attempt failed at
+  Add Prospect ("Oops!"): the row's prospect was already created by the 2026-10-12
+  run, so its email went into `reply-received.used.txt` and the second run passed.
+  The test keeps UPDATE_CONTACT_VALUES because saved Extra Configuration cannot be
+  cleared; this is my reading of "Extra Configuration empty", QA to confirm.
+- Create a Note 5: PASS, 5.6 min. In `tests/hubspot/reply-received.spec.ts`
+  (second reply describe). Update a Contact + Create a Note, reply twice on the
+  same step 1 email; the count of "Note created via Saleshandy" on the contact goes
+  up by one (a new, separate note). Own CSV row added (placeholder emails replaced
+  by `--refresh`).
+- Record (log) 7: PASS, 4.4 min. Same shape with Record (log) an Email Activity;
+  the count of the logged email subject on the contact goes up by one.
+- Note: `pgrep -f '[r]eply-received.spec'` inside a shell command that itself
+  contains the spec name matches that shell; use it from a separate command.
+
+## Session status 2026-10-13 (Reply Received only)
+
+Scenarios file has 46 rows; the spec now generates 46 tests (Create a Contact 6
+is no longer generated for this workflow: it is a Link Clicked row, skipped
+with `activityTests(..., { skip })`). Every scripted row has passed on staging
+(chromium): the 28 from 2026-10-12 plus Create a Task 1, 2; Create a Contact 4;
+Create a company 2; Update a company 1, 2; Create a Note 1 to 4 and 6; Record 3
+to 6; and, from the background run, Update a Contact 4 (new meaning), Create a
+Note 5, Record 7.
+
+QA answers 2026-10-13
+- Logs show the custom workflow's run: "Create a Note selected alone" is
+  Success in Logs with no note anywhere. Row 6 and the test were changed.
+- Update a Contact 4: the HubSpot contact gets the prospect's values first, then
+  nothing should change. Scripted with the saved Lead status and Lifecycle
+  values also set on the contact (they cannot be cleared); QA to confirm.
+
+Still open
+- (Closed 2026-10-13) Log RUNNING for 3 to 7.5 min: QA decided it is a
+  performance note, not a bug. Nothing filed, no action.
+- KB update (kb-update skill) and the "Fail, AL-xxxx" marks in test-cases.
+- Full run of the 46 tests in one go has not been done this session (rows ran
+  one by one).
+
+QA answers 2026-10-13 (later)
+- Update a Contact 4: OK with Extra Configuration filled in. Keep the same Lead
+  Status and Lifecycle values on the HubSpot contact as the saved ones, so
+  nothing is updated, unless a scenario says otherwise.
+- Screenshots for AL-4118 and AL-4119: not needed (N/A).
+- Log RUNNING for 3 to 7.5 minutes (Create a company 3 once; Update a deal rows
+  about 7 min 25 s): performance note, not a bug. Nothing filed, no action.
+
+## Final status 2026-10-13 (saved at QA's request, no run in progress)
+
+Full run of `tests/hubspot/reply-received.spec.ts` (chromium, 1 worker, 1.2 h,
+old serial setup): 26 passed, 4 failed, 2 skipped, 14 did not run.
+
+Passed (26): baseline 1; Create a Contact 2, 3, 4, 5; Update a Contact 2, 3, 4;
+Create a deal 1 to 5 (3 now passes after the fix below); Update a deal 1 to 6;
+Create a company 1, 2, 3, 4; Create a Task 3, 4; Record (log) 1, 2.
+Skipped (2, by design): Create a Contact 1, Update a Contact 1 (Extra
+Configuration already saved on this account; needs a new account).
+
+Failed (4), one cause: the sender hit its daily cap (Emails tab: step 1 email
+"Scheduled, Tomorrow, 09:00 AM"; sender Reply Receive2 showed 50/50).
+- Update a company 1
+- Update a deal 3 (second reply)
+- Create a Note 5 (second reply)
+- Record (log) 7 (second reply)
+The 30 to 45 s interval was correct. Not a product bug.
+
+Did not run (14), because the old serial group stopped after Update a company 1:
+Update a company 2 to 4; Create a Task 1, 2; Create a Note 1, 2, 3, 4, 6;
+Record (log) 3, 4, 5, 6.
+
+QA update after the run: QA attached their own email account(s) to the
+replyreceived account and said do NOT change them (150/day, 70 inbox
+placement, 40 to 55 s). Claude does not open or edit sender settings.
+
+Decisions pending (QA)
+- Run the remaining 19 tests now with its own report folder
+  (`REPORTS_DIR=reports/replyreceived`) while other sessions run, or wait for
+  the others to finish (project rule: sessions take turns).
+- Approve the Proposed lesson "Test-data refresh touched another workflow's
+  CSVs" and its one line for `knowledge-base/testing/how-to-test.md`.
+- Nothing is filed in Jira; no bug found in this run.
+
+Next steps
+1. When no other `playwright test` is running, run the 19 tests (18 rows plus
+   the baseline):
+   `cd automation && TEST_DATA_ONLY=hubspot/reply-received REPORT_OPEN=never npx playwright test tests/hubspot/reply-received.spec.ts --project=chromium --workers=1 -g '(Trigger behavior \(baseline\)|Update a company in HubSpot > [1-4]:|Create a Task in HubSpot > [12]:|Create a Note in HubSpot > [12346]:|Record \(log\) an email activity in HubSpot > [3-6]:|second reply)'`
+   Add `REPORTS_DIR=reports/replyreceived` if another run is going.
+2. If a step 1 email is "Scheduled, Tomorrow": the sender's cap is used up;
+   tell QA, do not change sender settings.
+3. KB update (kb-update) and "Fail, AL-xxxx" marks in test-cases (still open).
+
+Shared files changed this session (tell Link Clicked, Email Opened, Email Bounced)
+- `src/flows/activity-rows.ts`: removed `test.describe.configure({ mode: 'serial' })`
+  (a failed row no longer cancels the rest); Create a deal 3 now selects
+  `dealConfig('0')` (it relied on a saved Closing Date).
+- `src/data/global-setup.ts`: only the CSVs of the specs being run are
+  refreshed; `REFRESH_OTHER_USED=1` restores the old refresh of every CSV.
+- `knowledge-base/lessons.md`: new Proposed entry (2026-10-13).

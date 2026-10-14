@@ -13,6 +13,10 @@ handles them. Add one when it costs a failed run. Paths are under
 | Trigger name spelling is "Hubspot" | Exact text match fails with "HubSpot" | Use the product's spelling |
 | CRM list may already show the searched email at the top | Search looks done before it is | Wait for the "out of N" total to change (`crm.page.ts`) |
 | Prospect dialog fields have no accessible name | | CSS plus label text, `SaleshandyCrmPage.field(label)` |
+| Escape pressed inside an Extra Configuration list | Closed the whole modal, the next locator found nothing [staging, 2026-10-13] | Close a list by clicking its header again |
+| Add to Sequence step list loads after the sequence is picked | An early click on "Sequence Steps" opened nothing and the test waited out its 20 minute timeout [staging, 2026-10-13] | `moveToStep()` clicks until the "Step N - Day" option shows (`sequence.page.ts`) |
+| `{{` typed in the sequence step editor | Opens the variable picker and scrambles the text [staging, 2026-10-13] | Plain text without variables in test steps |
+| Logs tab of a Saleshandy account that never ran a workflow shows "No logs yet" and no rows | `logEntries` waited for a row that never came and the test hit its timeout [staging, 2026-10-13] | Returns [] on "No logs yet" (`hubspot-integration.page.ts`) |
 
 ## HubSpot
 
@@ -24,3 +28,7 @@ handles them. Add one when it costs a failed run. Paths are under
 | Job title disabled until Email is filled | | Fill Email first; `fill()` waits |
 | City shows in both the Key information card and the All properties panel | Two matches, test stopped (run 2026-10-08 12:32) | Stay inside the panel's `[data-test-id^="group-accordion-"]` groups |
 | Country/Region next to Country/Region Code | Partial label match picks the wrong one | Exact label match; tests edit only City, Company name, Job title [QA, 2026-10-08] |
+| The contacts list shows the name link and a truncated email (`serena.caruso@mailinat...`) | A locator on the full email never matches, so a "does it exist" check always said no [staging, 2026-10-13] | Read the footer count ("1 contact", "0 contacts") instead (`email-opened-data-check.spec.ts`) |
+| Create Contact panel says "This email address already belongs to a contact" | Job title stays disabled and Create never enables, the test ran into its timeout [staging, 2026-10-13] | Data: use new people; the check spec finds rows already in HubSpot |
+| Create a Task: the task shows under "Upcoming" on the contact record | The script reported "Task not found on the HubSpot record (gave up after 180 seconds)" while the screenshot showed the task there. Cause not confirmed; the date text in that section is not read yet [staging, 2026-10-12] | Create a Task 1 and 2 passed later on 2026-10-13 [project: reply-received-progress.md]; how the reading was fixed is not recorded here |
+| Logs entries are `role="button"` elements, not `<button>` tags, and the list renders several seconds after the page loads | A script that queries `button` finds no entries and returns an empty list; paging by script did not reload the list [staging, 2026-10-14] | Match on the 24-hex execution id in the element text; poll until the entries exist; use the MCP click on the snapshot ref for paging |

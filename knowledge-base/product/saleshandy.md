@@ -39,6 +39,13 @@ Staging wins once seen there; until then, ask QA.
 - Out of office detection pauses for 1 to 100 days (or the detected return date), then resumes; a reply during the pause makes it Replied.
 - Replied and Finished prospects can be resumed; Bounced and Unsubscribed cannot be paused.
 - Setting an outcome does not stop the sequence. Deleting an outcome with no replacement leaves prospects uncategorized.
+- Mark as bounced: sequence Emails tab > the prospect's row > Actions > Mark as bounced [QA, 2026-10-12].
+  - Works from an Active sequence, and from a non-Active one: a sequence that was Active, has emails delivered or scheduled, and was then paused. Those prospects can still be marked as bounced from its Emails tab. The prospect needs a row in the Emails tab [QA, 2026-10-12].
+  - A prospect that is in step 2 can be marked as bounced without sending the step 2 email [QA, 2026-10-12].
+  - It fires the HubSpot trigger "Email is Bounced in Saleshandy" [QA, 2026-10-12].
+- A step that starts on a later Day (for example step 2 on Day 3) has no row on the Emails tab until the prospect reaches it, so "Send now" is not there yet. To get the row now, move the prospect: Prospects tab > tick the row > "Add to Sequence" icon (the send icon) > Sequence: the current one > Sequence Steps "Step 2 - Day 3" > Add. The report shows "Successfully Moved 1". The prospect's step 1 row is replaced by a "Step 2, Scheduled" row, which Send now can send [QA, 2026-10-13; staging, 2026-10-13].
+- Track email opens needs a custom tracking domain. Turning the toggle on without one opens "Custom Domain Required"; with one it asks "Enable Open Tracking for Emails?" (spam warning) and "Enable Anyway" turns it on. The public docs tie the domain to Track Link Clicks only, which differs [staging, 2026-10-12; public docs: Sequence Settings].
+- Open and click timing. Staging: 10 seconds for a first and a second open or click. Production: a first open counts 60 s after sending and a second open 120 s after the first; clicks 90 s and 180 s; an open takes 1 to 3 minutes to register [QA, 2026-10-12, developer note].
 
 **What to test**
 - Stop on reply on vs off.

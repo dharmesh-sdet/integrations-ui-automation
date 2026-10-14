@@ -46,13 +46,16 @@ verify the result.
 | 7 | Reply is received in Saleshandy | AL-4011 | Saleshandy to HubSpot | reply-received.md |
 | 8 | Prospect Outcome is updated in Saleshandy | AL-4012 | Saleshandy to HubSpot | prospect-outcome-updated.md |
 | 9 | Link Clicked in Saleshandy (Jira: Link is Clicked in Saleshandy) | AL-4014 | Saleshandy to HubSpot | link-clicked.md |
+| 10 | Email is Bounced in Saleshandy (Jira: Email is bounced in Saleshandy) | AL-4016 | Saleshandy to HubSpot | email-bounced.md |
+| 11 | Sequence Email is Opened in Saleshandy | AL-4013 | Saleshandy to HubSpot | email-opened.md |
 
 All sub-tasks belong to AL-3984 ("[HubSpot] Triggers and Activities,
 Exploration and Test Cases"). Bugs are filed under Epic AL-3982.
 
-Not covered yet (no testing notes): Sequence Email is opened in Saleshandy
-(AL-4013), Prospect is Unsubscribed in Saleshandy (AL-4015), Email is
-bounced in Saleshandy (AL-4016).
+Not covered yet (no testing notes): Prospect is Unsubscribed in Saleshandy
+(AL-4015). Sequence Email is Opened in Saleshandy (AL-4013) has a context
+file and scenarios (2026-10-12). Email is
+bounced in Saleshandy (AL-4016) has a context file and scenarios (2026-10-12).
 
 Partially documented: Company Created/Properties Updated (parked 2026-10-09:
 no log appears when a company is created, see company-created-progress.md;
@@ -102,6 +105,28 @@ Status, Lead Lifecycle); the other activities are the same list, with
 Extra Configuration not documented yet. The exact field list per trigger is
 in each workflow file.
 
+**Extra Configuration dropdown values** [staging, 2026-10-13, account
+emailopened]:
+
+| Field | Options, in the order the list shows |
+|---|---|
+| Lead Status (Create a Contact) | New, Open, In Progress, Open Deal, Unqualified, Attempted to Contact, Connected, Bad Timing |
+| Lead Lifecycle (Create a Contact) | Subscriber, Lead, Marketing Qualified Lead, Sales Qualified Lead, Opportunity, Customer, Evangelist, Other |
+| Pipeline (Create a Deal) | Sales Pipeline (the only one) |
+| Pipeline Stage (Create a Deal, Sales Pipeline) | Prospecting, Initial Contact, Follow-Up, Proposal Sent, Negotiation, Closed Won, Closed Lost |
+| Deal Type | New Business, Existing Business |
+| Deal Priority | Low, Medium, High |
+
+Update a Contact has the same Lead Status and Lead Lifecycle lists (labels
+"Update Lead Status", "Update Lead Lifecycle"); Update a Deal has the same
+Pipeline, Stage, Deal Type and Priority lists (labels "when to update" and
+"while updating") [staging, 2026-10-13]. Create a Task: Task Type = Call,
+Email, Sales Navigator - Connection Request, Sales Navigator - InMail, To Do;
+Task Priority = None, Low, Medium, High [staging, 2026-10-13]. The
+searchable lists open with a Search box. "Two steps ahead" for an Update a Deal means Pipeline Stage: two
+positions further down the list than the deal's current stage [QA,
+2026-10-13].
+
 ## Intended behavior (confirmed)
 
 - **Extra Configuration once saved (QA, 2026-10-09):** on a new Saleshandy
@@ -110,6 +135,12 @@ in each workflow file.
   again brings the saved values back. Expected, not a bug. So "Extra
   Configuration skipped" rows can only run on an account where that
   activity's configuration was never saved.
+- **Extra Configuration empty, Create a Contact / Create a deal (QA,
+  2026-10-12):** the contact or deal is still created. HubSpot sets the
+  contact's Lifecycle Stage and Lead Status, and fills the deal's Pipeline,
+  Stage, Deal Type and Priority. The deal Amount stays empty (--) when the
+  prospect has no Deal Value. Closing Date 0 Days leaves the close date
+  empty (--). Update a deal with Extra Configuration empty: not stated yet.
 - **Mark Prospect as Finished / Replied / Paused:** the sequence in Extra
   Configuration is only used to check whether the prospect is already in
   that sequence. If it is, the status is applied. If the prospect is not in
@@ -132,6 +163,28 @@ in each workflow file.
 - **Create a Note and Record (log) an email activity:** have no Extra
   Configuration and must be paired with Create/Update a Contact or
   Create/Update a Deal, so the note or email has a record to attach to.
+  Selected alone, the workflow still runs and its log is Success, but the
+  note or email lands on no contact, company or deal (QA, 2026-10-13).
+- **Create a Note paired with Create a deal or Update a deal:** with Create a
+  deal and the contact not in HubSpot, the contact and the deal are created and
+  the note goes on both. With Update a deal the contact and the deal both
+  receive the note (QA, 2026-10-14, confirmed with the developer; it was
+  recorded as "deal only" on 2026-10-13 and the product showed both).
+- **Record (log) an email activity paired with Update a deal (3 deals):** the
+  email is logged on the latest created deal only, not on the contact
+  [staging, 2026-10-14, passed on Email Opened]. The card header reads "Logged
+  email by Email Opened via Saleshandy" on the Email Opened trigger (QA,
+  2026-10-14); on Link Clicked the header must name the prospect (AL-4123).
+- **Seen on staging, Sequence Email is Opened > Update a deal:** on 2026-10-13
+  the Search deal step filtered `dealname = <prospect email>`, found 0 deals
+  and the log still said Success, so the deal was not updated (AL-4128). On
+  2026-10-14 (from about 10:56) it filters by the associated contact, finds
+  the deal and updates it; 4 of 4 Update a deal scenarios passed twice. Who
+  changed it is not known.
+- **A Logs entry is the custom workflow's run, not one activity's result.**
+  Success means the workflow ran; it does not prove a record was written.
+  Whether a note, task, contact or deal exists is checked in HubSpot (QA,
+  2026-10-13).
 - **Prospect Outcome is updated:** Select Outcome is a single value. The
   workflow acts only when the new outcome matches it; any other outcome is
   blocked and nothing is created or updated. On this trigger, a logged

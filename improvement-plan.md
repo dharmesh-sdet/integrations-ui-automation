@@ -129,3 +129,56 @@ about 1 to 1.5 h to about 45 min, and later ones to about 20 to 30 min.
 - QA picks which items to do. Any item that changes a rule (P1 changes plan
   rule 7; R5 changes the "turn other triggers off first" rule) needs QA's
   explicit OK.
+
+## 8. Status (2026-10-12)
+
+| Item | Status |
+|---|---|
+| P1, P3, P7, P10, R5 | Done earlier (rule 7 change, `context/project.md`, `src/flows/`, login detection, one account per workflow) |
+| P9 | Done: `stopOnErrorLogs` and `StopWaiting` in `src/utils/wait.ts`; `expectNewLogsSuccess` fails at once on an Error entry. Checked with a small test |
+| R3 | Done: `staysTrue` default is 3 checks (15, 25, 35 s), not 4 (45 s). 35 s, not 30 s, because the 15 s then 10 s cadence is kept |
+| R2 | Done: one context per platform, account and browser per worker, fresh page per test (`src/fixtures/index.ts`). Trace and screenshots checked. Measured about 2 s per test (7.3 s first load, 5.0 s second), so well under the 1 min estimate |
+| R1 | Done in `contact-updated.spec.ts` rows 1 and 2 (act on all contacts, wait once). Typechecked; full run waiting on the `contactupdated` login |
+| R4, P2, P6, P8, P11 | Not done |
+
+
+## 9. From the Reply Received session (2026-10-13)
+
+Written after running the Reply Received in Saleshandy workflow (AL-4011) to
+the end. Items marked "Done" were built in that session; every other item
+needs QA's go-ahead before it is done. Numbering starts at Q so it does not
+clash with R and P above.
+
+### 9.1 Done in that session
+
+| # | Change | Why | Where |
+|---|---|---|---|
+| Q1 | Every run starts with all-new people for the whole CSV of each workflow being run (and its -deals and -companies files), from about 60 countries; every email ever made is kept in a ledger and never repeated. `KEEP_TEST_DATA=1` keeps people for a walkthrough; `TEST_DATA_ONLY=hubspot/<slug>` limits it to one workflow | Stale or reused people caused 3 false failures (a contact already in HubSpot) and QA had to prepare data | `src/data/global-setup.ts`, `src/data/generate.ts`, `src/data/countries.ts`, `test-data/_generated-emails.txt` |
+| Q2 | The review page `report.html` opens only with `REPORT_OPEN=always`, never by default | It opened by itself after runs and QA did not want it open mid-task | `reporter/plain-report.ts`, `playwright.config.ts` |
+| Q3 | A Logs entry is the custom workflow's run, not one activity's result; "Create a Note selected alone" is Success with no note anywhere. Row changed in all 5 workflow scenario files and in the shared test | The scenario said "Fails" and it was scripted and asked as a bug | KB `00-overview.md`, `how-to-test.md`, `lessons.md`, `src/flows/activity-rows.ts` |
+| Q4 | `activityTests(flow, title, { skip })`: a workflow can leave out a shared row that is not in its scenario file (Create a Contact 6 is Link Clicked only) | Rows of another workflow were in this workflow's counts | `src/flows/activity-rows.ts`, `tests/hubspot/reply-received.spec.ts` |
+| Q5 | `createCompany` waits for the record URL on commit and re-clicks only while the form is open | A click during HubSpot's same-domain check did nothing and the test waited 5 minutes | `src/pages/hubspot/companies.page.ts` |
+| Q6 | A workflow can set its own note text check (`noteContains`) | Reply notes read "Step: 1 (Variant A)" and "Prospect email:", not the shared default | `tests/hubspot/reply-received.spec.ts` |
+
+### 9.2 Proposed, not done
+
+| # | Change | Saves | Effort |
+|---|---|---|---|
+| Q7 | One command to run a single row: `npm run row -- <slug> "<row title>"`. It escapes the title (a `(log)` in `-g` is a regex and matched no test), sets `REPORT_OPEN`, `REPORTS_DIR` and `TEST_DATA_ONLY`, saves failure screenshots to a per-row folder, prints one result line and fails loudly on "No tests found" | Six hand-written queue scripts in one session; four rows that "failed" only because no test matched | Small |
+| Q8 | Scenario template rule: an Expected that says "Fails" must be checked with QA before it is scripted, and log checks always mean "the custom workflow ran" | Wrong Expected copied into 5 workflows | Tiny (needs QA OK, changes the template) |
+| Q9 | `SHARED-FILES.md`: each shared file with its owner and a short change log; each session names itself at the start (workflow and Jira key) | Several sessions edited `activity-rows.ts`, `companies.page.ts`, `generate.ts`, `global-setup.ts`; nobody could tell who owned what | Small |
+| Q10 | A check that a spec's generated test list equals the rows of its scenario file; it fails on extra or missing rows | Create a Contact 6 sat in the Reply Received count although the workflow does not have it | Small |
+| Q11 | Fail fast with a clear message when a person from the CSV already exists in HubSpot, before the row's test runs | A disabled Create button was waited on for 5 minutes | Tiny |
+| Q12 | Keep one result folder per row and never overwrite it (each run empties `test-results`, so screenshots were copied out by hand) | Failure evidence lost between rows | Tiny |
+| Q13 | `npm run status`: prints pass or fail per row for one workflow from `results.json` | Status tables were written by hand and mixed in rows of other workflows | Small |
+| Q14 | Record each log's RUNNING duration in the results | "Performance note" gets numbers (Update a deal 7 min 25 s, Create a company 3 once 5 min 28 s) | Small |
+| Q15 | A second Saleshandy account per busy workflow (for example `replyreceived2`) so two runs can go in parallel; trigger settings belong to the account | 46 rows run one at a time, about 3 hours | Medium (needs QA, changes the one-account rule) |
+| Q16 | A file allow-list in the prompt of every background agent | A helper edited a shared file it had been told to avoid | Tiny |
+| Q17 | Seed a HubSpot login on every per-workflow MCP server | The Reply Received MCP browser had no HubSpot login, so checks needed a script | Tiny |
+
+### 9.3 Suggested order
+
+1. Q7, Q8, Q11 and Q12 first (about an hour, remove the failures that cost the most time).
+2. Q9, Q10 and Q13 before the next workflow.
+3. Q14, Q16 and Q17 when convenient.
+4. Q15 when QA decides about accounts.

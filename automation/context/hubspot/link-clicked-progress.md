@@ -334,3 +334,384 @@ Also done this session (not Link Clicked):
   --workers=1 -g "Update a deal in HubSpot > N". Row 1 may need the test
   timeout (5 min, playwright.config.ts) raised if it times out again.
 - Not run yet: Update a deal 1, 2, 4, 5, 6. No product bug found.
+
+## Rows written 2026-10-12 (background fork; written and typechecked, NOT run)
+
+Nothing was run and no browser or account was touched (the main session was
+running Update a deal 1, 2, 4, 5, 6 on linkclick). `npx tsc --noEmit` clean;
+`playwright test --list` shows 47 Link Clicked tests (was 16 + 5 Update a deal
+rows already there); Reply Received gets the shared rows except step 2 and
+Update a deal 3 (its own second-reply test stays).
+
+Written in `src/flows/activity-rows.ts` (appended after Update a deal 6):
+- Create a Contact 3, 4, 6; Update a Contact 3, 4.
+- Create a company 1, 2, 4; Update a company 1-4.
+- Create a Task 1, 2.
+- Create a Note 1-6; Record (log) 3-7.
+- Update a deal 3 (new CSV row, see below): Closing Date 0 Days, first
+  click, then Closing Date 51 Days and the second link; same change as the
+  Reply Received version. ~25 to 50 min.
+
+Other files: `src/pages/mailinator.page.ts` (`clickFirstLink(email, subject
+| RegExp, link = 0)`), `tests/hubspot/link-clicked.spec.ts` (`fireEvent` now
+handles step 2 = Send now + step 2 subject, and `link` = 0-based link; flags
+`emailSubject`, `step2Events`, `secondEventRows`), `src/flows/saleshandy-to-hubspot.ts`
+(FlowConfig options `noteContains`, `loggedEmailContains`, `emailSubject`,
+`step2Events`, `secondEventRows`; flow exposes `fireEvent`, `noteContains`,
+`loggedEmailContains`), `hubspot.page.ts` (`activitiesText(typeId, id)`),
+`contacts.page.ts` (`setDropdownProperty`), `companies.page.ts`
+(`property(companyId, label)`).
+CSV: added row "Update a deal in HubSpot > 3" (Tomás Ibarra, Contact + 1 deal)
+to `link-clicked.csv` and "Brex Deal 1" to `link-clicked-deals.csv`.
+
+Per-workflow checks stay optional (Reply Received): note must contain
+`Note created via Saleshandy`, `Step: N`, `Variant: A`, `Prospect Email: ...`
+(default, `noteContains` overrides; Latest Outcome is not asserted); logged
+email must contain the step 1 subject when `emailSubject` is set, else the
+prospect's name. Step 2 rows (Note 5, Record 7) and the shared Update a deal 3
+are added only where the spec sets `step2Events` / `secondEventRows` (Link
+Clicked sets both; Reply Received sets neither).
+
+"From row N" rows reuse the prospect of that row in the same run (Create a
+Contact 6 from 3, Note 5 from 2, Record 7 from 4), so run the pair together
+(`-g` with both titles, `--workers=1`). The describe is serial: one failing row
+skips every row after it, so run rows singly or in pairs.
+
+### Still need a staging walkthrough before they can be trusted
+
+None of these screens or texts has been seen; locators and expected texts are
+guesses from similar screens:
+1. HubSpot record Activities tab (`activitiesText`: tab named "Activities",
+   reads the whole page text). Used by Task 1-2, Note 1-5, Record 3-7. Check
+   the note header text "Note created via Saleshandy" (seen on Reply
+   Received), the due date format for tasks (`dueDatePattern`: month name and
+   day), whether long notes are cut ("Read more"), the logged email header on
+   an outgoing email, and the deal record's Activities tab (Note 3, 4,
+   Record 5, 6).
+2. Task type, priority and the log action label "Create task for existing
+   contact" are not checked (only title and due date); add after the walk.
+3. Lifecycle stage dropdown on a contact (`setDropdownProperty`, Create a
+   Contact 4): picker role and option role are guesses.
+4. Company record About card (`HubSpotCompaniesPage.property`, Update a
+   company 1, 2): test id prefix `card-wrapper-PROPERTIES_V3/0-2`, label then
+   value lines, "State/Region" label. The prospect's City and State map to
+   company City and State/Region (00-overview.md); the companies are created
+   with domain and name only, so City starts empty.
+5. Create a company 2: expects exactly 1 associated company and that it is
+   not the pre-created "Greenhouse Existing" (mailinator.com). Create a
+   company 4: expects 1 company from the email domain; the company is not
+   inspected.
+6. Step 2 email subject in Mailinator: `STEP_2_SUBJECT` accepts the step 1
+   subject with an optional "Re: ". Check the real subject, and that Mailinator
+   lists the newest first.
+7. Update a Contact 4: expects City, Lead status unchanged ("--") and Job
+   title as created. Create a Note 6: expects no log entry with Success and no
+   contact; check what status a failing note log shows.
+8. Update a deal 3 may need the Update a Deal log timeout raised if the run
+   passes 50 minutes; `UPDATE_DEAL_LOG_TIMEOUT_MS` is 12 min per click.
+9. Create a Contact 6 and Update a deal 3: Clicked goes from 1 to 2 for the
+   same email (QA's scenario); if Saleshandy counts unique links the second
+   click may count differently.
+10. CRM edit of `State` in the prospect dialog (Update a company 1, 2) uses
+    `editField('State', ...)`; the textbox name "Enter state" is assumed.
+
+## Note from the Email Opened session (2026-10-12, QA)
+
+No change made to Link Clicked. QA said tracking events register in about
+10 seconds on staging and 1 to 3 minutes on production, and thinks the same
+holds for link clicks. The current notes say 1 to 1.5 min (developer's max)
+and a 3 min give-up; the staging wait may be shorter than that. QA has not
+confirmed it for Link Clicked, so check before changing any wait.
+Also: public docs say Track Link Clicks is under Sequence > Settings >
+Safety Settings, and a custom tracking domain is offered with it.
+
+Developer's note (via QA, 2026-10-12): the cooling times are production
+values, in seconds: Clicked first 90, second 180 (Opened: first 60, second
+120). On staging both are 10 seconds, for clicks and opens. No change made to
+Link Clicked from the Email Opened session; a second click on staging needs
+10 s after the first, not 180 s.
+
+## Update a deal rows run, 2026-10-12 (about 18:00 IST)
+
+- HubSpot session in `auth/hubspot-chromium.json` was valid (refreshed 14:27);
+  no login needed. `.env` has only the Jira keys.
+- Pass on staging: Update a deal 1 (2.3 min), 2 (3.4), 4 (2.5), 5 (2.6),
+  6 (2.1, on the second run).
+- Update a deal 6 first failed because a stale contact
+  sloane.kensington@mailinator.com (created 10:42 AM, not by the product)
+  was in HubSpot. Deleted it (restorable) and the leftover prospect, then it
+  passed. The row does not clean this precondition itself yet.
+- New: `npm run prospect:delete -- <account> <email>`
+  (`scripts/delete-prospect.ts`); the pinned checkbox is under the sidebar
+  at 1440 px, so it is clicked via the DOM.
+- Next: the rows written but not run (Contact 3, 4, 6; Update a Contact 3,
+  4; companies; Task 1, 2; Note 1-6; Record (log) 3-7; Update a deal 3), each
+  after a staging walkthrough of the unseen screens (see "Rows written").
+
+## Update a deal rows run, 2026-10-12 (about 18:00 IST)
+
+- HubSpot session in `auth/hubspot-chromium.json` was valid (refreshed 14:27);
+  no login needed. `.env` has only the Jira keys.
+- Pass on staging: Update a deal 1 (2.3 min), 2 (3.4), 4 (2.5), 5 (2.6),
+  6 (2.1, on the second run).
+- Update a deal 6 first failed because a stale contact
+  sloane.kensington@mailinator.com (created 10:42 AM, not by the product)
+  was in HubSpot. Deleted it (restorable) and the leftover prospect, then it
+  passed. The row does not clean this precondition itself yet.
+- New: `npm run prospect:delete -- <account> <email>`
+  (`scripts/delete-prospect.ts`); the pinned checkbox is under the sidebar
+  at 1440 px, so it is clicked via the DOM.
+- Next: the rows written but not run (Contact 3, 4, 6; Update a Contact 3,
+  4; companies; Task 1, 2; Note 1-6; Record (log) 3-7; Update a deal 3), each
+  after a staging walkthrough of the unseen screens (see "Rows written").
+
+## Create a Task rows, 2026-10-12 (evening)
+
+- Create a Task 1: the product worked (task "Follow up from the workflow",
+  "Task created via Saleshandy", due Oct 15 = 3 days, log Success 3.2 s).
+  The first two runs failed in the script: the Extra Configuration save
+  toast took over 5 s (now 30 s), and `HubSpotPage.activitiesText` waited for
+  "networkidle", which HubSpot never reaches (now waits for
+  `timeline-preview-event`).
+- Link Clicked note (seen, contact 565322291905): "Note created via
+  Saleshandy", Title `email-link-clicked`, Sequence, Sequence Name, Step,
+  Variant, `Click Count:` (EMPTY after a real click; QA asked, not decided),
+  Sender Email, Latest Outcome (empty), Prospect Email, User, `Link URL:`.
+  Task card: "Task created via Saleshandy", "Due:Oct 15, 2026 at 5:30 AM
+  GMT+5:30".
+- Third run stopped on Saleshandy: "You have reached the maximum daily
+  sending limit for this sender email, please wait for the quota reset"
+  (Send now). Gmail senders cap at 50 a day; today's runs used it up.
+  Email Accounts page did not load in a headless check.
+- Changes today: Link Clicked sends step 1 with Send now
+  (`sendStep1Now`), waits 25 s after a click then refreshes Emails every 5 s
+  until Clicked goes up; the Mailinator inbox tab stays open for link 2;
+  `HubSpotCompaniesPage.property` reads "View all properties";
+  `setDropdownProperty` uses panel casing.
+- Update a deal 1-6 all pass (3 in 3.6 min, second click counts 1 to 2).
+
+## Click Count note bug is filed (2026-10-13)
+
+The empty "Click Count:" in the Link Clicked note was sent as AL-4120
+(created 2026-10-12 18:09 IST, status To Do, assignee Darshan, Epic AL-3982,
+linked to AL-4014). It is no longer an open QA decision. Screenshots (note on
+contact 565322291905, Logs entry 6accd19ecab06eccf0e7e088) were to be attached
+manually; not checked.
+
+## Note from the Reply Received session, 2026-10-13
+- `src/flows/activity-rows.ts`: `activityTests(flow, title, options)` takes an
+  optional `{ skip: [scenario ids] }`. Reply Received passes
+  `Create a Contact in HubSpot > 6`, so that row is not generated there. Link
+  Clicked passes nothing: its Create a Contact 6 is unchanged.
+- Create a Note 6 ("selected alone") now expects Success in Logs and no contact
+  (QA, 2026-10-13: the Logs entry is the custom workflow's run). The scenario row
+  in `test-cases/hubspot/link-clicked.md` (row 6) was changed to match.
+- Update a Contact 4 now builds the HubSpot contact with the prospect's values
+  (City, Lead status, Lifecycle stage), runs the trigger and expects nothing
+  changed (QA's meaning of "details not changed", 2026-10-13). It is the same
+  shared test, so Link Clicked's row 4 uses it too; not run on linkclick yet.
+
+## Note from the Reply Received session, 2026-10-13 (test data)
+- `src/data/global-setup.ts` now replaces EVERY row of the CSV of the workflow
+  being run (and -deals, -companies) with new people before each run, not only
+  used rows. The workflow comes from the spec name on the command line
+  (`tests/hubspot/link-clicked.spec.ts` -> `test-data/hubspot/link-clicked.csv`);
+  no spec given means every workflow with a spec. Set `KEEP_TEST_DATA=1` to keep
+  today's behavior (used rows only) while a walkthrough uses the CSV's people.
+- `src/data/countries.ts` (new) adds about 50 countries; `generate.ts` imports
+  it and never repeats an email listed in `test-data/_generated-emails.txt`.
+
+## Final status, session saved 2026-10-13 about 15:00 IST (resume here)
+
+Account `linkclick`, sequence 196221, spec `tests/hubspot/link-clicked.spec.ts`
+(rows in `src/flows/activity-rows.ts`). Everything is uncommitted.
+
+### Passed on staging (2026-10-13)
+- Create a Task 1, 2.
+- Create a Note 1, 2, 4, 5 (step 2), 6.
+- Record (log) 3, 4.
+- Create a Contact 3, 4, 6.
+- Update a deal 1, 2, 4, 5, 6 (2026-10-12; 3 passed 2026-10-12 per the earlier section).
+
+### Failed or open
+- Create a Note 3 (Create a deal + note): AL-4121. Record (log) 5 (Create a deal
+  + email): AL-4122. Both filed; both rows keep failing until fixed.
+- Record (log) 6 (Update a deal + email, 3 deals): AL-4123. Email lands on the
+  latest deal only (expected, QA) but headed "Unknown Contact" (bug). The row
+  asserts the header names the prospect, so it fails until fixed.
+- Create a Note count in note, empty "Click Count:": AL-4120.
+- Record (log) 7 (Update a Contact + email, step 2 click): the "Link is Clicked"
+  log 6acdf7a2c9a5007e3fecb3be is Error. Only node "log email" (hubspot) fails,
+  HubSpot 400 VALIDATION_ERROR "Invalid input JSON on line 1, column 733:
+  Cannot deserialize value of type from Object value". Other nodes Success.
+  QA decision PENDING (bug or not); not drafted, not filed.
+
+### Not run yet
+- Update a Contact 3 (was running at 14:59, result not read; run again if
+  `reports/linkclick/results.json` does not show it) and 4.
+- Create a company 1, 2, 4; Update a company 1 to 4.
+- Update a deal 3 (second click after changing Extra Configuration, 25 to 50 min).
+- Record (log) 6 stays failing on AL-4123; re-run after the fix.
+
+### QA decisions made today (also in the scenario file)
+- Update a deal + Create a Note, contact has 1 deal: note on the deal only (not a bug).
+- Update a deal + Record email: email on the latest deal only (expected);
+  "Unknown Contact" header is the bug (AL-4123).
+- Create a Note alone: Success in Logs, no note anywhere (not a bug).
+
+### Findings that cost time (for the next session)
+- Prospects tab search matches one word or an email, never "First Last".
+  `sequence.moveToStep(sequenceId, email, step)` searches by email (Email Opened
+  session's fix). Step 2 has no Emails row until the prospect is moved to it.
+- Logged email card shows "Logged email with <name> created via Saleshandy"
+  and the body, never the subject. Spec overrides `loggedEmailContains`.
+- Each Playwright run clears `reports/linkclick/test-results`; read failure
+  screenshots before starting the next run.
+- A used CSV row is replaced by a new person on the next run, so never clean
+  up by the name in the CSV; read the name from the run.
+- The saved HubSpot login expires; `npm run login:hubspot` in `automation/`.
+
+### Run command
+`REPORTS_DIR=reports/linkclick TEST_DATA_ONLY=hubspot/link-clicked REPORT_OPEN=never npm test -- tests/hubspot/link-clicked.spec.ts --workers=1 -g "<row title>"`
+Run one row, or a pair for "from row N" rows (Create a Contact 3 + 6, Note 2 + 5,
+Record 4 + 7, Update a deal 1 + 3). `--workers=1`; the describe is serial.
+
+### Shared and new files changed this session
+- `tests/hubspot/link-clicked.spec.ts` (Link Clicked's own): `loggedEmailContains`
+  override; step 2 calls `sequence.moveToStep(SEQUENCE_ID, row['Email'], step)`.
+- `src/flows/activity-rows.ts`: Note 4 and Record 6 expectations (QA 2026-10-13).
+- `src/pages/saleshandy/sequence.page.ts`: no change kept (my duplicate
+  `moveToStepBySearch` was removed; `moveToStep` belongs to Email Opened).
+- New `scripts/delete-hubspot-contact.ts`, `package.json` script
+  `hubspot:delete-contact`.
+- `test-cases/hubspot/link-clicked.md`: rows Create a Note 4, Record (log) 6.
+- `knowledge-base/lessons.md`, `knowledge-base/testing/how-to-test.md`: lesson
+  "Expected results taken from our own scenario file" (Applied).
+- `automation/jira/drafts/`: four Link Clicked drafts, all sent (AL-4120 to AL-4123).
+
+## Session resumed 2026-10-13 about 15:15 IST (RUNNING in this session)
+
+Link Clicked is being worked in the session named "Link Clicked". Do not run
+`link-clicked.spec.ts`, `REPORTS_DIR=reports/linkclick` or the `linkclick`
+account from another session until this section says "stopped". Other workflows
+(Email Opened, Reply Received, Email Bounced) can run in parallel.
+
+- Update a Contact 3 "Contact not in HubSpot": PASSED (read from
+  `reports/linkclick/results.json`, run finished 2026-10-13 09:28 UTC, 158 s).
+- Plan this session: Update a Contact 4, Update a deal 3, Create a company 1, 2, 4,
+  Update a company 1 to 4. Bug-or-not items stay open for QA (Record 7, Update a
+  company 1 and 2).
+
+### Product issues to review later (QA rule 2026-10-13: log, keep running, do not wait)
+Format: row | what failed | evidence | state. Drafts for Jira only after QA says bug.
+- Record (log) 7 | "Link is Clicked" log 6acdf7a2c9a5007e3fecb3be Error, HubSpot 400 on the log email node | see Failed or open above | QA bug-or-not pending
+- Update a Contact 4: PASSED 2026-10-13 (3.9 m).
+- Update a deal 1 and 3: PASSED 2026-10-13 (7.5 m together).
+- Create a company 1, 2, 4: PASSED 2026-10-13. Update a company 3, 4: PASSED.
+- Update a company 1: Logs Success path, but HubSpot company 351264728764 City stays "--" (expected "Ulaanbaatar"), gave up after 180 s. Same finding as Email Bounced and Email Opened (Update a company 1 and 2; related AL-4030, AL-4109, AL-4110). Evidence: `reports/linkclick/test-results/*Update a company 1*` run 2026-10-13 (22.9 m run, 5 passed 2 failed).
+- Update a company 2: failed in the Saleshandy edit step, State stayed "Coimbra" after the edit (City saved). Looks like the script/UI edit, not the product; re-run once to confirm.
+
+### Product issues to review later (additions)
+- Update a company 1 | HubSpot company City not updated after a Link Clicked trigger ("--", expected "Ulaanbaatar") | company 351264728764, 2026-10-13 | QA bug-or-not pending, same as other workflows
+- Update a company 2 re-run (2026-10-13 about 15:58 IST): the Saleshandy edit step passed this time (first failure was a one-off State edit that did not save). Now fails on the product side like row 1: company 351264728787 City stays "--" (expected "Durban") after 180 s. Same finding as Update a company 1; QA bug-or-not pending.
+
+## Final status, session stopped 2026-10-13 about 16:00 IST (resume here)
+
+Session "Link Clicked" has stopped; the `linkclick` account and `reports/linkclick` are free.
+
+- Every Link Clicked row has now run on staging. Passed: Create a Task 1, 2; Notes 1, 2, 4, 5, 6; Record 3, 4; Create a Contact 3, 4, 6; Update a Contact 3, 4; Update a deal 1 to 6; Create a company 1, 2, 4; Update a company 3, 4.
+- Failing on filed bugs: Note 3 (AL-4121), Record 5 (AL-4122), Record 6 (AL-4123), Click Count (AL-4120).
+- Product issues for QA bug-or-not (nothing drafted): Record 7 (log 6acdf7a2c9a5007e3fecb3be Error, HubSpot 400); Update a company 1 and 2 (City stays "--", companies 351264728764 and 351264728787; same as Email Bounced and Email Opened, related AL-4030, AL-4109, AL-4110).
+- Left: QA decisions above, "Fail, AL-xxxx" marks in `test-cases/hubspot/link-clicked.md`, a full-spec run in one go, and `kb-update` for new learnings.
+
+### Note from the Email Opened session, 2026-10-13 (about 16:30 IST)
+- Update a company shows Success but City stays "--" on Email Opened and
+  Email Bounced too. The Email Bounced one is filed as AL-4125 (per the Email
+  Opened session; not checked in Jira here). Older related: AL-4030, AL-4109,
+  AL-4110. Email Opened has an unsent draft:
+  `jira/drafts/email-opened-update-company-shows-success-not-updated.json`.
+- Link Clicked Update a company 1 and 2 show the same symptom (see product
+  issues above). If QA says bug, link AL-4125 in the draft instead of filing
+  a separate unrelated bug. Reply Received passes these rows, so the result
+  is a mix across workflows. Nothing drafted or filed from this session.
+
+### QA decisions 2026-10-13 (about 16:45 IST)
+- Update a company 1 and 2: BUG (QA). Goes as a comment on AL-4125 (additional
+  observation), not a new ticket. Draft (unsent, QA sends):
+  `jira/drafts/al-4125-link-clicked-observation-comment.json`. QA says Email
+  Bounced then passed because the developer fixed it, so a re-run of these two
+  rows on Link Clicked is the check once the fix is on staging.
+- Record (log) 7: NOT a bug (QA). Reason not given; the row still fails
+  because the spec expects Success and the step 2 email as a separate activity.
+  Needs QA's word on what the row should expect (not blocking).
+- Update a company 1 and 2 bug draft (unsent): jira/drafts/link-clicked-update-company-shows-success-not-updated.json (QA, 2026-10-13: draft a bug, not a comment).
+
+## Session resumed 2026-10-14 about 09:30 IST (RUNNING in session local-project-63)
+
+Link Clicked is owned by session local-project-63. Confirmed free by the
+Email Bounced session (pid 1753855 is Email Bounced) and local-project-12
+(owns Email Opened). Do not run `link-clicked.spec.ts`, `REPORTS_DIR=reports/linkclick`
+or the `linkclick` account from another session until this section says "stopped".
+Plan: re-run Update a company 1 and 2, settle Record 7 expectation with QA,
+"Fail, AL-xxxx" marks in test-cases, full-spec run, `kb-update`.
+
+### Record (log) 4 + 7 re-run, 2026-10-14 about 11:10 IST (session local-project-63)
+- Command: REPORTS_DIR=reports/linkclick TEST_DATA_ONLY=hubspot/link-clicked, `-g "Record \(log\) an email activity in HubSpot > (4|7):"`, 2 tests, 6.3 m.
+- Record 4 (prospect Matias Contreras, contact 569270663885): FAILED at "Check HubSpot: email logged on the contact". Logs entry 6acf14a6fcf220df809e1d22 is Success (2.7 s). HubSpot Activities shows "Logged email by Link Clicked via Saleshandy" with the body preview, and the contact moved to Sales Qualified Lead / Connected. The spec expected the header "Logged email with Matias Contreras created via Saleshandy", which is not on the page. So the email IS logged; the header text differs from what the spec looks for. Not yet known if this is HubSpot rendering or a product change; script assertion not changed (QA decision pending).
+- Record 7: not run (needs Record 4 to pass first in the same run).
+- Evidence: reports/linkclick/test-results/hubspot-link-clicked-Link--2f9aa--Contact-contact-in-HubSpot-chromium/
+
+### Record (log) 4 + 7 re-run after header change, 2026-10-14 (session local-project-63)
+- QA picked option A: Link Clicked now expects the header "Logged email by Link Clicked via Saleshandy" (tests/hubspot/link-clicked.spec.ts); Update a deal + email also asserts the deal has no "Unknown Contact" (activity-rows.ts) so AL-4123 stays visible.
+- Result: Record 4 PASSED (3.5 m), Record 7 PASSED (2.4 m), prospect Dana Al-Mutairi (new people generated for the run). The 2026-10-13 Error log 6acdf7a2c9a5007e3fecb3be (HubSpot 400 on "log email", step 2) did NOT reproduce. Unknown if fixed or intermittent; QA's "not a bug" stands.
+
+### Update a company 1 and 2 bug filed: AL-4127 (checked in Jira 2026-10-14, session local-project-63)
+- AL-4127 "Link is Clicked in Saleshandy: Update a Company in HubSpot activity shows Success but does not update the company City and State", In Progress, assignee Rudra Chauhan. It is the Link Clicked bug (companies 351264728764 and 351264728787). AL-4125 is the Email Bounced one (related, not the same ticket).
+- Marked "Fail, AL-4127" on Update a company 1 and 2 in test-cases/hubspot/link-clicked.md.
+
+### AL-4122 and AL-4123 retested, 2026-10-14 (session local-project-63)
+- Record 5 (AL-4122, prospect Olafur Haraldsson) and Record 6 (AL-4123, prospect Nasser Al-Busaidi, 3 deals): both PASSED with new data, 9.2 m together. AL-4123 Logs entry 6acf1c5d13ed1b251a0ca4e0 (11:38 AM, Success).
+- Verification comments posted by QA's OK: AL-4122 comment 78816, AL-4123 comment 78817. No status change.
+- Scenario row 6 marked "Pass after fix, AL-4123". Update a company 1 and 2 run was stopped by QA (AL-4127 is WIP, expected to fail).
+
+### AL-4127 / AL-4121 retest, 2026-10-14 afternoon (session local-project-63, QA: AL-4127 fixed and deployed on staging)
+- Create a Note 3 (AL-4121): PASSED (3.8 m, new data). Scenario row 3 not yet marked.
+- Update a company 2: FAILED. Company 352155477733 City "--", expected "Cebu City", after 180 s.
+- Update a company 1: first attempt timed out at 10 m in "Create & Add Prospect" (script/UI, no product result). Re-run FAILED: company 352239992544 City "--", expected "Da Nang", after 180 s. Newest Logs entry 6acf27b25f6567d77c59bfcb (12:26 PM) is Success, 2.4 s (not tied to the test with certainty).
+- So AL-4127 still reproduces on both rows after the deploy. Nothing posted; any comment goes to jira/drafts for QA.
+- Queue: Record 3 (header check changed today); AL-4120 (Create a Note 2 + Click Count check) waits for QA's row and value.
+
+- 2026-10-14 (Email Opened session, QA's instruction): QA confirmed with the
+  developer that Create a Note + Update a deal puts the note on BOTH the contact
+  and the deal (replaces "deal only"). Changed: `src/flows/activity-rows.ts`
+  (Update a deal + Note, contact has 1 deal now expects the note on the deal and
+  on the contact) and `test-cases/hubspot/link-clicked.md` (Create a Note > 4).
+  Not rerun on this account. The Record (log) + Update a deal rule is NOT
+  changed (email on the latest deal only, card name per trigger).
+
+### Create a Note 4 and Record 3 re-run, 2026-10-14 (session local-project-63)
+- Create a Note 4 (new rule: note on the deal and on the contact): PASSED.
+- Record (log) 3 (new header "Logged email by Link Clicked via Saleshandy"): PASSED.
+
+### AL-4120 and AL-4127 retest, 2026-10-14 about 13:15 IST (session local-project-63)
+- AL-4120: Create a Note 2 PASSED (3.3 m) with a new check in link-clicked.spec.ts `noteContains`: step 1 notes must contain "Click Count: 1". Nothing posted; QA already moved AL-4120 to QA Approved.
+- AL-4127 (QA: fixed and deployed on staging): Update a company 1 FAILED, company 352238552821 City "--" expected "Brisbane" (7.1 m). Update a company 2 FAILED, company 352156918513 City "--" expected "George Town" (7.4 m). Same symptom as before the deploy, both rows, new data.
+
+### AL-4127 third attempt, 2026-10-14 about 13:45 IST (session local-project-63, Chromium, new data)
+- Update a company 1 FAILED: company 352157626071 City "--", expected "Montevideo" (7.2 m). Update a company 2 FAILED: company 352155480818 City "--", expected "Heredia" (7.9 m).
+- Third run with new data after the deploy, same symptom. Baseline 2 test written (link-clicked.spec.ts, new CSV row) and queued.
+
+### Baseline 2 written and run, 2026-10-14 afternoon (session local-project-63)
+- New test in tests/hubspot/link-clicked.spec.ts "Trigger behavior (baseline) > 2": Update a Contact only, prospect added, first link clicked, Clicked count, purple icon (span-wrapper purple-14 on the Prospects tab), new log entry. New CSV row "Trigger behavior (baseline) > 2" in link-clicked.csv.
+- First run: blank Triggers & Activity page for 5 min (staging page load, no test result). Second run: SKIPPED (not a pass): useOnly with no values skips because Update Lead Status and Lifecycle are already saved on this account. Fixing the test to select the saved values, then re-run.
+- Baseline 2, third run (read from the run output and report-data.json): PASSED, 2.3 m, all 7 steps passed (select Update a Contact with the saved values, add prospect, step 1 sent, link clicked, Clicked counted, purple icon, new log entry). Scenario row 2 still to be marked Pass in test-cases.
+
+### AL-4127 cause found by QA, 2026-10-14 afternoon (session local-project-63)
+- QA tested manually and it works. The three failing runs were caused by the Field Mapping on the linkclick account (not updated); QA updated it. It was not a product failure, and my guess that the fix was "not live" was wrong.
+- Draft comment written to jira/drafts/al-4127-verification-comment.json; QA sends it from `npm run jira`. Update a company 1 and 2 re-run in the script to follow.
+
+### AL-4127 re-run with corrected Field Mapping, 2026-10-14 about 15:10 IST (session local-project-63)
+- Update a company 2: PASSED (5.3 m).
+- Update a company 1: script read City "--" for 180 s on company 352239996629 (expected "Quito"), but the product DID update it: Logs entry 6acf4bcf1fffc597731b9558 (3:00 PM, 9.1 s, all nodes Success); node "Update Company" request had city Quito, state Pichincha, response city Quito, state Pichincha (updatedAt 09:31:02Z); the company record read afterwards in HubSpot shows City Quito. So not a product failure; the script's read of the property did not see it. Re-run of row 1 follows.
+- Cause of the three earlier failures: Field Mapping on the linkclick account (QA). Not checked by me; proposed lesson pending.
+- Update a company 1 re-run: PASSED (4.9 m, read from the run output and report-data.json). Both Update a company rows now pass with the corrected Field Mapping. AL-4127 cause: Field Mapping on the account (QA).

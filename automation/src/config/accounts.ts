@@ -16,6 +16,8 @@ export const accounts = {
   replyreceived: { saleshandy: 'dharmesh+replyreceive@saleshandy.com' }, // Reply is received in Saleshandy
   outcomeupdated: { saleshandy: 'dharmesh+outcomeupdated@saleshandy.com' }, // Prospect Outcome is updated in Saleshandy
   linkclick: { saleshandy: 'dharmesh+linkclick@saleshandy.com' }, // Link Clicked in Saleshandy
+  emailbounced: { saleshandy: 'dharmesh+emailbounced@saleshandy.com' }, // Email is Bounced in Saleshandy (TODO(needs-input): confirm the address QA signs up with)
+  emailopened: { saleshandy: 'dharmesh+emailopened@saleshandy.com' }, // Sequence Email is Opened in Saleshandy (TODO(needs-input): confirm the address QA signs up with)
 } as const;
 
 export type Account = keyof typeof accounts;

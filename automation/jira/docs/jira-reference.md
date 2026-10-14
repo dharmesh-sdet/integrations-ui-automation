@@ -47,7 +47,7 @@ apply them silently.
 | Summary | none | from the source; see the pattern in [bug-creation.md](bug-creation.md) |
 | Priority | `Medium` | `priority` |
 | Assignee | Darshan | `assignee` (accountId) |
-| Environment | `Staging` for Staging sources, else `Production` | `additional_fields` |
+| Environment | `Production` always (QA, 2026-10-13: tickets then move to QA Approved, not Done). The environment where the bug was seen goes in the description Note as "Affected Environment - Staging" (or Production) | `additional_fields` |
 | Epic Link | `AL-3982` for HubSpot integration bugs; for other integrations, search Jira and ask | `additional_fields` |
 | QA | Dharmesh Patel | `additional_fields` (accountId) |
 | Linked Work Items | sibling bugs + the workflow tracking ticket + parent ticket | separate `createJiraIssueLink` call after creation |

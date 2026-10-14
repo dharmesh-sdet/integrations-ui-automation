@@ -1,0 +1,29 @@
+{
+  "type": "bug",
+  "project": "AL",
+  "summary": "Reply is Received in Saleshandy: Update a Deal in HubSpot activity shows Success but does not update the deal",
+  "description": "**Prerequisites:**\n- Staging account connected to HubSpot.\n- Reply is Received in Saleshandy trigger enabled with the \"Update a Deal in HubSpot\" activity only.\n- Update a Deal Extra Configuration:\n  - Pipeline (when to update): Sales Pipeline\n  - Pipeline Stage (when to update): Initial Contact\n  - Deal Type (while updating): New Business\n  - Deal Priority (while updating): High\n  - Closing Date (while updating): 0 Days\n- A contact exists in HubSpot with 1 deal (Sales Pipeline, Prospecting, Deal Type and Priority empty, default close date).\n- An active sequence with the same prospect (same email as the HubSpot contact) and the step 1 email sent.\n\n**Steps to Reproduce:**\n1. Open the sequence > Emails, open the menu on the prospect's Step 1 email and click Mark as replied.\n2. Open API & Integrations > Integrations > HubSpot > Logs and wait for the new \"Reply is Received in Saleshandy\" entry to show Success.\n3. Open the deal in HubSpot and check Pipeline Stage, Deal Type, Deal Priority and Close Date.\n4. Open Triggers & Activity, change Closing Date (while updating) to 51 Days and save.\n5. In the sequence > Emails, click Mark as replied again on the same Step 1 email.\n6. Wait for the new log entry to show Success and open the deal in HubSpot again.\n\n**Actual Result:**\n- Both log entries show Success (4 to 6 seconds each).\n- The deal is not updated after the first reply: Deal Type and Deal Priority stay empty.\n- After the second reply the deal is still not updated: Close Date stays at the default end-of-month date instead of today + 51 days, and Deal Type and Deal Priority stay empty.\n- A screenshot will be attached to the ticket manually.\n\n**Expected Result:**\n- When the log shows Success, the deal should be updated with the configured Pipeline Stage, Deal Type and Deal Priority.\n- After the Closing Date is changed to 51 Days, the second reply should set the deal's Close Date to today + 51 days.\n\n",
+  "priority": "Medium",
+  "environment": "Staging",
+  "epic": "AL-3982",
+  "assignee": {
+    "name": "Darshan",
+    "accountId": "5af5d8dd244bc90a10605d4f"
+  },
+  "qa": {
+    "name": "Dharmesh Patel",
+    "accountId": "712020:c7dedb58-9cb3-4450-a98f-5b5b56f6556b"
+  },
+  "links": [
+    "AL-4011",
+    "AL-3984"
+  ],
+  "attachments": [],
+  "waitingFor": "Screenshots are in automation/reports/reply/test-results/hubspot-reply-received-Rep-6afe5-ration-changed-second-reply-chromium/ (test-failed-1.png Logs, test-failed-2.png deal). Attach by hand after sending.",
+  "sent": {
+    "key": "AL-4119",
+    "url": "https://saleshandy.atlassian.net/browse/AL-4119",
+    "problems": [],
+    "at": "2026-10-12T10:31:55.117Z"
+  }
+}

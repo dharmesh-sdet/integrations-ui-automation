@@ -2,12 +2,14 @@
 // Data: test-data/hubspot/saleshandy-3-random-contacts.csv, values used as they are.
 // Each run takes the next 2 unused contacts (test-data/hubspot/*.used.txt lists
 // the ones already created). Both go through rows 1 and 2; rows 3 and 4 use the first.
+// Rows 1 and 2 act on every contact first, then wait for Logs once (the Refold
+// delay is paid once, not once per contact).
 import { expect, test } from '../../src/fixtures/index.ts';
 import { readCsv, type Row } from '../../src/data/csv.ts';
 import { markUsed, unusedRows } from '../../src/data/used.ts';
 import type { HubSpotIntegrationPage } from '../../src/pages/saleshandy/hubspot-integration.page.ts';
 import type { SaleshandyCrmPage } from '../../src/pages/saleshandy/crm.page.ts';
-import { staysTrue, untilPasses } from '../../src/utils/wait.ts';
+import { staysTrue, stopOnErrorLogs, untilPasses } from '../../src/utils/wait.ts';
 
 test.use({ account: 'contactupdated' });
 
@@ -25,11 +27,13 @@ async function knownLogIds(integration: HubSpotIntegrationPage): Promise<Set<str
   return new Set((await integration.logEntries(TRIGGER)).map((e) => e.id));
 }
 
-async function expectNewLogsSuccess(integration: HubSpotIntegrationPage, known: Set<string>): Promise<void> {
+// `count`: how many new entries to wait for (one per contact acted on).
+async function expectNewLogsSuccess(integration: HubSpotIntegrationPage, known: Set<string>, count = 1): Promise<void> {
   await untilPasses(`New "${TRIGGER}" log entries did not all reach Success`, async () => {
     await integration.refreshLogs();
     const fresh = (await integration.logEntries(TRIGGER)).filter((e) => !known.has(e.id));
-    expect(fresh.length, 'new log entries for this trigger').toBeGreaterThan(0);
+    expect(fresh.length, `new log entries for this trigger (at least ${count})`).toBeGreaterThanOrEqual(count);
+    stopOnErrorLogs(TRIGGER, fresh);
     expect(fresh.map((e) => e.status), 'status of each new log entry').toEqual(fresh.map(() => 'Success'));
   });
 }
@@ -58,14 +62,14 @@ test.describe('Contact Updated in HubSpot', () => {
     });
   });
 
-  for (const contact of contacts) {
-    test(`Trigger only (no activities) > 1: Contact not in Saleshandy (${fullName(contact)})`, async ({
-      hubspotContacts,
-      saleshandyIntegration,
-      saleshandyCrm,
-    }) => {
-      const known = await test.step('Note the existing log entries', () => knownLogIds(saleshandyIntegration));
-      await test.step('Create the contact in HubSpot', async () => {
+  test(`Trigger only (no activities) > 1: Contact not in Saleshandy (${contacts.map(fullName).join(', ')})`, async ({
+    hubspotContacts,
+    saleshandyIntegration,
+    saleshandyCrm,
+  }) => {
+    const known = await test.step('Note the existing log entries', () => knownLogIds(saleshandyIntegration));
+    for (const contact of contacts) {
+      await test.step(`Create the contact in HubSpot (${fullName(contact)})`, async () => {
         const id = await hubspotContacts.createContact({
           email: contact.Email,
           firstName: contact['First Name'],
@@ -75,38 +79,47 @@ test.describe('Contact Updated in HubSpot', () => {
         contactIds.set(contact.Email, id);
         markUsed(CSV, contact.Email);
       });
-      await test.step('Wait for Success in Saleshandy Logs', () => expectNewLogsSuccess(saleshandyIntegration, known));
-      await test.step('Find the new prospect in Saleshandy with the mapped fields', () =>
+    }
+    await test.step('Wait for Success in Saleshandy Logs for every contact', () =>
+      expectNewLogsSuccess(saleshandyIntegration, known, contacts.length),
+    );
+    for (const contact of contacts) {
+      await test.step(`Find the new prospect in Saleshandy with the mapped fields (${fullName(contact)})`, () =>
         expectProspect(saleshandyCrm, contact, { 'Job Title': contact['Job Title'] }),
       );
-    });
-  }
+    }
+  });
 
-  for (const contact of contacts) {
-    test(`Trigger only (no activities) > 2: Contact already a prospect (${fullName(contact)})`, async ({
-      hubspotContacts,
-      saleshandyIntegration,
-      saleshandyCrm,
-    }) => {
-      const updated = {
-        City: contact.City,
-        Company: contact.Company,
-        'Job Title': `${contact['Job Title']} (updated)`,
-      };
-      const known = await test.step('Note the existing log entries', () => knownLogIds(saleshandyIntegration));
-      await test.step('Update City, Company name and Job title in HubSpot', () =>
+  test(`Trigger only (no activities) > 2: Contact already a prospect (${contacts.map(fullName).join(', ')})`, async ({
+    hubspotContacts,
+    saleshandyIntegration,
+    saleshandyCrm,
+  }) => {
+    const updatedFor = (contact: Row) => ({
+      City: contact.City,
+      Company: contact.Company,
+      'Job Title': `${contact['Job Title']} (updated)`,
+    });
+    const known = await test.step('Note the existing log entries', () => knownLogIds(saleshandyIntegration));
+    for (const contact of contacts) {
+      const updated = updatedFor(contact);
+      await test.step(`Update City, Company name and Job title in HubSpot (${fullName(contact)})`, () =>
         hubspotContacts.updateProperties(contactIds.get(contact.Email)!, {
           City: updated.City,
           'Company name': updated.Company,
           'Job title': updated['Job Title'],
         }),
       );
-      await test.step('Wait for Success in Saleshandy Logs', () => expectNewLogsSuccess(saleshandyIntegration, known));
-      await test.step('Check the prospect shows the new values and is not duplicated', () =>
-        expectProspect(saleshandyCrm, contact, updated),
+    }
+    await test.step('Wait for Success in Saleshandy Logs for every contact', () =>
+      expectNewLogsSuccess(saleshandyIntegration, known, contacts.length),
+    );
+    for (const contact of contacts) {
+      await test.step(`Check the prospect shows the new values and is not duplicated (${fullName(contact)})`, () =>
+        expectProspect(saleshandyCrm, contact, updatedFor(contact)),
       );
-    });
-  }
+    }
+  });
 
   test(`Trigger only (no activities) > 3: Same contact, updated again (${fullName(first)})`, async ({
     hubspotContacts,

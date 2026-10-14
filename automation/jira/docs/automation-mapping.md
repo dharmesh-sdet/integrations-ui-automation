@@ -33,7 +33,7 @@ the case and the run:
 | Steps to Reproduce | the `test.step` titles, one action per line |
 | Actual Result | `whatHappened` as plain language plus the workflow status in Logs, and "Screenshot attached." |
 | Expected Result | the row's Expected cell (without a trailing " - Pass" or " - Fail, ...") |
-| Environment | the run's environment. Runs are Staging today; ask if unsure |
+| Environment | Production always (QA, 2026-10-13). The run's environment (Staging today) goes in the Note as "Affected Environment - Staging" |
 | Linked Work Items | the row's Ticket (if not None), plus the workflow ticket |
 | Priority, Assignee, QA, Epic Link | defaults in [jira-reference.md](jira-reference.md), editable in the review form |
 

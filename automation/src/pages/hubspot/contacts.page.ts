@@ -49,6 +49,20 @@ export class HubSpotContactsPage extends HubSpotPage {
     }
   }
 
+  // Sets a dropdown property (e.g. "Lifecycle stage") on the "All Properties"
+  // panel. Seen 2026-10-12 (read-only): label casing is the panel's ("Lifecycle
+  // stage", "Lead status"); one click on the row opens the picker; the row
+  // button is then named "<label> <current value>"; options appear twice in
+  // the DOM, so the last match is used.
+  async setDropdownProperty(contactId: string, label: string, value: string): Promise<void> {
+    await this.openAllProperties(contactId);
+    const panel = this.page.locator('[data-test-id^="group-accordion-"]');
+    await this.page.getByRole('searchbox', { name: 'Search property' }).fill(label);
+    await panel.getByRole('button', { name: new RegExp(`^${escape(label)} View property history`) }).click();
+    await this.page.getByRole('option', { name: value, exact: true }).last().click();
+    await panel.getByRole('button', { name: new RegExp(`^${escape(label)}.* ${escape(value)}$`) }).waitFor();
+  }
+
   // Finds a contact by email in the contacts list and returns its record id
   // (search URL and result link seen 2026-10-09).
   async findContactId(email: string, fullName: string): Promise<string> {

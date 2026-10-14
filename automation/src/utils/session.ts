@@ -14,8 +14,10 @@ export function authFile(platform: Platform, account: Account, browser: Browser)
   return path.resolve(import.meta.dirname, '../../auth', `${name}.json`);
 }
 
+// HubSpot is shared, so its login command has no account.
 export function loginCommand(platform: Platform, account: Account, browser: Browser): string {
-  return `npm run login:${platform}${browser === 'chromium' ? '' : `:${browser}`} -- ${account}`;
+  const script = `npm run login:${platform}${browser === 'chromium' ? '' : `:${browser}`}`;
+  return platform === 'hubspot' ? script : `${script} -- ${account}`;
 }
 
 export function assertSessionFresh(platform: Platform, account: Account, browser: Browser): string {
@@ -23,12 +25,14 @@ export function assertSessionFresh(platform: Platform, account: Account, browser
   const loginHint = `run ${loginCommand(platform, account, browser)}`;
 
   if (!fs.existsSync(file)) {
-    throw new Error(`No saved ${platform} session for ${account} (${browser}), ${loginHint}`);
+    throw new Error(`No saved ${platform} session${platform === 'hubspot' ? '' : ` for ${account}`} (${browser}), ${loginHint}`);
   }
   const ageMs = Date.now() - fs.statSync(file).mtimeMs;
   if (ageMs > MAX_SESSION_AGE_MS) {
     const days = Math.floor(ageMs / (24 * 60 * 60 * 1000));
-    throw new Error(`${platform} session for ${account} (${browser}) expired (saved ${days} days ago), ${loginHint}`);
+    throw new Error(
+      `${platform} session${platform === 'hubspot' ? '' : ` for ${account}`} (${browser}) expired (saved ${days} days ago), ${loginHint}`,
+    );
   }
   return file;
 }

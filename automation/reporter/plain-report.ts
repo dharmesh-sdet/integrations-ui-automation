@@ -15,7 +15,7 @@ function specFile(test: TestCase): string {
 
 // Writes reports/report.html as soon as the workers finish: a plain-English
 // page for QA review, with a Jira bug draft per failure and a "tested" comment
-// draft per workflow. It opens in the browser unless CI or REPORT_OPEN=never.
+// draft per workflow. It opens in the browser only when REPORT_OPEN=always (QA, 2026-10-13: never open it by default).
 // The page keeps the latest run of every workflow (QA, 2026-10-09): a run
 // replaces only the sections of the spec files it ran. Sections go
 // Integration > Workflow > Activity. The data is kept in report-data.json, and
@@ -146,7 +146,7 @@ export default class PlainReport implements Reporter {
     writeFileSync(storeFile, JSON.stringify(data));
     renderReport(out);
     console.log(`\nPlain-English report: ${path.relative(process.cwd(), out)}`);
-    if (!process.env.CI && process.env.REPORT_OPEN !== 'never') open(out);
+    if (!process.env.CI && process.env.REPORT_OPEN === 'always') open(out);
   }
 }
 

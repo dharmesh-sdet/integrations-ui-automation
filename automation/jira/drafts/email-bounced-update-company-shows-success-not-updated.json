@@ -1,0 +1,31 @@
+{
+  "type": "bug",
+  "project": "AL",
+  "priority": "Medium",
+  "environment": "Staging",
+  "epic": "AL-3982",
+  "assignee": {
+    "name": "Darshan",
+    "accountId": "5af5d8dd244bc90a10605d4f"
+  },
+  "qa": {
+    "name": "Dharmesh Patel",
+    "accountId": "712020:c7dedb58-9cb3-4450-a98f-5b5b56f6556b"
+  },
+  "links": [
+    "AL-4016",
+    "AL-4109",
+    "AL-4110",
+    "AL-4030"
+  ],
+  "attachments": [],
+  "summary": "Email is Bounced in Saleshandy: Update a Company in HubSpot activity shows Success but does not update the company City and State",
+  "description": "**Prerequisites:**\n- Staging account connected to HubSpot.\n- Email is Bounced in Saleshandy trigger enabled with the \"Update a Company in Hubspot\" activity only (no Extra Configuration).\n- Active sequence \"HubSpot Email Bounced QA\" with the prospect's step 1 email sent.\n- The prospect's contact exists in HubSpot with an associated company that has no City and no State (company left empty).\n\n**Steps to Reproduce:**\n1. Add the prospect to the sequence and wait for the step 1 email to be sent.\n2. Open the prospect in Saleshandy and set City and State on the prospect.\n3. On the Emails tab, open the three-dot menu of the step 1 email and click Mark as bounced.\n4. Open Settings > Integrations > HubSpot > Logs and wait for the new \"Email is Bounced in Saleshandy\" entry.\n5. Open the associated company in HubSpot and check City and State/Region.\n6. Repeat with a contact that has two associated companies and check the latest associated company.\n\n**Actual Result:**\n- The log entry shows Success.\n- The company in HubSpot is not updated: City and State/Region stay empty (\"--\"), both with one associated company and with two (latest associated company).\n- A screenshot will be attached to the ticket manually.\n\n**Expected Result:**\n- The Update a Company in HubSpot activity should fill the empty company details (City, State/Region) from the prospect's current details in Saleshandy; with two associated companies, the latest associated company is updated.\n\n**Note:**\n- Same symptom as AL-4109, AL-4110 and AL-4030 (other triggers, marked Done). Seen on 2026-10-13 on the Email is Bounced trigger (Update a company 1 and 2), and the same two scenarios also fail on Link Clicked in Saleshandy and Sequence Email is Opened in Saleshandy.\n- The same two scenarios pass on the Reply is received trigger (company City and State updated), so the issue looks specific to these triggers.\n",
+  "waitingFor": "ON HOLD, do not send. On 2026-10-13 about 5 PM the same two scenarios PASSED on the Email is Bounced trigger (Update a company 1 and 2, same account and data), so the earlier failure did not reproduce. QA to decide: re-run on staging once more, or drop this draft.",
+  "sent": {
+    "key": "AL-4125",
+    "url": "https://saleshandy.atlassian.net/browse/AL-4125",
+    "problems": [],
+    "at": "2026-10-13T10:26:51.277Z"
+  }
+}

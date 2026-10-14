@@ -177,7 +177,19 @@ export class HubSpotIntegrationPage extends SaleshandyPage {
   // "Contact Updated in Hubspot 6ac7397229a2f6774c8a9f0c Oct 8, 2026, 12:04 PM 16.6s Success".
   async logEntries(workflow: string): Promise<LogEntry[]> {
     const rows = this.page.getByRole('button', { name: `Open execution detail for ${workflow}`, exact: true });
-    await rows.first().waitFor();
+    // A new account has no logs at all: the page then shows "No logs yet"
+    // (seen 2026-10-13, emailopened) and no row ever appears, so do not wait
+    // for one. The caller retries until its new entries show.
+    const empty = this.page.getByText('No logs yet', { exact: true });
+    // An account can have logs for other workflows but none for this one yet
+    // (seen 2026-10-13, emailbounced with the Reply is Received trigger): the
+    // list is not empty and no row of this workflow ever appears, so any
+    // workflow's row also ends the wait.
+    const anyRow = this.page.getByRole('button', { name: /^Open execution detail for / });
+    // .first() on the union: when this workflow's row and another workflow's
+    // row are both there, the union has two elements and waitFor is strict.
+    await rows.first().or(empty).or(anyRow.first()).first().waitFor();
+    if (await empty.isVisible()) return [];
     return (await rows.allInnerTexts()).map((text) => {
       const words = text.trim().split(/\s+/);
       return { id: words.find((w) => /^[0-9a-f]{24}$/.test(w)) ?? '', status: words[words.length - 1] };

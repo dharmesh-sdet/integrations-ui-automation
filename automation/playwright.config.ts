@@ -23,7 +23,8 @@ const reports = process.env.REPORTS_DIR ?? './reports';
 
 export default defineConfig({
   testDir: './tests',
-  // Replaces used CSV rows with new people before each run (src/data/global-setup.ts).
+  // Before each run: every row of the CSV of each workflow being run gets a new
+  // person, other CSVs get their used rows replaced (src/data/global-setup.ts).
   globalSetup: './src/data/global-setup.ts',
   outputDir: `${reports}/test-results`,
   // A test creates a record, then waits up to about 1 minute for the sync.
@@ -40,8 +41,8 @@ export default defineConfig({
     ['html', { outputFolder: `${reports}/html`, open: 'never' }],
     // Read by the skill's results stage to write reports/failures.md.
     ['json', { outputFile: `${reports}/results.json` }],
-    // Plain-English review page with Jira drafts, written and opened as soon
-    // as the run ends (REPORT_OPEN=never to only write it).
+    // Plain-English review page with Jira drafts, written as soon as the run ends.
+    // It opens in the browser only with REPORT_OPEN=always.
     ['./reporter/plain-report.ts', { outputFile: `${reports}/report.html` }],
   ],
   use: {

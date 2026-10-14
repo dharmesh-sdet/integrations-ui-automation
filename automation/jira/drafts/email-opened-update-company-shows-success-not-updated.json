@@ -1,0 +1,31 @@
+{
+  "type": "bug",
+  "project": "AL",
+  "priority": "Medium",
+  "environment": "Staging",
+  "epic": "AL-3982",
+  "assignee": {
+    "name": "Darshan",
+    "accountId": "5af5d8dd244bc90a10605d4f"
+  },
+  "qa": {
+    "name": "Dharmesh Patel",
+    "accountId": "712020:c7dedb58-9cb3-4450-a98f-5b5b56f6556b"
+  },
+  "links": [
+    "AL-4013",
+    "AL-4125",
+    "AL-4030",
+    "AL-4109",
+    "AL-4110"
+  ],
+  "attachments": [],
+  "summary": "Sequence Email is Opened in Saleshandy: Update a Company in HubSpot activity shows Success but does not update the company City",
+  "description": "**Prerequisites:**\n- Staging account connected to HubSpot.\n- Sequence Email is Opened in Saleshandy trigger enabled with the \"Update a Company in Hubspot\" activity only (no Extra Configuration).\n- The prospect's contact exists in HubSpot with an associated company that has no City (City shows \"--\").\n- The prospect is enrolled in an active sequence and the step 1 email is sent.\n\n**Steps to Reproduce:**\n1. Open the prospect in Saleshandy and set City and State on the prospect.\n2. Open the step 1 email.\n3. Open Settings > Integrations > HubSpot > Logs and wait for the new \"Sequence Email is Opened in Saleshandy\" entry.\n4. Open the associated company in HubSpot and check City.\n\n**Actual Result:**\n- The company details are not updated in HubSpot.\n- City stays \"--\" and does not get the City from the prospect in Saleshandy.\n- The log entry shows Success.\n- A screenshot will be attached to the ticket manually.\n\n**Expected Result:**\n- The Update a Company in HubSpot activity should update the company City in HubSpot with the City from the prospect in Saleshandy.\n\n**Note:**\n- The same behavior was reported on the Email is Bounced trigger in AL-4125.\n- On an earlier run of the same scenario on this trigger, the log showed Error instead of Success.",
+  "sent": {
+    "key": "AL-4126",
+    "url": "https://saleshandy.atlassian.net/browse/AL-4126",
+    "problems": [],
+    "at": "2026-10-13T12:41:48.488Z"
+  }
+}

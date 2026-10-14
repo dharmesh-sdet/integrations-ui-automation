@@ -1,0 +1,12 @@
+{
+  "type": "comment",
+  "ticket": "AL-4126",
+  "body": "**What I did:**\nRetested on Staging on 2026-10-14 after the fix. Sequence Email is Opened in Saleshandy trigger, Update a Company in HubSpot activity (only this activity selected, no Extra Configuration).\n\n**Steps:**\n1. Enable the Sequence Email is Opened in Saleshandy trigger with only the Update a Company in HubSpot activity and save.\n2. Create the contact in HubSpot with its associated company or companies (no City on the company).\n3. Add the same prospect to a sequence, change City and State on the prospect in Saleshandy, wait for the step 1 email to be sent, and open it.\n4. Open API & Integrations > Integrations > HubSpot > Logs, check the workflow status, then check the company in HubSpot.\n\n| # | Scenario | Actual Result | Status |\n| --- | --- | --- | --- |\n| 1 | Contact has 1 associated company | Workflow Success, the company shows the new City and State | Pass |\n| 2 | Contact has 2 associated companies | Workflow Success, the latest associated company shows the new City and State, the other company is unchanged | Pass |",
+  "waitingFor": "QA to check the wording and that Pass is right for both rows. Evidence: Update a company in HubSpot > 1 and > 2 passed in the 2026-10-14 full run (email-opened.spec.ts, results in the log; reports/emailopened-phase1) and in the earlier AL-4126 run the same morning. Ticket status is READY FOR QA, no comments yet; the draft does not move it.",
+  "sent": {
+    "key": "AL-4126",
+    "url": "https://saleshandy.atlassian.net/browse/AL-4126",
+    "problems": [],
+    "at": "2026-10-14T08:54:57.400Z"
+  }
+}

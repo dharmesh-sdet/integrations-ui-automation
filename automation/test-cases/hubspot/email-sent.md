@@ -153,7 +153,7 @@ above.
 | 3 | Paired with Create a deal, prospect has Deal Value and Closing Date | Send the email | Success. Note on both the contact and the deal | AL-4033 |
 | 4 | Paired with Update a deal, contact has 1 deal, prospect has no Closing Date (AL-4096) | Send the email | Success. Note on both the contact and the deal | None |
 | 5 | Pairing from row 2, step 2 sent | Send now on step 2 | New note shows Step 2, Variant A | AL-4097 |
-| 6 | Create a Note selected alone | Send the email | Fails, no note created (as the activity's tooltip says) | None |
+| 6 | Create a Note selected alone | Send the email | Success in Logs (the custom workflow runs); no note on any contact, company or deal | None |
 
 ## Record (log) an email activity in HubSpot
 

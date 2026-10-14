@@ -1,0 +1,12 @@
+{
+  "type": "comment",
+  "ticket": "AL-4127",
+  "body": "**Verification:** Retested on Staging. Link is Clicked in Saleshandy trigger, Update a Company in HubSpot activity: the company is updated with the prospect's City and State now. The earlier failure was caused by the field mapping on the test account, which was not set up for these fields; after updating the field mapping, the activity works as expected. Pass.",
+  "waitingFor": "QA to check the wording: the fields named (City and State) come from the ticket title, not from the mapping screen. Say which fields were mapped if it should name them.",
+  "sent": {
+    "key": "AL-4127",
+    "url": "https://saleshandy.atlassian.net/browse/AL-4127",
+    "problems": [],
+    "at": "2026-10-14T09:22:29.010Z"
+  }
+}

@@ -140,8 +140,8 @@ are changed in Saleshandy.
 
 | # | Scenario | Do | Expected | Ticket |
 |---|---|---|---|---|
-| 1 | Contact has 1 associated company | Click the link | Success. Company shows the new values (not the name, AL-4104) | None |
-| 2 | Contact has 2 associated companies | Click the link | The latest associated company is updated, the other is unchanged | None |
+| 1 | Contact has 1 associated company | Click the link | Success. Company shows the new values (not the name, AL-4104) - Pass after Field Mapping fix, AL-4127 | AL-4127 |
+| 2 | Contact has 2 associated companies | Click the link | The latest associated company is updated, the other is unchanged - Pass after Field Mapping fix, AL-4127 | AL-4127 |
 | 3 | Contact in HubSpot, no associated company | Click the link | Success, nothing created or updated | None |
 | 4 | Contact not in HubSpot | Click the link | Success, nothing created or updated | None |
 
@@ -166,10 +166,10 @@ above.
 |---|---|---|---|---|
 | 1 | Paired with Create a Contact (Lead Status and Lifecycle set), contact not in HubSpot | Click the link | Success. Contact created, note on it shows Step 1, Variant A and the Prospect Outcome | None |
 | 2 | Paired with Update a Contact, contact in HubSpot | Click the link | Success. Note on the contact | None |
-| 3 | Paired with Create a deal, prospect has Deal Value and Closing Date | Click the link | Success. Note on both the contact and the deal | None |
-| 4 | Paired with Update a deal, contact has 1 deal, prospect has no Closing Date (AL-4096) | Click the link | Success. Note on both the contact and the deal | None |
+| 3 | Paired with Create a deal, prospect has Deal Value and Closing Date | Click the link | Success. Note on both the contact and the deal - Pass after fix, AL-4121 | None |
+| 4 | Paired with Update a deal, contact has 1 deal, prospect has no Closing Date (AL-4096) | Click the link | Success. The deal is updated and the note is on both the contact and the deal (QA, 2026-10-14, confirmed with the developer; it was deal only on 2026-10-13) | None |
 | 5 | Pairing from row 2, step 2 sent | Send now on step 2, click its link | New note shows Step 2, Variant A | None |
-| 6 | Create a Note selected alone | Click the link | Fails, no note created (as the activity's tooltip says) | None |
+| 6 | Create a Note selected alone | Click the link | Success in Logs (the custom workflow runs); no note on any contact, company or deal | None |
 
 ## Record (log) an email activity in HubSpot
 
@@ -182,6 +182,6 @@ above.
 | 2 | Only this activity selected | Click Save | Saved | None |
 | 3 | Paired with Create a Contact (Lead Status and Lifecycle set), contact not in HubSpot | Click the link | Success. Email logged on the contact with From, To, "logged email by", date and time, and the step body | None |
 | 4 | Paired with Update a Contact, prospect has Deal Value and Closing Date | Click the link | Success. Email logged on the contact | None |
-| 5 | Paired with Create a deal, prospect has Deal Value and Closing Date | Click the link | Success. Email logged on both the deal and the contact | None |
-| 6 | Paired with Update a deal, contact has 3 deals | Click the link | Success. Latest created deal updated, email logged | AL-4103 |
+| 5 | Paired with Create a deal, prospect has Deal Value and Closing Date | Click the link | Success. Email logged on both the deal and the contact - Pass after fix, AL-4122 | None |
+| 6 | Paired with Update a deal, contact has 3 deals | Click the link | Success. Latest created deal updated; the email is logged on that deal only (the contact gets no logged email, QA 2026-10-13), and its header names the prospect, not "Unknown Contact" - Pass after fix, AL-4123 | AL-4103 |
 | 7 | Pairing from row 4, step 2 sent | Send now on step 2, click its link | Step 2 email appears as a separate activity | None |

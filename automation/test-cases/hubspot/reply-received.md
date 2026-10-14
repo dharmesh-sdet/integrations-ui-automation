@@ -66,7 +66,7 @@ Sent family is not a failure here either.
 | 1 | Contact in HubSpot, details changed, Extra Configuration skipped | Mark as Replied | Success. Contact shows the new mapped values | None |
 | 2 | Contact in HubSpot, Update Lead Status and Lifecycle set | Mark as Replied | Success. Contact shows the configured Lead Status and Lifecycle Stage | None |
 | 3 | Contact not in HubSpot | Mark as Replied | Success, no contact created | None |
-| 4 | Contact in HubSpot, details not changed | Mark as Replied | Contact not updated | None |
+| 4 | Contact in HubSpot with the same values as the prospect (Job title, City, configured Lead Status and Lifecycle Stage added to the contact after it is created), details not changed | Mark as Replied | Success. Contact not updated: every value stays as it was | None |
 
 ## Create a deal in HubSpot
 
@@ -84,7 +84,7 @@ Sent family is not a failure here either.
 |---|---|---|---|---|
 | 1 | Contact has 1 deal | Mark as Replied | Success. Deal shows the configured Pipeline, Stage, Type and Priority | None |
 | 2 | Contact has 3 deals | Wait after creating the deals (HubSpot search delay), then Mark as Replied | Latest created deal updated, the 2 older ones unchanged | None |
-| 3 | Deal updated in row 1, Extra Configuration values changed | Mark as Replied on step 2 (or a new prospect with 1 deal) | Deal shows the new values | None |
+| 3 | Deal updated in row 1, Extra Configuration values changed | Mark as Replied on step 2 (or a new prospect with 1 deal) | Deal shows the new values | AL-4119 |
 | 4 | Contact has 1 deal, Closing Date 51 Days | Mark as Replied | Close date = today + 51 | None |
 | 5 | Contact in HubSpot with 0 deals | Mark as Replied | Nothing created or updated | None |
 | 6 | Contact not in HubSpot | Mark as Replied | Nothing created or updated | None |
@@ -125,12 +125,12 @@ Replied has no reply text).
 
 | # | Scenario | Do | Expected | Ticket |
 |---|---|---|---|---|
-| 1 | Paired with Create a Contact (Lead Status and Lifecycle set), contact not in HubSpot | Mark as Replied | Success. Contact created, a note on it | None |
-| 2 | Paired with Update a Contact, contact in HubSpot | Mark as Replied | Success. A note on the contact | None |
-| 3 | Paired with Create a deal, prospect has Deal Value and Closing Date | Mark as Replied | Success. A note on both contact and deal | None |
-| 4 | Paired with Update a deal, contact has 1 deal, no Closing Date | Mark as Replied | Success. A note on both contact and deal | None |
-| 5 | Pairing from row 2, second reply | Mark as Replied on step 2 (or a new prospect) | A new, separate note on the contact | None |
-| 6 | Create a Note selected alone | Mark as Replied | Fails, no note created (as the tooltip says) | None |
+| 1 | Paired with Create a Contact (Lead Status and Lifecycle set), contact not in HubSpot | Mark as Replied | Success. Contact created, a note on it | AL-4118 |
+| 2 | Paired with Update a Contact, contact in HubSpot | Mark as Replied | Success. A note on the contact | AL-4118 |
+| 3 | Paired with Create a deal, prospect has Deal Value and Closing Date | Mark as Replied | Success. A note on both contact and deal | AL-4118 |
+| 4 | Paired with Update a deal, contact has 1 deal, no Closing Date | Mark as Replied | Success. A note on both contact and deal | AL-4118 |
+| 5 | Pairing from row 2, second reply | Mark as Replied on step 2 (or a new prospect) | A new, separate note on the contact | AL-4118 |
+| 6 | Create a Note selected alone | Mark as Replied | Success in Logs (the custom workflow runs); no note on any contact, company or deal | None |
 
 ## Record (log) an email activity in HubSpot
 

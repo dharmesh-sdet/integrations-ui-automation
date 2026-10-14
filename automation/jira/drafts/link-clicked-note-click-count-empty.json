@@ -1,0 +1,28 @@
+{
+  "type": "bug",
+  "project": "AL",
+  "summary": "Link is Clicked in Saleshandy: note created in HubSpot shows an empty Click Count after the link is clicked",
+  "description": "**Prerequisites:**\n- Staging account connected to HubSpot.\n- Link is Clicked in Saleshandy trigger enabled with the \"Create a Task in HubSpot\" activity only (Task Title: Follow up from the workflow, Task Type: Call, Task Priority: Medium, Due In: 3 Days).\n- Active sequence \"HubSpot Link Clicked QA\" (Track link clicks on) with 2 links in the step 1 email.\n- The prospect's contact exists in HubSpot.\n\n**Steps to Reproduce:**\n1. Add the prospect to the sequence and send the step 1 email.\n2. Open the email in the prospect's inbox and click the first link (https://www.saleshandy.com/).\n3. In Saleshandy, open the sequence > Emails and wait until Clicked shows 1 for the prospect.\n4. Open API & Integrations > Integrations > HubSpot > Logs and wait for the new \"Link is Clicked in Saleshandy\" entry to show Success.\n5. Open the contact in HubSpot > Activities and open the note \"Note created via Saleshandy\".\n\n**Actual Result:**\n- The log entry shows Success (3.2 seconds). Execution ID: 6accd19ecab06eccf0e7e088 (Oct 12, 2026, 5:55 PM IST).\n- The note is created with Title: email-link-clicked, Sequence, Sequence Name, Step: 1, Variant: A, Sender Email, Prospect Email, User and Link URL: https://www.saleshandy.com/.\n- The \"Click Count:\" line in the note is empty, although the link was clicked and Clicked shows 1 in Saleshandy.\n- A screenshot will be attached to the ticket manually.\n\n**Expected Result:**\n- The \"Click Count:\" line in the note shows the number of clicks.\n\n**Note:**\n- Seen on HubSpot contact Min-jun Yoon (record 565322291905), sequence 196221.\n",
+  "priority": "Medium",
+  "environment": "Staging",
+  "epic": "AL-3982",
+  "assignee": {
+    "name": "Darshan",
+    "accountId": "5af5d8dd244bc90a10605d4f"
+  },
+  "qa": {
+    "name": "Dharmesh Patel",
+    "accountId": "712020:c7dedb58-9cb3-4450-a98f-5b5b56f6556b"
+  },
+  "links": [
+    "AL-4014"
+  ],
+  "attachments": [],
+  "waitingFor": "QA to confirm: (1) this is a bug and the Expected Result (Click Count shows the number of clicks), (2) epic AL-3982 and link AL-4014 (Link is Clicked tracking sub-task), (3) attach a screenshot of the note on HubSpot contact 565322291905 and of Logs entry 6accd19ecab06eccf0e7e088.",
+  "sent": {
+    "key": "AL-4120",
+    "url": "https://saleshandy.atlassian.net/browse/AL-4120",
+    "problems": [],
+    "at": "2026-10-12T12:39:33.723Z"
+  }
+}

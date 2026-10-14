@@ -54,7 +54,8 @@ export class SaleshandySequencePage extends SaleshandyPage {
     }
     await form.getByRole('button', { name: 'Create & Add to sequence', exact: true }).click();
     // The form stays open behind a status dialog; "Done" closes both.
-    await expect(this.page.getByText('Successfully Moved')).toBeVisible();
+    // Creating the prospect can take longer than the default 5 s.
+    await expect(this.page.getByText('Successfully Moved')).toBeVisible({ timeout: 30_000 });
     await this.page.getByRole('button', { name: 'Done', exact: true }).click();
   }
 
@@ -114,11 +115,106 @@ export class SaleshandySequencePage extends SaleshandyPage {
     await expect(this.page.getByRole('alert').filter({ hasText: 'Email has been marked as replied' })).toBeVisible({ timeout: 15_000 });
   }
 
+  // Emails tab > row > three dots > "Mark as bounced" (no confirm dialog; seen
+  // 2026-10-12). The row then reads "Hard Bounced" and Latest Status Bounced.
+  // It works on a sent row and on an Active or paused sequence (QA).
+  async markAsBounced(sequenceId: string, fullName: string, step = 1): Promise<void> {
+    await this.openEmails(sequenceId);
+    const row = this.emailRow(fullName, step);
+    await expect(row).toBeVisible();
+    await row.locator('#dropdown-basic').click();
+    await row.getByRole('button', { name: /Mark as bounced$/ }).click();
+    await expect(this.page.getByRole('alert').filter({ hasText: 'Email has been marked as bounced' })).toBeVisible({ timeout: 15_000 });
+  }
+
+  // A real bounce: the row's Scheduled/Sent cell turns to a Bounced status by
+  // itself after the send (seen as "Hard Bounced" for a manual one, 2026-10-12).
+  async waitUntilBounced(sequenceId: string, fullName: string, step = 1, timeout = 5 * 60_000): Promise<void> {
+    await expect(async () => {
+      await this.openEmails(sequenceId);
+      const row = this.emailRow(fullName, step);
+      await expect(row).toBeVisible();
+      expect((await (await this.cell(row, 'Scheduled/Sent')).innerText()).trim()).toMatch(/Bounced/);
+    }, `Email to ${fullName} did not show Bounced within ${timeout / 60_000} minutes`).toPass({ timeout, intervals: [15_000] });
+  }
+
+  // The sequence's status switch next to its name (seen 2026-10-12): a confirm
+  // dialog "Pause Sequence" or "Activate Sequence" with Yes, then a toast.
+  async pauseSequence(sequenceId: string): Promise<void> {
+    await this.setSequenceActive(sequenceId, false);
+  }
+
+  async resumeSequence(sequenceId: string): Promise<void> {
+    await this.setSequenceActive(sequenceId, true);
+  }
+
+  private async setSequenceActive(sequenceId: string, active: boolean): Promise<void> {
+    await this.goto(`/sequence/${sequenceId}/steps`);
+    // The header renders before the sequence's status is known; wait for the
+    // Steps tab content first, or the click is lost (seen 2026-10-12).
+    await this.page.getByRole('button', { name: 'Add Step' }).first().waitFor();
+    const toggle = this.page.locator('.switchToggle').first();
+    await toggle.waitFor();
+    if ((await toggle.locator('input[name="Switch"]').isChecked()) === active) return;
+    await toggle.click();
+    const dialog = this.page.getByRole('dialog').filter({ hasText: active ? 'Activate Sequence' : 'Pause Sequence' });
+    await expect(dialog).toBeVisible();
+    await dialog.getByRole('button', { name: 'Yes', exact: true }).click();
+    await expect(this.page.getByRole('alert').filter({ hasText: active ? 'Sequence resumed successfully' : 'Sequence paused successfully' })).toBeVisible({ timeout: 15_000 });
+  }
+
   async clickedCount(sequenceId: string, fullName: string, step = 1): Promise<number> {
     await this.openEmails(sequenceId);
     const row = this.emailRow(fullName, step);
     await expect(row).toBeVisible();
     return Number((await (await this.cell(row, 'Clicked')).innerText()).trim()) || 0;
+  }
+
+  // Moves a prospect that is still in step 1 to a later step (QA, 2026-10-13:
+  // with the step 2 on Day 3 there is no step 2 row on the Emails tab until
+  // then). Prospects tab > tick the row > "Add to Sequence" icon (the send
+  // icon, no accessible name) > Sequence: the current one > Sequence Steps:
+  // "Step N - Day D" > Add > report "Successfully Moved 1" > Done. The
+  // prospect's step 1 row is replaced by a "Step N, Scheduled" row, which
+  // Send now can then send.
+  async moveToStep(sequenceId: string, email: string, step: number): Promise<void> {
+    await this.goto(`/sequence/${sequenceId}/prospects`);
+    await this.closeSidebar();
+    await this.page.getByRole('columnheader', { name: 'Name' }).waitFor({ timeout: 30_000 });
+    // The list is paged and a busy test sequence has many prospects, so the
+    // row can be on a later page (seen 2026-10-13, about 40 prospects): search
+    // first. The search matches one word or the email, not "First Last" with a
+    // space (seen 2026-10-13), so it searches by email.
+    await this.page.locator('.sequence-prospect-search-bar-and-filter input').fill(email);
+    await this.page.keyboard.press('Enter');
+    // The row shows the email cut after about 20 characters; its first 14 are always there.
+    const row = this.page.getByRole('row').filter({ hasText: email.slice(0, 14) });
+    await expect(row.first(), `prospect ${email} on the Prospects tab`).toBeVisible({ timeout: 30_000 });
+    await row.first().getByRole('checkbox').check();
+    await this.page.locator('button[icon="send"]').click();
+    const dialog = this.page.getByRole('dialog').filter({ hasText: 'Add To Sequence' });
+    await dialog.getByText('Select Sequence', { exact: true }).click();
+    await this.page.getByText('(Current Sequence)').click();
+    // The step list loads after the sequence is picked: a click before that
+    // opens nothing (seen 2026-10-13), so click again until the option shows.
+    const option = this.page.getByText(new RegExp(`^Step ${step} - Day`)).first();
+    await expect(async () => {
+      if (!(await option.isVisible())) await dialog.getByText('Select Step of Sequence', { exact: true }).click();
+      await expect(option).toBeVisible({ timeout: 2_000 });
+    }).toPass({ timeout: 30_000, intervals: [1_000] });
+    await option.click();
+    await dialog.getByRole('button', { name: 'Add', exact: true }).click();
+    await expect(this.page.getByText('Successfully Moved')).toBeVisible({ timeout: 30_000 });
+    await expect(this.page.getByText('Failed to move').locator('xpath=following-sibling::*[1]')).toHaveText(/0/);
+    await this.page.getByRole('button', { name: 'Done', exact: true }).click();
+  }
+
+  // The prospect's Opened number for a step ("-" or empty reads as 0).
+  async openedCount(sequenceId: string, fullName: string, step = 1): Promise<number> {
+    await this.openEmails(sequenceId);
+    const row = this.emailRow(fullName, step);
+    await expect(row).toBeVisible();
+    return Number((await (await this.cell(row, 'Opened')).innerText()).trim()) || 0;
   }
 
   private async cell(row: Locator, header: string): Promise<Locator> {

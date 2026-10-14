@@ -15,4 +15,18 @@ export abstract class HubSpotPage extends BasePage {
       await tooltip.getByRole('button', { name: 'Close' }).click();
     });
   }
+
+  // The record's Activities tab as text (notes, tasks, logged emails), for
+  // "is on the record" checks. `typeId` is HubSpot's object type id (contact
+  // 0-1, company 0-2, deal 0-3). Not walked yet (2026-10-12): the tab name
+  // comes from the Reply Received walkthrough; the page body is read because
+  // the timeline has no known test id.
+  async activitiesText(typeId: '0-1' | '0-2' | '0-3', id: string): Promise<string> {
+    await this.goto(`/contacts/${HUBSPOT_PORTAL_ID}/record/${typeId}/${id}`);
+    // Seen 2026-10-12: the tab is a role=button; the page never reaches
+    // "networkidle" (waiting for it timed out), so wait for the timeline events.
+    await this.page.getByRole('button', { name: 'Activities', exact: true }).first().click();
+    await this.page.locator('[data-test-id="timeline-preview-event"]').first().waitFor({ timeout: 30_000 });
+    return this.page.locator('body').innerText();
+  }
 }

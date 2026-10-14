@@ -1,6 +1,6 @@
-import { test as base, devices, type Browser as PlaywrightBrowser, type Page, type TestInfo } from '@playwright/test';
+import { test as base, devices, type Browser as PlaywrightBrowser, type BrowserContext, type Page, type TestInfo } from '@playwright/test';
 import { accounts, type Account } from '../config/accounts.ts';
-import { browsers, isBrowser, platforms, type Platform } from '../config/environments.ts';
+import { browsers, isBrowser, platforms, type Browser, type Platform } from '../config/environments.ts';
 import { HubSpotCompaniesPage } from '../pages/hubspot/companies.page.ts';
 import { HubSpotContactsPage } from '../pages/hubspot/contacts.page.ts';
 import { HubSpotDealsPage } from '../pages/hubspot/deals.page.ts';
@@ -20,6 +20,10 @@ type Options = {
   account: Account | undefined;
 };
 
+type WorkerFixtures = {
+  sessionContexts: SessionContexts;
+};
+
 type Fixtures = {
   hubspotPage: Page;
   saleshandyPage: Page;
@@ -35,12 +39,44 @@ type Fixtures = {
   mailinator: MailinatorPage;
 };
 
-// A logged-in page for one platform, in its own context with the saved session
-// of the spec's account. Fails early with a login hint if the account is not
-// set, or the session is missing or older than a week. Only created when a
-// test asks for it.
+// One logged-in browser context per platform, account and browser, kept for
+// the whole worker (a spec file's tests run in order in one worker), so the
+// app code and cookies are loaded once per workflow, not once per test. Every
+// test still gets its own fresh page, and the pages are closed after the test.
+class SessionContexts {
+  private contexts = new Map<string, BrowserContext>();
+
+  private browser: PlaywrightBrowser;
+
+  constructor(browser: PlaywrightBrowser) {
+    this.browser = browser;
+  }
+
+  async get(platform: Platform, account: Account, browserName: Browser): Promise<BrowserContext> {
+    const key = `${platform}:${account}:${browserName}`;
+    let context = this.contexts.get(key);
+    if (!context) {
+      context = await this.browser.newContext({
+        ...devices[browsers[browserName].device],
+        baseURL: platforms[platform].baseURL,
+        storageState: assertSessionFresh(platform, account, browserName),
+      });
+      this.contexts.set(key, context);
+    }
+    return context;
+  }
+
+  async closeAll(): Promise<void> {
+    for (const context of this.contexts.values()) await context.close();
+    this.contexts.clear();
+  }
+}
+
+// A logged-in page for one platform, in the worker's context for the spec's
+// account. Fails early with a login hint if the account is not set, or the
+// session is missing or older than a week. Only created when a test asks for it.
 async function loggedInPage(
-  browser: PlaywrightBrowser,
+  sessions: SessionContexts,
   platform: Platform,
   account: Account | undefined,
   testInfo: TestInfo,
@@ -56,24 +92,29 @@ async function loggedInPage(
         `accounts: ${Object.keys(accounts).join(', ')} (src/config/accounts.ts)`,
     );
   }
-  const context = await browser.newContext({
-    ...devices[browsers[browserName].device],
-    baseURL: platforms[platform].baseURL,
-    storageState: assertSessionFresh(platform, account, browserName),
-  });
+  const context = await sessions.get(platform, account, browserName);
   await use(await context.newPage());
-  await context.close();
+  // The page and any tab the test opened (e.g. Mailinator); the context stays.
+  for (const page of context.pages()) await page.close();
 }
 
-export const test = base.extend<Options & Fixtures>({
+export const test = base.extend<Options & Fixtures, WorkerFixtures>({
   account: [undefined, { option: true }],
-  hubspotPage: async ({ browser, account }, use, testInfo) =>
-    loggedInPage(browser, 'hubspot', account, testInfo, async (page) => {
+  sessionContexts: [
+    async ({ browser }, use) => {
+      const sessions = new SessionContexts(browser);
+      await use(sessions);
+      await sessions.closeAll();
+    },
+    { scope: 'worker' },
+  ],
+  hubspotPage: async ({ sessionContexts, account }, use, testInfo) =>
+    loggedInPage(sessionContexts, 'hubspot', account, testInfo, async (page) => {
       await HubSpotPage.closePopups(page);
       await use(page);
     }),
-  saleshandyPage: async ({ browser, account }, use, testInfo) =>
-    loggedInPage(browser, 'saleshandy', account, testInfo, use),
+  saleshandyPage: async ({ sessionContexts, account }, use, testInfo) =>
+    loggedInPage(sessionContexts, 'saleshandy', account, testInfo, use),
   hubspotContacts: async ({ hubspotPage }, use) => use(new HubSpotContactsPage(hubspotPage)),
   hubspotDeals: async ({ hubspotPage }, use) => use(new HubSpotDealsPage(hubspotPage)),
   hubspotCompanies: async ({ hubspotPage }, use) => use(new HubSpotCompaniesPage(hubspotPage)),

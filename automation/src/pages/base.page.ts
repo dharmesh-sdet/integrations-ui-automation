@@ -1,5 +1,6 @@
 import type { Page } from '@playwright/test';
 import type { Platform } from '../config/environments.ts';
+import { gotoWithRetry } from '../utils/wait.ts';
 
 export abstract class BasePage {
   readonly page: Page;
@@ -12,7 +13,8 @@ export abstract class BasePage {
   // `page` is hubspotPage or saleshandyPage from the fixtures, so the path is
   // relative to that platform's base URL.
   async goto(path: string): Promise<void> {
-    await this.page.goto(path);
+    // Tries again on net::ERR_CONNECTION_CLOSED and similar (see gotoWithRetry).
+    await gotoWithRetry(this.page, path);
     await this.assertNotOnLogin();
   }
 

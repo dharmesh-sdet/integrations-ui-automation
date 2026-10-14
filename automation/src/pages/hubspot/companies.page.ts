@@ -22,8 +22,31 @@ export class HubSpotCompaniesPage extends HubSpotPage {
     await this.page.locator('[data-test-id="create-object-dropdown-create-object"]').click();
     await this.panel.getByRole('textbox', { name: 'Company domain name' }).fill(company.domain);
     await this.panel.getByRole('textbox', { name: 'Company name' }).fill(company.name);
-    await this.panel.getByRole('button', { name: 'Create', exact: true }).click();
-    await this.page.waitForURL(/\/record\/0-2\/\d+/);
+    // When HubSpot lists companies with the same domain ("Gosh, that looks
+    // familiar"), the form's "Create" is disabled and the button reads "Create
+    // a new company" (seen 2026-10-12); click whichever one is enabled.
+    // The same-domain check swaps the button a moment after the fields are
+    // filled; a click that lands in the swap does nothing (seen 2026-10-13:
+    // the form stayed open for 5 minutes). So click again until the record opens.
+    const recordUrl = /\/record\/0-2\/\d+/;
+    // 'commit', not the default 'load': the record page can take over 15 s to
+    // load, and a slow success must not look like a lost click (Email Bounced
+    // trace, 2026-10-13). Click again only while the form is still open.
+    const buttonName = /^Create( a new company)?$/;
+    for (let attempt = 1; ; attempt++) {
+      await this.panel.getByRole('button', { name: buttonName, disabled: false }).click();
+      try {
+        await this.page.waitForURL(recordUrl, { timeout: 15_000, waitUntil: 'commit' });
+        break;
+      } catch (e) {
+        if ((await this.panel.getByRole('button', { name: buttonName }).count()) === 0) {
+          // The form is gone: the company is being created, so wait for the record.
+          await this.page.waitForURL(recordUrl, { timeout: 90_000, waitUntil: 'commit' });
+          break;
+        }
+        if (attempt === 4) throw e;
+      }
+    }
     return this.page.url().match(/\/record\/0-2\/(\d+)/)![1];
   }
 
@@ -46,5 +69,25 @@ export class HubSpotCompaniesPage extends HubSpotPage {
     }
     await this.panel.getByRole('button', { name: 'Save', exact: true }).click();
     await this.page.getByRole('button', { name: `Contacts (${contacts.length})`, exact: true }).waitFor();
+  }
+
+  // A property's value from the company record's "About this company" card
+  // ("--" when empty), e.g. property(id, 'City'). NOT walked yet (2026-10-12):
+  // the card's test id prefix follows the deal record's
+  // (`card-wrapper-PROPERTIES_V3/0-3`), and the label-then-value line order is
+  // the one deals.page.ts reads on "About this deal".
+  async property(companyId: string, label: string): Promise<string> {
+    await this.goto(`/contacts/${HUBSPOT_PORTAL_ID}/record/0-2/${companyId}`);
+    // Seen 2026-10-12: the left card is "Key information" and shows only some
+    // fields (City, but not State/Region, domain or Country). "View all
+    // properties" has every row as "<label>\n<value>", e.g. "City", "State/Region",
+    // "Company domain name", "Country/Region"; empty shows "--".
+    await this.page.locator('[data-test-id="card-wrapper-PROPERTIES_V3/0-2/V2"]').getByRole('button', { name: 'Actions', exact: true }).click();
+    await this.page.getByRole('button', { name: 'View all properties' }).click();
+    await this.page.getByRole('searchbox', { name: 'Search property' }).fill(label);
+    const row = this.page.locator('[data-test-id^="group-accordion-"]').getByRole('button', { name: new RegExp(`^${label.replace(/[.*+?^${}()|[\]\\\/]/g, '\\$&')} View property history`) }).first();
+    await row.waitFor();
+    const lines = (await row.innerText()).split('\n').map((l) => l.trim()).filter(Boolean);
+    return lines[1] ?? '--';
   }
 }

@@ -10,6 +10,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { readCsv, type Row } from './csv.ts';
+import { EXTRA_NATIONALITIES, type Nationality } from './countries.ts';
 
 export const dataDir = path.resolve(import.meta.dirname, '../../test-data');
 
@@ -21,8 +22,6 @@ const TEMPLATE_FIELDS = [
 ];
 const COMPANY_FIELDS = ['Company', 'Company Website', 'Company Industry', 'Company Founded Year', 'Company LinkedIn'];
 
-type Place = [city: string, state: string];
-type Nationality = { country: string; first: string[]; last: string[]; places: Place[] };
 const NATIONALITIES: Nationality[] = [
   { country: 'United States', first: ['Caleb', 'Harper', 'Wyatt', 'Avery', 'Graham', 'Quinn', 'Reid', 'Sloane', 'Tucker', 'Brooke'], last: ['Holloway', 'Prescott', 'Whitfield', 'Bramley', 'Kensington', 'Lockhart', 'Ashby', 'Pembroke', 'Thornbury', 'Garrison'], places: [['Denver', 'Colorado'], ['Raleigh', 'North Carolina'], ['Portland', 'Oregon'], ['Madison', 'Wisconsin']] },
   { country: 'Spain', first: ['Íñigo', 'Lucía', 'Álvaro', 'Nerea', 'Gonzalo', 'Ainhoa', 'Rodrigo', 'Itziar', 'Borja', 'Maite'], last: ['Echeverría', 'Larrañaga', 'Villalobos', 'Cifuentes', 'Arrizabalaga', 'Benavides', 'Quintero', 'Olabarri', 'Valdivieso', 'Zubiaurre'], places: [['Valencia', 'Valencia'], ['Seville', 'Andalusia'], ['Zaragoza', 'Aragon'], ['Malaga', 'Andalusia']] },
@@ -35,7 +34,27 @@ const NATIONALITIES: Nationality[] = [
   { country: 'India', first: ['Aditya', 'Meera', 'Kabir', 'Ananya', 'Siddharth', 'Riya', 'Varun', 'Tanvi', 'Karthik', 'Diya'], last: ['Chaturvedi', 'Menon', 'Kapoor', 'Reddy', 'Banerjee', 'Pillai', 'Joshi', 'Agarwal', 'Nair', 'Trivedi'], places: [['Bengaluru', 'Karnataka'], ['Hyderabad', 'Telangana'], ['Ahmedabad', 'Gujarat'], ['Kochi', 'Kerala']] },
   { country: 'Sweden', first: ['Elias', 'Maja', 'Viktor', 'Ebba', 'Gustav', 'Signe', 'Albin', 'Tilda', 'Hugo', 'Alva'], last: ['Ekström', 'Lundberg', 'Holmgren', 'Nyström', 'Sandberg', 'Wallin', 'Forsberg', 'Engström', 'Dahlberg', 'Hedlund'], places: [['Stockholm', 'Stockholm'], ['Gothenburg', 'Vastra Gotaland'], ['Umea', 'Vasterbotten'], ['Orebro', 'Orebro']] },
   { country: 'United Arab Emirates', first: ['Khalid', 'Mariam', 'Yousef', 'Fatima', 'Rashid', 'Huda', 'Saeed', 'Noura', 'Faisal', 'Salma'], last: ['Al-Mazrouei', 'Al-Suwaidi', 'Al-Hashimi', 'Al-Nuaimi', 'Al-Shamsi', 'Al-Ketbi', 'Al-Falasi', 'Al-Dhaheri', 'Al-Marri', 'Al-Qassimi'], places: [['Abu Dhabi', 'Abu Dhabi'], ['Sharjah', 'Sharjah'], ['Al Ain', 'Abu Dhabi'], ['Ajman', 'Ajman']] },
+  // Added 2026-10-13 (QA): the 11 countries above were reused by every CSV and
+  // kept producing people HubSpot already holds. New people come only from the
+  // countries below (see RETIRED_COUNTRIES); none of them is in any CSV yet.
+  { country: 'Turkey', first: ['Emre', 'Zeynep', 'Burak', 'Elif', 'Kaan', 'Defne', 'Mert', 'Selin', 'Onur', 'Ceren'], last: ['Yildirim', 'Kaplan', 'Aydin', 'Demirci', 'Ozkan', 'Tekin', 'Korkmaz', 'Uysal', 'Bozkurt', 'Gunes'], places: [['Istanbul', 'Istanbul'], ['Ankara', 'Ankara'], ['Izmir', 'Izmir'], ['Bursa', 'Bursa']] },
+  { country: 'Portugal', first: ['Tiago', 'Beatriz', 'Duarte', 'Matilde', 'Salvador', 'Leonor', 'Rúben', 'Mafalda', 'Simão', 'Catarina'], last: ['Barbosa', 'Cardoso', 'Furtado', 'Nogueira', 'Sequeira', 'Valente', 'Teixeira', 'Pestana', 'Vasconcelos', 'Albuquerque'], places: [['Lisbon', 'Lisbon'], ['Porto', 'Porto'], ['Braga', 'Braga'], ['Coimbra', 'Coimbra']] },
+  { country: 'Netherlands', first: ['Daan', 'Fleur', 'Bram', 'Sanne', 'Jesse', 'Lotte', 'Thijs', 'Noor', 'Ruben', 'Femke'], last: ['Vermeulen', 'Bakker', 'Hendriks', 'Mulder', 'Dekker', 'Verhoeven', 'Smits', 'Kuipers', 'Brouwer', 'Visser'], places: [['Amsterdam', 'North Holland'], ['Utrecht', 'Utrecht'], ['Rotterdam', 'South Holland'], ['Eindhoven', 'North Brabant']] },
+  { country: 'Finland', first: ['Aatu', 'Ilona', 'Eino', 'Venla', 'Onni', 'Aino', 'Veeti', 'Helmi', 'Leevi', 'Siiri'], last: ['Korhonen', 'Virtanen', 'Laaksonen', 'Niemi', 'Heikkinen', 'Koskinen', 'Lehtonen', 'Salmela', 'Rantanen', 'Jokinen'], places: [['Helsinki', 'Uusimaa'], ['Tampere', 'Pirkanmaa'], ['Turku', 'Southwest Finland'], ['Oulu', 'North Ostrobothnia']] },
+  { country: 'Argentina', first: ['Joaquín', 'Valentina', 'Facundo', 'Agustina', 'Santiago', 'Camila', 'Nicolás', 'Milagros', 'Bautista', 'Florencia'], last: ['Gutiérrez', 'Sosa', 'Acosta', 'Benítez', 'Cabrera', 'Domínguez', 'Medina', 'Peralta', 'Rojas', 'Ledesma'], places: [['Buenos Aires', 'Buenos Aires'], ['Córdoba', 'Córdoba'], ['Rosario', 'Santa Fe'], ['Mendoza', 'Mendoza']] },
+  { country: 'Vietnam', first: ['Minh', 'Linh', 'Quang', 'Thao', 'Hieu', 'Trang', 'Khoa', 'Huong', 'Phuc', 'Ngoc'], last: ['Nguyen', 'Tran', 'Pham', 'Hoang', 'Vu', 'Dang', 'Bui', 'Do', 'Ngo', 'Truong'], places: [['Hanoi', 'Hanoi'], ['Da Nang', 'Da Nang'], ['Ho Chi Minh City', 'Ho Chi Minh'], ['Hue', 'Thua Thien Hue']] },
+  { country: 'Kenya', first: ['Wanjiru', 'Kipchoge', 'Achieng', 'Otieno', 'Njeri', 'Kamau', 'Atieno', 'Mwangi', 'Chebet', 'Omondi'], last: ['Kariuki', 'Mutiso', 'Odhiambo', 'Wekesa', 'Cheruiyot', 'Nyaga', 'Kimani', 'Onyango', 'Rotich', 'Waweru'], places: [['Nairobi', 'Nairobi'], ['Mombasa', 'Mombasa'], ['Kisumu', 'Kisumu'], ['Nakuru', 'Nakuru']] },
+  { country: 'Thailand', first: ['Somchai', 'Nattaya', 'Kritsada', 'Pimchanok', 'Thanakorn', 'Warunee', 'Chaiwat', 'Suda', 'Arthit', 'Malee'], last: ['Wongsakul', 'Chaiyasit', 'Srisuk', 'Boonmee', 'Jaidee', 'Rattanakul', 'Prasert', 'Kaewmanee', 'Sukhum', 'Thongchai'], places: [['Bangkok', 'Bangkok'], ['Chiang Mai', 'Chiang Mai'], ['Phuket', 'Phuket'], ['Khon Kaen', 'Khon Kaen']] },
 ];
+
+// 2026-10-13 (QA): many more countries, so new people do not match anyone
+// HubSpot already holds. See countries.ts.
+NATIONALITIES.push(...EXTRA_NATIONALITIES);
+
+// Countries of the people made before 2026-10-13. Kept in NATIONALITIES because
+// refreshUsed looks an existing row's country up there, but not used for new people.
+const RETIRED_COUNTRIES = new Set(['United States', 'Spain', 'Greece', 'Japan', 'Italy', 'South Korea', 'Brazil', 'France', 'India', 'Sweden', 'United Arab Emirates']);
+const FRESH_NATIONALITIES = NATIONALITIES.filter((n) => !RETIRED_COUNTRIES.has(n.country));
 
 type Role = { title: string; senior: string; department: string };
 const ROLES: Role[] = [
@@ -74,6 +93,11 @@ const shuffled = <T>(list: T[]): T[] => [...list].sort(() => Math.random() - 0.5
 const domainOf = (url = '') => url.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '');
 
 export const usedFileOf = (csv: string) => path.join(dataDir, csv.replace(/\.csv$/, '.used.txt'));
+
+// Every email this generator ever made, one per line. Created records stay in
+// HubSpot after a row leaves its CSV, so a new person must never repeat one
+// (QA, 2026-10-13: "the data will not be matched").
+const ledgerFile = path.join(dataDir, '_generated-emails.txt');
 const readUsed = (csv: string): Set<string> => {
   const file = usedFileOf(csv);
   if (!fs.existsSync(file)) return new Set();
@@ -90,6 +114,9 @@ class PersonFactory {
   private companies = shuffled(COMPANIES);
 
   constructor() {
+    if (fs.existsSync(ledgerFile)) {
+      for (const line of fs.readFileSync(ledgerFile, 'utf8').split('\n')) if (line.trim()) this.takenEmails.add(line.trim().toLowerCase());
+    }
     for (const file of fs.readdirSync(dataDir, { recursive: true, encoding: 'utf8' })) {
       if (file.endsWith('.used.txt')) for (const email of readUsed(file.replace(/\.used\.txt$/, '.csv'))) this.takenEmails.add(email);
       if (!file.endsWith('.csv')) continue;
@@ -103,7 +130,7 @@ class PersonFactory {
 
   next(): Row {
     for (let attempt = 0; attempt < 500; attempt++) {
-      const nat = pick(NATIONALITIES);
+      const nat = pick(FRESH_NATIONALITIES);
       const first = pick(nat.first);
       const last = pick(nat.last);
       const email = `${plain(first)}.${plain(last)}@mailinator.com`;
@@ -112,6 +139,7 @@ class PersonFactory {
       if (this.takenNames.has(`${first} ${last}`.toLowerCase()) || this.takenEmails.has(email)) continue;
       this.takenNames.add(`${first} ${last}`.toLowerCase());
       this.takenEmails.add(email);
+      fs.appendFileSync(ledgerFile, `${email}\n`);
       this.usedFirst.add(first);
       this.usedLast.add(last);
 
@@ -233,13 +261,25 @@ export function generateFrom(outCsv: string, sourceCsv: string): string[] {
 export function refreshUsed(csv: string): string[] {
   const used = readUsed(csv);
   if (used.size === 0) return [];
+  return replaceRows(csv, (email) => used.has(email));
+}
+
+// Replaces EVERY row of an existing CSV (and its -deals and -companies files)
+// with new people (QA, 2026-10-13: each run starts with all-new data).
+export function refreshAll(csv: string): string[] {
+  return replaceRows(csv, () => true);
+}
+
+function replaceRows(csv: string, shouldReplace: (email: string) => boolean): string[] {
+  const used = readUsed(csv);
   const header = headerOf(csv);
   const factory = new PersonFactory();
   const changes = new Map<string, [Row, Row]>();
   const rows = readCsv(csv).map((old) => {
-    if (!used.has((old['Email'] ?? '').toLowerCase())) return old;
+    const email = (old['Email'] ?? '').toLowerCase();
+    if (!email || !shouldReplace(email)) return old;
     const fresh = replacePerson(old, header, factory);
-    changes.set(old['Email'].toLowerCase(), [old, fresh]);
+    changes.set(email, [old, fresh]);
     return fresh;
   });
   if (changes.size > 0) {
@@ -248,7 +288,7 @@ export function refreshUsed(csv: string): string[] {
   }
   // Emails no longer in the CSV are done with; keep any that are still there.
   const stillThere = [...used].filter((e) => !changes.has(e) && rows.some((r) => r['Email']?.toLowerCase() === e));
-  fs.writeFileSync(usedFileOf(csv), stillThere.map((e) => `${e}\n`).join(''));
+  if (used.size > 0 || changes.size > 0) fs.writeFileSync(usedFileOf(csv), stillThere.map((e) => `${e}\n`).join(''));
   return [...changes.keys()];
 }
 

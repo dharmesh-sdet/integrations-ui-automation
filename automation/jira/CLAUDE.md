@@ -72,3 +72,10 @@ kit are relative to the file they are in.
 10. **Deleting comments is not possible through the Atlassian MCP.** If a
     comment goes to the wrong ticket, tell the user so they can delete it
     manually.
+11. **Prerequisites name the activity that owns the failing behavior.** Use
+    the activity that produces the failing record or field, not the one
+    selected in the run where it was first seen, and put the Prerequisites in
+    the question round for QA's yes. If the symptom can show up in several
+    workflows or rows, say so in Note instead of picking one. When asked which
+    scenario failed, answer from the run evidence (report or trace), not from
+    a draft, and say "not known" if neither shows it.

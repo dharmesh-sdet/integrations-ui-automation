@@ -1,0 +1,28 @@
+{
+  "type": "bug",
+  "project": "AL",
+  "priority": "Medium",
+  "environment": "Staging",
+  "epic": "AL-3982",
+  "assignee": {
+    "name": "Darshan",
+    "accountId": "5af5d8dd244bc90a10605d4f"
+  },
+  "qa": {
+    "name": "Dharmesh Patel",
+    "accountId": "712020:c7dedb58-9cb3-4450-a98f-5b5b56f6556b"
+  },
+  "links": [
+    "AL-4014"
+  ],
+  "attachments": [],
+  "summary": "Link is Clicked in Saleshandy: Create a Note in HubSpot activity creates no note on the contact or the deal when paired with Create a Deal in HubSpot activity",
+  "description": "**Prerequisites:**\n- Staging account connected to HubSpot.\n- Link is Clicked in Saleshandy trigger enabled with the \"Create a Deal in Hubspot\" activity (Pipeline: Sales Pipeline, Pipeline Stage: Initial Contact, Deal Type: New Business, Deal Priority: High, Closing Date: 1 Day) and the \"Create a Note in Hubspot\" activity selected.\n- Active sequence \"HubSpot Link Clicked QA\" (Track link clicks on).\n- The prospect's contact does not exist in HubSpot. The prospect has a Deal Value (25500) and no Closing Date.\n\n**Steps to Reproduce:**\n1. Add the prospect to the sequence and wait for the step 1 email to be sent.\n2. Open the email in the prospect's inbox and click the first link.\n3. Open API & Integrations > Integrations > HubSpot > Logs and wait for the new \"Link is Clicked in Saleshandy\" entry.\n4. Open the contact and the deal in HubSpot > Activities.\n\n**Actual Result:**\n- The log entry shows Success (3.5 seconds). Execution ID: 6acdb48bb2262a17f6d161b5 (Oct 13, 2026, 10:03 AM IST).\n- The execution steps end at \"Create Deal (fallback, new contact)\"; there is no Create note step.\n- No note is created on the contact (record 568284359381) or on the deal (record 353778675421).\n- A screenshot will be attached to the ticket manually.\n\n**Expected Result:**\n- A note is created on the deal and on the contact.\n\n**Note:**\n- Seen on contact Camila Restrepo, sequence 196221.\n",
+  "waitingFor": "QA to confirm epic AL-3982, link AL-4014, assignee, and to attach screenshots of the log entry and the contact and deal Activities.",
+  "sent": {
+    "key": "AL-4121",
+    "url": "https://saleshandy.atlassian.net/browse/AL-4121",
+    "problems": [],
+    "at": "2026-10-13T08:35:04.769Z"
+  }
+}

@@ -48,8 +48,8 @@ writing anything. Code: `jira/server/`.
    and metadata together, and offer a default for each:
    - bug content: whatever is missing from step 1,
    - Priority (default Medium),
-   - Environment (Staging when the source is Staging notes or a Staging run,
-     otherwise Production),
+   - Environment (always Production, QA 2026-10-13; the Note says "Affected
+     Environment - Staging" or Production, where the bug was seen),
    - Epic Link (the one found in step 2),
    - Assignee (default Darshan),
    - QA (default Dharmesh Patel),

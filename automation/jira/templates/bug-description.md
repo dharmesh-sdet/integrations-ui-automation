@@ -23,6 +23,7 @@ facts for. Note is optional.
 - <what should happen instead, from the user's notes or answer>
 
 **Note:**
+- Affected Environment - <Staging | Production>.
 - <caveats only: secrets left out, workaround, related open bug>
 ```
 
@@ -34,7 +35,7 @@ facts for. Note is optional.
 | Summary | <summary> |
 | Project / Type | AL / Bug |
 | Priority | Medium |
-| Environment | Staging or Production |
+| Environment | Production (always; the seen-on environment is in the Note) |
 | Epic Link | AL-xxxx |
 | Assignee | Darshan |
 | QA | Dharmesh Patel |

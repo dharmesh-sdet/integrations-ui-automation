@@ -1,0 +1,12 @@
+{
+  "type": "comment",
+  "ticket": "AL-4119",
+  "body": "**Verification:** Retested on Staging. Reply is Received in Saleshandy trigger, Update a Deal in HubSpot activity: for a contact with 1 deal, marked the Step 1 email as replied, then changed Closing Date to 51 Days and marked the same email as replied again. Both workflow runs show Success and the deal's Close Date is now today + 51 days. I could not reproduce the issue reported on this ticket. Pass.\n\nAlso retested the single-reply case (contact with 1 deal, Closing Date 0 Days): the deal shows the configured Pipeline, Stage, Type and Priority. Pass.",
+  "waitingFor": "QA to check the wording: it says 'could not reproduce', not 'fixed', because no fix was reported. Update a deal 2 and 4 are still running.",
+  "sent": {
+    "key": "AL-4119",
+    "url": "https://saleshandy.atlassian.net/browse/AL-4119",
+    "problems": [],
+    "at": "2026-10-12T11:41:12.050Z"
+  }
+}

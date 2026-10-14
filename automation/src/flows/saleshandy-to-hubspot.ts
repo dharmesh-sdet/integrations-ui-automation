@@ -17,7 +17,7 @@ import type { MailinatorPage } from '../pages/mailinator.page.ts';
 import type { SaleshandyCrmPage } from '../pages/saleshandy/crm.page.ts';
 import type { HubSpotIntegrationPage } from '../pages/saleshandy/hubspot-integration.page.ts';
 import type { SaleshandySequencePage } from '../pages/saleshandy/sequence.page.ts';
-import { untilPasses } from '../utils/wait.ts';
+import { stopOnErrorLogs, untilPasses } from '../utils/wait.ts';
 
 // Page objects a trigger step may need (fixtures from src/fixtures/index.ts).
 export type FlowContext = {
@@ -36,8 +36,29 @@ export type FlowConfig = {
   csv: string;
   // The workflow's own trigger event, done after the step's email is sent
   // (Email Sent: nothing). `step` is 1 unless a row needs the event on step 2
-  // (e.g. Reply rows that reply to the follow-up).
-  fireEvent: (ctx: FlowContext, row: Row, step: number) => Promise<void>;
+  // (e.g. Reply rows that reply to the follow-up). `link` is the 0-based link
+  // of the email for "click the second link" rows (Link Clicked only; other
+  // workflows fire the same event again).
+  fireEvent: (ctx: FlowContext, row: Row, step: number, link?: number) => Promise<void>;
+  // True when `fireEvent` can fire the event on the step 2 email (rows that
+  // continue "from row N, step 2 sent"). Default false: those rows are not added.
+  step2Events?: boolean;
+  // True when the shared "second event on the same email" row (Update a deal
+  // 3) should be added. Default false: Reply Received writes its own.
+  secondEventRows?: boolean;
+  // True when step 1 should be sent with "Send now" right after the prospect
+  // is added, instead of waiting for Saleshandy's own send (QA, 2026-10-12, for
+  // Link Clicked). Default false: single prospects wait for Saleshandy.
+  sendStep1Now?: boolean;
+  // Subject of the step 1 email, for checks on the logged email (optional).
+  emailSubject?: string;
+  // Texts the HubSpot note must contain. Default: Step, Variant and the
+  // prospect's email, which every Saleshandy-side workflow writes (Reply
+  // Received: Step 1, Variant A, empty Latest Outcome). Return [] to skip.
+  noteContains?: (row: Row, step: number) => string[];
+  // Texts the logged email activity must contain. Default: the step 1
+  // subject when `emailSubject` is set, else the prospect's full name.
+  loggedEmailContains?: (row: Row, step: number) => string[];
 };
 
 export const fullName = (r: Row) => `${r['First Name']} ${r['Last Name']}`;
@@ -156,7 +177,9 @@ export function createFlow(cfg: FlowConfig) {
       else await integration.chooseConfigOption(label, option);
     }
     await integration.configSaveButton().click();
-    await expect(integration.savedToast(), 'save confirmation').toBeVisible();
+    // Saving a Create a Deal with nothing chosen showed "Loading..." for longer
+    // than 5 s on emailbounced (2026-10-12), so wait longer for the toast.
+    await expect(integration.savedToast(), 'save confirmation').toBeVisible({ timeout: 30_000 });
   }
 
   async function knownLogIds(integration: HubSpotIntegrationPage): Promise<Set<string>> {
@@ -178,7 +201,7 @@ export function createFlow(cfg: FlowConfig) {
     // Email Sent: the send is the event, so take the log ids before it.
     const known = await knownLogIds(ctx.integration);
     await test.step('Wait until Saleshandy sends step 1', async () => {
-      await ctx.sequence.ensureSent(sequenceId, fullName(row));
+      await ctx.sequence.ensureSent(sequenceId, fullName(row), 1, { bulk: cfg.sendStep1Now });
     });
     await cfg.fireEvent(ctx, row, 1);
     return known;
@@ -191,6 +214,7 @@ export function createFlow(cfg: FlowConfig) {
       await integration.refreshLogs();
       const fresh = (await integration.logEntries(trigger)).filter((e) => !known.has(e.id));
       expect(fresh.length, 'new log entries for this trigger').toBeGreaterThan(0);
+      stopOnErrorLogs(trigger, fresh);
       expect(fresh.map((e) => e.status), 'status of each new log entry').toEqual(fresh.map(() => 'Success'));
     }, timeout);
   }
@@ -210,9 +234,17 @@ export function createFlow(cfg: FlowConfig) {
     return statuses;
   }
 
+  const noteContains = cfg.noteContains ?? ((row: Row, step: number) => [`Step: ${step}`, 'Variant: A', `Prospect Email: ${row['Email']}`]);
+  const loggedEmailContains = cfg.loggedEmailContains ?? ((row: Row) => [cfg.emailSubject ?? fullName(row)]);
+
   return {
     trigger,
     rows,
+    fireEvent: cfg.fireEvent,
+    step2Events: cfg.step2Events === true,
+    secondEventRows: cfg.secondEventRows === true,
+    noteContains,
+    loggedEmailContains,
     newLogsFinished,
     deals: sideCsv('deals'),
     companies: sideCsv('companies'),

@@ -1,0 +1,29 @@
+{
+  "type": "bug",
+  "project": "AL",
+  "summary": "Sequence Email is Opened in Saleshandy: Update a Deal in HubSpot activity shows Success but does not update the deal",
+  "description": "**Prerequisites:**\n- Sequence Email is Opened in Saleshandy trigger enabled with the \"Update a Deal in HubSpot\" activity only.\n- Update a Deal Extra Configuration:\n  - Pipeline (when to update): Sales Pipeline\n  - Pipeline Stage (when to update): Follow-Up\n  - Deal Type (while updating): New Business\n  - Deal Priority (while updating): High\n  - Closing Date (while updating): 0 Days\n- Field mapping between Saleshandy and HubSpot is configured.\n- A contact exists in HubSpot with 1 deal (Sales Pipeline, Prospecting, Deal Type and Priority empty). The deal name is not the prospect's email, for example \"AWS Deal 1\".\n- An active sequence with the same prospect (same email as the HubSpot contact) and the step 1 email sent.\n\n**Steps to Reproduce:**\n1. Open API & Integrations > Integrations > HubSpot > Triggers & Activity.\n2. Turn on only the Sequence Email is Opened in Saleshandy trigger and select the \"Update a Deal in HubSpot\" activity.\n3. Open Extra Configuration, select Sales Pipeline, Follow-Up, New Business, High and 0 Days, click Save on the modal, then Save on the page.\n4. Open the step 1 email of the prospect in Mailinator.\n5. Open API & Integrations > Integrations > HubSpot > Logs and wait for the new \"Sequence Email is Opened in Saleshandy\" entry to show Success.\n6. Open the contact's deal in HubSpot and check Pipeline Stage, Deal Type and Deal Priority.\n7. Open the execution detail of the log entry and check the \"Search deal\" step.\n\n**Actual Result:**\n- The log entry shows Success (3 to 4 seconds).\n- The deal is not updated: Pipeline Stage stays Prospecting, Deal Type and Deal Priority stay empty. Only Pipeline matches, because the deal was already in Sales Pipeline.\n- In the execution detail the only HubSpot call is \"Search deal\" (POST /crm/v3/objects/deals/search, filter dealname equals the prospect's email). It returns total 0, so no update call is made.\n- The same happened in every Update a Deal run checked (7 of 7).\n- A screenshot will be attached to the ticket manually.\n\n**Expected Result:**\n- When the log shows Success, the Update a Deal in HubSpot activity should update the contact's existing deal with the configured Pipeline Stage, Deal Type and Deal Priority.\n\n**Note:**\n- Affected Environment - Staging.\n- The same configuration works on Link Clicked in Saleshandy, where the deal is found through the contact (the search by contact returns 1 deal).\n- Other scenarios of the same Update a Deal activity on this trigger, seen failing in the same run:\n  - Update a Deal, contact has 3 deals: the latest created deal stays at Prospecting, Deal Type and Deal Priority empty.\n  - Update a Deal, values changed in Extra Configuration and the email opened a second time: the deal still shows the old values.\n  - Update a Deal, Closing Date 51 Days: Close Date is not today + 51 days (HubSpot shows 10/31/2026, expected 12/03/2026).\n  - Create a Note paired with Update a Deal, contact has 1 deal: the note is not on the deal after 180 seconds.\n  - Record (log) an Email Activity paired with Update a Deal, contact has 3 deals: the latest created deal stays at Prospecting, Deal Type and Deal Priority empty.\n",
+  "priority": "Medium",
+  "environment": "Production",
+  "epic": "AL-3982",
+  "assignee": {
+    "name": "Darshan",
+    "accountId": "5af5d8dd244bc90a10605d4f"
+  },
+  "qa": {
+    "name": "Dharmesh Patel",
+    "accountId": "712020:c7dedb58-9cb3-4450-a98f-5b5b56f6556b"
+  },
+  "links": [
+    "AL-4013",
+    "AL-3984"
+  ],
+  "attachments": [],
+  "waitingFor": "Screenshots: automation/test-results-emailopened-p2/hubspot-email-opened-phase-ad60d-ubSpot-1-Contact-has-1-deal-chromium/ (Update a deal 1) and automation/test-results-emailopened-probe3/hubspot-email-opened-phase-27690-ubSpot-1-Contact-has-1-deal-chromium/. Log entry 6ace1921f6d843d7c465c7f4 (Oct 13, 2026, 5:12 PM) shows the Search deal step. Attach by hand after sending.",
+  "sent": {
+    "key": "AL-4128",
+    "url": "https://saleshandy.atlassian.net/browse/AL-4128",
+    "problems": [],
+    "at": "2026-10-14T05:02:38.212Z"
+  }
+}

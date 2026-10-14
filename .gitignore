@@ -23,3 +23,10 @@ playwright-report/
 
 # Machine-specific MCP config (absolute paths); add to git when pushing
 automation/.mcp.json
+/.mcp.json
+
+# Editor config (terminal profiles and tasks are personal)
+.vscode/
+
+# Per-run Playwright output folders (traces, videos; may hold session data)
+automation/test-results-*/

@@ -726,3 +726,15 @@ Link Clicked is stopped; the `linkclick` account and `reports/linkclick` are fre
 - Re-runs 18:16 to 18:18 IST: Update a Contact 3, Create a Note 2 and Create a Note 5 passed. Tally: 46 of 48 pass, 2 skipped by design.
 - AL-4127 verification comment was sent (draft file shows `sent`, 2026-10-14 14:52 IST); it names the Field Mapping as the cause.
 - Open: `kb-update` not done; lesson about checking the account Field Mapping before calling a product failure is still proposed (needs QA's OK).
+
+## Production smoke written, session saved 2026-10-14 night (battery low, session 8e524677)
+
+- Staging: Link Clicked complete, 46 of 48 pass, 2 skipped by design, committed c6f3177.
+- Production smoke checklist APPROVED by QA: `notes/production-testing/02-link-clicked.md` (11 checks, row 02 in the README).
+- Spec written and typechecked, listed 11 tests, NOT run: `tests/hubspot/link-clicked-smoke.spec.ts`; data `test-data/hubspot/link-clicked-smoke.csv` (+ -deals, -companies). Not committed.
+- Account `emailopenedprod` (shared with the Email Opened smoke). Trigger name used: "Link is Clicked in Saleshandy" (staging name; NOT seen on production yet).
+- Before the run: new production sequence (Track Link Clicks on, 2 links in step 1, activated) then SMOKE_SEQUENCE_ID and SMOKE_STEP1_SUBJECT; sender limit 15 per day (Email Opened smoke 10 + this 11 = 21, run on different days, not in parallel); QA does the headed Cloudflare login if the session expired.
+- Run: SMOKE_SEQUENCE_ID=... SMOKE_STEP1_SUBJECT="..." TEST_DATA_ONLY=hubspot/link-clicked-smoke REPORTS_DIR=reports/linkclick-prod-smoke npx playwright test tests/hubspot/link-clicked-smoke.spec.ts --project=chromium --workers=1 --reporter=list --output=test-results-linkclicked-prod-smoke
+- QA decisions open: test 02 has no "details changed" edit (follows the staging row); test 10 extra check that older deals have no logged email.
+- Pending QA OK (not applied): production smoke scope section in `notes/production-testing/README.md`, KB index row, how-to-test.md production URL fix, ui-test-from-workflow skill pointer (Email Bounced session did not find the scope).
+- The playwright-test generator agent cannot write files (tests/seed.spec.ts `test.use()` rejected by the MCP runner); the parent session wrote the files.

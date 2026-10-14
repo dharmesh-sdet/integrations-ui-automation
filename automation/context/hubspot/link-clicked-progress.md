@@ -738,3 +738,10 @@ Link Clicked is stopped; the `linkclick` account and `reports/linkclick` are fre
 - QA decisions open: test 02 has no "details changed" edit (follows the staging row); test 10 extra check that older deals have no logged email.
 - Pending QA OK (not applied): production smoke scope section in `notes/production-testing/README.md`, KB index row, how-to-test.md production URL fix, ui-test-from-workflow skill pointer (Email Bounced session did not find the scope).
 - The playwright-test generator agent cannot write files (tests/seed.spec.ts `test.use()` rejected by the MCP runner); the parent session wrote the files.
+
+### QA decisions on the production smoke, 2026-10-14 night (session a2)
+- Test 02: add the "details changed" edit step (Job Title and City changed in Saleshandy, new values checked on the contact). Done in the spec and the smoke CSV row; typechecked, 11 tests listed, not run.
+- Test 10: keep the extra check (older 2 deals and the contact have no logged email).
+- Production sequence: Claude may create it on `emailopenedprod` once the Email Opened smoke run has ended (not before; do not touch triggers or its run).
+- Run day: later, QA tells Claude. Spec stays ready.
+- Done since the last save: KB updated (c6f3177), scope and rules in `notes/production-testing/README.md` (3ba2246), post-deploy log monitoring dropped from smoke (QA 2026-10-14). Earlier "kb-update not done" and "scope fix pending QA OK" lines above are stale.

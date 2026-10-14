@@ -195,7 +195,7 @@ test.describe('Production smoke: Link Clicked in Saleshandy', () => {
   });
 
   // Update a Contact in HubSpot > 2
-  test('02 Update a Contact in HubSpot: contact in HubSpot', async ({ saleshandyIntegration, saleshandySequence, saleshandyCrm, mailinator, hubspotContacts }) => {
+  test('02 Update a Contact in HubSpot: details changed', async ({ saleshandyIntegration, saleshandySequence, saleshandyCrm, mailinator, hubspotContacts }) => {
     const ctx = { sequence: saleshandySequence, mailinator, crm: saleshandyCrm, integration: saleshandyIntegration };
     const row = flow.rowFor('Update a Contact in HubSpot > 2');
     await test.step('Select only Update a Contact: Lead Status Connected, Lifecycle Sales Qualified Lead', async () => {
@@ -204,12 +204,19 @@ test.describe('Production smoke: Link Clicked in Saleshandy', () => {
     await test.step('Create the contact in HubSpot', async () => {
       await newContact(hubspotContacts, row);
     });
-    const known = await flow.runTrigger(ctx, row);
+    const known = await flow.runTrigger(ctx, row, async () => {
+      await test.step('Change Job Title and City in Saleshandy', async () => {
+        await saleshandyCrm.search(row['Email']);
+        await saleshandyCrm.openProspect(fullName(row));
+        await saleshandyCrm.editField('Job Title', row['Updated Job Title']);
+        await saleshandyCrm.editField('City', row['Updated City']);
+      });
+    });
     await test.step('Check Logs: new entries are Success', async () => {
       await flow.expectNewLogsSuccess(saleshandyIntegration, known, LOG_TIMEOUT_MS);
     });
-    await test.step('Check the contact in HubSpot: Lead status Connected, Lifecycle stage Sales Qualified Lead', async () => {
-      await expectContact(hubspotContacts, row, { 'Lead status': 'Connected', 'Lifecycle stage': 'Sales Qualified Lead' });
+    await test.step('Check the contact in HubSpot: new Job title and City, Lead status Connected, Lifecycle stage Sales Qualified Lead', async () => {
+      await expectContact(hubspotContacts, row, { 'Job title': row['Updated Job Title'], City: row['Updated City'], 'Lead status': 'Connected', 'Lifecycle stage': 'Sales Qualified Lead' });
     });
   });
 

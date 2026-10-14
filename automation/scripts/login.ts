@@ -1,5 +1,6 @@
-// Usage: npm run login:<platform> -- <account> (Chromium)
-//    or: npm run login:<platform>:edge -- <account>
+// Usage: npm run login:saleshandy -- <account> (Chromium)
+//    or: npm run login:saleshandy:edge -- <account>
+//        npm run login:hubspot (or :edge), no account: one HubSpot portal for all
 // Accounts are listed in src/config/accounts.ts, one per workflow.
 // Opens a headed browser. You log in yourself (2FA/OAuth included), then press
 // Enter here and the session is saved to auth/<platform>-<account>-<browser>.json.
@@ -9,14 +10,16 @@ import { chromium, devices } from '@playwright/test';
 import fs from 'node:fs';
 import path from 'node:path';
 import readline from 'node:readline/promises';
-import { accounts, isAccount } from '../src/config/accounts.ts';
+import { accounts, isAccount, type Account } from '../src/config/accounts.ts';
 import { browsers, isBrowser, isPlatform, platforms } from '../src/config/environments.ts';
 import { authFile } from '../src/utils/session.ts';
 
 // Platform first; account, browser and --force in any order after it.
 const [platform, ...rest] = process.argv.slice(2);
 const force = rest.includes('--force');
-const account = rest.find(isAccount);
+const sharedPlatform = platform === 'hubspot'; // one common portal, one session per browser
+// HubSpot needs no account; any account is ignored (session file is the same).
+const account = rest.find(isAccount) ?? (sharedPlatform ? Object.keys(accounts)[0] as Account : undefined);
 const browserName = rest.find(isBrowser) ?? 'chromium';
 if (!isPlatform(platform)) {
   console.error(`Unknown platform "${platform}". Use one of: ${Object.keys(platforms).join(', ')}`);
@@ -35,10 +38,8 @@ const { baseURL, loginPath } = platforms[platform];
 const { device, channel } = browsers[browserName];
 const file = authFile(platform, account, browserName);
 const reuse = !force && fs.existsSync(file);
-const who =
-  platform === 'saleshandy'
-    ? `as ${accounts[account].saleshandy}`
-    : `to the portal connected to ${accounts[account].saleshandy}`;
+const who = sharedPlatform ? 'to the shared HubSpot portal' : `as ${accounts[account].saleshandy}`;
+const label = sharedPlatform ? platform : `${platform} ${account}`;
 
 const browser = await chromium.launch({ headless: false, channel });
 // Same device preset as the tests, so the saved session matches how tests look to the site.
@@ -52,7 +53,7 @@ await page.goto(new URL(loginPath, baseURL).toString());
 const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
 await rl.question(
   reuse
-    ? `Loaded the saved ${platform} session for ${account} in ${browserName}. If you are still logged in ${who}, ` +
+    ? `Loaded the saved ${label} session in ${browserName}. If you are still logged in ${who}, ` +
         `just press Enter; otherwise log in first, then press Enter... `
     : `Log in to ${platform} ${who} in ${browserName}, then press Enter here to save the session... `,
 );
@@ -61,4 +62,4 @@ rl.close();
 fs.mkdirSync(path.dirname(file), { recursive: true });
 await context.storageState({ path: file });
 await browser.close();
-console.log(`Saved ${platform} ${account} ${browserName} session to auth/${path.basename(file)} (valid for about 7 days).`);
+console.log(`Saved ${label} ${browserName} session to auth/${path.basename(file)} (valid for about 7 days).`);

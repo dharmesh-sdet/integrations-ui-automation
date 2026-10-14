@@ -15,6 +15,12 @@ Entry shape:
 - Status: Proposed | Applied | Rejected
 ```
 
+## 2026-10-14: A seed check reset every workflow's test data (Unsubscribed agents setup)
+- What went wrong: to prove the new `tests/seed.spec.ts` logs in, I ran `npx playwright test tests/seed.spec.ts` with no `TEST_DATA_ONLY` or `KEEP_TEST_DATA` while four workflows were running. `global-setup.ts` found no CSV named for that spec, fell back to "every workflow", and replaced all rows (and emptied `*.used.txt`) of 7 CSVs at 16:44:37. Runs of email-opened-phase2, link-clicked, reply-received and email-bounced-phase2 read changed people mid-run, so their later failures can be false.
+- Why: I did not read `testing/how-to-test.md` "Test data" before running anything. It already says `KEEP_TEST_DATA=1` and `TEST_DATA_ONLY` exist, and I had flagged the same risk in my own plan, then ran the command anyway. The 2026-10-13 lesson above this one is still only Proposed (a doc line), and `global-setup.ts` still treats a spec with no CSV as "run all". The test agents would hit the same fallback on every `planner_setup_page`.
+- Change: (1) `.mcp.json`, `playwright-test` entry: add `"env": {"KEEP_TEST_DATA": "1"}`. (2) `knowledge-base/testing/how-to-test.md` "Test data": add "Any `playwright test` run (seed, spec, agent) with no CSV of its own, or while other workflows are live, needs `KEEP_TEST_DATA=1` or `TEST_DATA_ONLY=<own slug>`; without it a run with no matching CSV refreshes every workflow." (3) `plan.md` section 0 rule: same sentence, as a Claude working rule. (4) Optional, QA decides: `src/data/global-setup.ts` fallback, a named spec with no CSV refreshes nothing (shared file, every workflow uses it).
+- Status: Applied 1 to 3 (QA OK 2026-10-14: `automation/.mcp.json` `playwright-test` env, `testing/how-to-test.md` Test data, `plan.md` section 0 rule 11). Change 4 (`global-setup.ts` fallback) Proposed, waits until the live runs end and QA's OK.
+
 ## 2026-10-14: Posted Jira comments from the terminal instead of drafting (Link Clicked, AL-4122 and AL-4123)
 - What went wrong: after QA said "looks good" on the wording of two Verification comments, I called `addOrEditJiraIssueComment` and posted them (comments 78816 and 78817). QA's workflow is: Claude writes a draft file in `automation/jira/drafts/`, QA sends it from `npm run jira`. The comments cannot be deleted through the MCP, so QA has to remove them by hand if they want them re-sent.
 - Why: the rule already existed in Claude memory (`jira-verify-then-draft`) but not where I work from. The kit's own text says the opposite: `automation/jira/CLAUDE.md` rule 5 and `docs/comments.md` section intro tell Claude to post with `addOrEditJiraIssueComment` after "looks good". I followed the kit in front of me and read QA's "looks good" as approval to write, when it was approval of the text.
@@ -127,4 +133,10 @@ Entry shape:
 - What went wrong: "resume" in a new session meant digging through old transcripts.
 - Why: state was not written to files.
 - Change: memory `resume-pointers`.
+- Status: Applied
+
+## 2026-10-14: Fix retest failed three times, cause was the account Field Mapping
+- What went wrong: AL-4127 (Update a company) was re-run three times after the deploy with the same result and the guess was "fix not live"; QA then found the Field Mapping on the linkclick account was not updated.
+- Why: the account's Field Mapping was not checked before calling the failure a product result.
+- Change: before calling an activity failure after a fix, check the account's Field Mapping (Settings > Integrations > HubSpot) against the fields the activity writes [QA, 2026-10-14].
 - Status: Applied

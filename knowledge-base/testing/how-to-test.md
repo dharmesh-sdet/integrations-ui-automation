@@ -45,6 +45,13 @@ over this page.
   replaces used rows only (use it when a walkthrough is using the CSV's people);
   `TEST_DATA_ONLY=hubspot/<slug>` limits it to one workflow.
 
+- Any `playwright test` run (seed, spec or test agent) with no CSV of its own,
+  or while other workflows are live, needs `KEEP_TEST_DATA=1` or
+  `TEST_DATA_ONLY=<own slug>` [QA, 2026-10-14]. Without it, a run with no
+  matching CSV refreshes the data of every workflow (a seed check did this on
+  2026-10-14 while four runs were live; see `lessons.md`). The `playwright-test`
+  MCP entry sets `KEEP_TEST_DATA=1` for the agents.
+
 - From a QA CSV in `automation/test-data/<integration>/`, used exactly as
   written, no name prefix [QA, 2026-10-08].
 - Records are created one at a time through the UI, never bulk-imported,
@@ -179,6 +186,7 @@ most often look like failures:
   Contact" as From (AL-4113).
 - HubSpot refuses backward lifecycle stage moves.
 - Two companies created when HubSpot's company auto-create is on (AL-4029).
+- Saleshandy alert "You have reached the maximum daily sending limit for this sender email" rejects Send now late in a long run (sender limit 15 per day). Re-run the row. Create a Note 5 needs Create a Note 2 in the same run [staging, 2026-10-14].
 
 Open or undeployed tickets are listed in each scenario file's intro and are
 not failures.

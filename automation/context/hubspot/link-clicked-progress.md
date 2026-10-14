@@ -715,3 +715,14 @@ Plan: re-run Update a company 1 and 2, settle Record 7 expectation with QA,
 - Update a company 1: script read City "--" for 180 s on company 352239996629 (expected "Quito"), but the product DID update it: Logs entry 6acf4bcf1fffc597731b9558 (3:00 PM, 9.1 s, all nodes Success); node "Update Company" request had city Quito, state Pichincha, response city Quito, state Pichincha (updatedAt 09:31:02Z); the company record read afterwards in HubSpot shows City Quito. So not a product failure; the script's read of the property did not see it. Re-run of row 1 follows.
 - Cause of the three earlier failures: Field Mapping on the linkclick account (QA). Not checked by me; proposed lesson pending.
 - Update a company 1 re-run: PASSED (4.9 m, read from the run output and report-data.json). Both Update a company rows now pass with the corrected Field Mapping. AL-4127 cause: Field Mapping on the account (QA).
+
+## Full run and status, saved 2026-10-14 evening (session 68484cf5, written by the 8e524677 session)
+
+Link Clicked is stopped; the `linkclick` account and `reports/linkclick` are free.
+
+- Full run, one command (`npm run test:link-clicked`, `scripts/run-link-clicked.sh`), about 15:30 to 17:38 IST, 2.2 h, 48 tests: 44 passed, 2 skipped (Extra Configuration already saved on this account), 2 failed. Log: scratchpad `link-clicked-run.log` of session 68484cf5.
+- Failure 1, Update a Contact 3: 10 min timeout, blank Emails tab. Re-run passed. Cause not proven (page load, one-off).
+- Failure 2, Create a Note 5 (step 2 sent): Saleshandy alert "maximum daily sending limit for this sender email" (sender 15 per day), so Send now on step 2 was rejected. Re-run passed (needs Create a Note 2 in the same run).
+- Re-runs 18:16 to 18:18 IST: Update a Contact 3, Create a Note 2 and Create a Note 5 passed. Tally: 46 of 48 pass, 2 skipped by design.
+- AL-4127 verification comment was sent (draft file shows `sent`, 2026-10-14 14:52 IST); it names the Field Mapping as the cause.
+- Open: `kb-update` not done; lesson about checking the account Field Mapping before calling a product failure is still proposed (needs QA's OK).

@@ -17,6 +17,7 @@ handles them. Add one when it costs a failed run. Paths are under
 | Add to Sequence step list loads after the sequence is picked | An early click on "Sequence Steps" opened nothing and the test waited out its 20 minute timeout [staging, 2026-10-13] | `moveToStep()` clicks until the "Step N - Day" option shows (`sequence.page.ts`) |
 | `{{` typed in the sequence step editor | Opens the variable picker and scrambles the text [staging, 2026-10-13] | Plain text without variables in test steps |
 | Logs tab of a Saleshandy account that never ran a workflow shows "No logs yet" and no rows | `logEntries` waited for a row that never came and the test hit its timeout [staging, 2026-10-13] | Returns [] on "No logs yet" (`hubspot-integration.page.ts`) |
+| Sequence Emails tab renders a blank white page | The test waited for the Clicked column header until its 10 minute timeout (Link Clicked, Update a Contact 3); the re-run passed, cause not proven [staging, 2026-10-14] | Re-run the row; no script change |
 
 ## HubSpot
 

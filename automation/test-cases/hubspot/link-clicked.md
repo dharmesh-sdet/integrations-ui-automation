@@ -67,7 +67,7 @@ not checked). Do not treat these as failures.
 | # | Scenario | Do | Expected | Ticket |
 |---|---|---|---|---|
 | 1 | Trigger off before the test | Enable "Link Clicked in Saleshandy", select an activity, click Save | "Configuration Updated Successfully" | None |
-| 2 | Prospect received the step 1 email | Click the link | Within about 1.5 min: Sequences > Emails clicked count is 1 and Sequence > Prospects shows the link clicked icon in purple. Then a new log entry for Link Clicked in Saleshandy | None |
+| 2 | Prospect received the step 1 email | Click the link | Within about 1.5 min: Sequences > Emails clicked count is 1 and Sequence > Prospects shows the link clicked icon in purple. Then a new log entry for Link Clicked in Saleshandy - Pass, 2026-10-14 | None |
 
 ## Create a Contact in HubSpot
 
@@ -165,9 +165,9 @@ above.
 | # | Scenario | Do | Expected | Ticket |
 |---|---|---|---|---|
 | 1 | Paired with Create a Contact (Lead Status and Lifecycle set), contact not in HubSpot | Click the link | Success. Contact created, note on it shows Step 1, Variant A and the Prospect Outcome | None |
-| 2 | Paired with Update a Contact, contact in HubSpot | Click the link | Success. Note on the contact | None |
+| 2 | Paired with Update a Contact, contact in HubSpot | Click the link | Success. Note on the contact; step 1 note contains "Click Count: 1" - Pass after fix, AL-4120 | AL-4120 |
 | 3 | Paired with Create a deal, prospect has Deal Value and Closing Date | Click the link | Success. Note on both the contact and the deal - Pass after fix, AL-4121 | None |
-| 4 | Paired with Update a deal, contact has 1 deal, prospect has no Closing Date (AL-4096) | Click the link | Success. The deal is updated and the note is on both the contact and the deal (QA, 2026-10-14, confirmed with the developer; it was deal only on 2026-10-13) | None |
+| 4 | Paired with Update a deal, contact has 1 deal, prospect has no Closing Date (AL-4096) | Click the link | Success. The deal is updated and the note is on both the contact and the deal (QA, 2026-10-14, confirmed with the developer; it was deal only on 2026-10-13) - Pass, 2026-10-14 | None |
 | 5 | Pairing from row 2, step 2 sent | Send now on step 2, click its link | New note shows Step 2, Variant A | None |
 | 6 | Create a Note selected alone | Click the link | Success in Logs (the custom workflow runs); no note on any contact, company or deal | None |
 

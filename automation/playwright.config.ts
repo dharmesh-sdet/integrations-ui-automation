@@ -48,6 +48,7 @@ export default defineConfig({
   use: {
     screenshot: 'on',
     trace: 'retain-on-failure',
+    reducedMotion: 'reduce',
   },
   projects: [project('chromium'), project('edge')],
 });

@@ -5,9 +5,11 @@
 //
 // A draft is a JSON file Claude writes after QA confirmed the bug (or asked
 // for the comment); see docs/bug-creation.md. Once sent, the file records the
-// Jira key and cannot be sent again. Failed writes are never retried.
+// Jira key and cannot be sent again. Failed writes are never retried. A
+// draft can be deleted from the review page; that only removes the local
+// file, it does not touch Jira (and does nothing to an already-sent one).
 import { createServer, type ServerResponse } from 'node:http';
-import { existsSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, statSync, unlinkSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { addComment, createBug, describeFields, issueStatus, JIRA_SITE, whoAmI, type BugDraft, type CommentDraft, type Sent } from './jira-client.ts';
 
@@ -89,6 +91,17 @@ createServer(async (req, res) => {
       } finally {
         sending.delete(id);
       }
+    }
+
+    const del = url.pathname.match(/^\/api\/drafts\/([\w-]+)$/);
+    if (req.method === 'DELETE' && del) {
+      // Only the review page served from here may delete.
+      if (req.headers.origin !== `http://localhost:${PORT}`) return json(res, 403, { error: 'Open the report from this server to delete.' });
+      const id = del[1];
+      if (!existsSync(draftFile(id))) return json(res, 404, { error: 'Draft not found.' });
+      // Removes the local draft file only; a sent draft stays in Jira as is.
+      unlinkSync(draftFile(id));
+      return json(res, 200, { deleted: id });
     }
 
     if (req.method === 'GET') {

@@ -1,0 +1,12 @@
+{
+  "type": "comment",
+  "ticket": "AL-4164",
+  "body": "Verified on production after deploy. Retested the scenario from this ticket and it works as expected.",
+  "waitingFor": "QA to check and send via npm run jira. QA tested on production 2026-10-20: contact not in HubSpot, the contact is created and the task is created.",
+  "sent": {
+    "key": "AL-4164",
+    "url": "https://saleshandy.atlassian.net/browse/AL-4164",
+    "problems": [],
+    "at": "2026-10-20T06:21:26.325Z"
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "type": "comment",
+  "ticket": "AL-4015",
+  "body": "**Verification:** Production testing is done. Smoke tested the Prospect is Unsubscribed in Saleshandy trigger on Production, all 9 activities, using the real \"Unsubscribe here\" link:\n\n| # | Activity | What was checked | Status |\n| --- | --- | --- | --- |\n| 1 | Create a Contact in HubSpot | Workflow Success, contact created with the data available in Saleshandy for the prospect. | Pass |\n| 2 | Update a Contact in HubSpot | Workflow Success, contact updated with the new values. Baseline with only this activity selected: Success and the contact is updated in HubSpot. | Pass |\n| 3 | Create a Deal in HubSpot | Deal created. Closing Date set to 0 days, the close date is empty. | Pass |\n| 4 | Update a Deal in HubSpot | With 3 deals, the latest created deal is updated (AL-4165). | Pass |\n| 5 | Create a Company in HubSpot | Company created. | Pass |\n| 6 | Update a Company in HubSpot | The latest company is updated, including City (AL-4163). | Pass |\n| 7 | Create a Task in HubSpot | Task created. For a prospect not in HubSpot, the contact is also created (AL-4164). | Pass |\n| 8 | Create a Note in HubSpot | Paired with Create a Deal, the note is created (AL-4162). | Pass |\n| 9 | Record (log) an Email Activity in HubSpot | Paired with Update a Deal, the email is logged on the contact and the latest deal. | Pass |\n\n**Note:** If the prospect is not in a sequence and is unsubscribed manually, the workflow does not trigger. This is expected.",
+  "waitingFor": "QA to check and send via npm run jira.",
+  "sent": {
+    "key": "AL-4015",
+    "url": "https://saleshandy.atlassian.net/browse/AL-4015",
+    "problems": [],
+    "at": "2026-10-20T06:23:04.668Z"
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "type": "comment",
+  "ticket": "AL-4163",
+  "body": "Verified on production after deploy. Retested the scenario from this ticket and it works as expected.",
+  "waitingFor": "QA to check and send via npm run jira. Source: Prospect is Unsubscribed production smoke test, QA-approved 2026-10-20 (06 Update a Company, latest company updated incl. City).",
+  "sent": {
+    "key": "AL-4163",
+    "url": "https://saleshandy.atlassian.net/browse/AL-4163",
+    "problems": [],
+    "at": "2026-10-20T06:19:53.596Z"
+  }
+}

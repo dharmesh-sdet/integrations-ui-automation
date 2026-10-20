@@ -5,8 +5,12 @@ One short checklist per workflow, numbered. Scope and rules: see
 
 | # | File | Trigger | Tickets | Result |
 |---|---|---|---|---|
-| 01 | [01-email-opened.md](01-email-opened.md) | Sequence Email is Opened in Saleshandy | AL-4013, AL-4126, AL-4128 | Not run (script: tests/hubspot/email-opened-smoke.spec.ts) |
-| 02 | [02-link-clicked.md](02-link-clicked.md) | Link is Clicked in Saleshandy | AL-4014, AL-4103, AL-4120, AL-4121, AL-4122, AL-4123, AL-4127 | Not run (script: tests/hubspot/link-clicked-smoke.spec.ts, 11 tests) |
+| 01 | [01-email-opened.md](01-email-opened.md) | Sequence Email is Opened in Saleshandy | AL-4013, AL-4126, AL-4128 | Run 2026-10-14: 10 of 10 passed, 9 in run 2 and test 10 on its own re-run (script: tests/hubspot/email-opened-smoke.spec.ts). Jira comments drafted in jira/drafts, not sent |
+| 02 | [02-link-clicked.md](02-link-clicked.md) | Link is Clicked in Saleshandy | AL-4014, AL-4103, AL-4120, AL-4121, AL-4122, AL-4123, AL-4127 | **Passed and production approved by QA, 2026-10-15.** Run 2026-10-15: 10 of 11 passed; test 10 failed only on the older-deal check, AL-4130 filed, developer says expected. Clicks wait 90 s first and 180 s second (developer). Sequence 974015. Jira drafts in jira/drafts, not sent |
+| 03 | [03-email-bounced.md](03-email-bounced.md) | Email is Bounced in Saleshandy | AL-4016, AL-4125 | Run 2026-10-15: 10 of 10 passed, 8 in run 1 and tests 00 and 09 on their re-run after two script fixes (script: tests/hubspot/email-bounced-smoke.spec.ts, sequence 973942). Jira comment drafted in jira/drafts/al-4016-production-smoke-summary.json, not sent |
+| 04 | [04-company-created.md](04-company-created.md) | Company Created/Properties Updated in HubSpot | AL-4009 (AL-4059 not covered) | Run 2026-10-15 (script, production): 00, 01, 02, 03, 04 passed; 05 Replied failed in the script (13.4 min, status not read) and QA validated it manually as passed; 06 Finished validated manually by QA as passed (2026-10-15); 07 Unsubscribed validated manually by QA as passed (2026-10-15); 08 Blacklist a domain validated manually by QA as passed (2026-10-15). Script: tests/hubspot/company-created-smoke.spec.ts, command: npm run smoke:company-created |
+| 05 | [05-reply-received.md](05-reply-received.md) | Reply is Received in Saleshandy | AL-4011, AL-4129, AL-4119, AL-4118 | **Passed, all 9 activities Pass.** Run 2026-10-15 (script: tests/hubspot/reply-received-smoke.spec.ts, sequence 974166, account emailopenedprod): 7 of 11 passed; the 4 that failed in the script (02 Update a Contact, 08 Create a Note, 09 and 10 Record (log) an Email Activity) were checked manually by QA and confirmed Pass (QA, 2026-10-16). Summary comment sent to AL-4011, 2026-10-16 |
+| 06 | [06-unsubscribed.md](06-unsubscribed.md) | Prospect is Unsubscribed in Saleshandy | AL-4015, AL-4162, AL-4163, AL-4164, AL-4165 | **Passed and production approved by QA, 2026-10-20.** All 9 activities Pass, tested with the real Unsubscribe link (script: tests/hubspot/unsubscribed-smoke.spec.ts). Jira drafts in jira/drafts, not sent |
 
 ## Scope and rules
 
@@ -45,7 +49,9 @@ Link Clicked production work [staging/production, 2026-10-14], QA answers
     Track email opens or Track Link Clicks with 2 links); its id and step 1
     subject go in `SMOKE_SEQUENCE_ID` and `SMOKE_STEP1_SUBJECT`.
 - **Production timing:** the first open counts 60 s after sending, a second
-  open 120 s after the first; a click registers within 1 to 1.5 min; the log
-  shows 1 to 3 min after that (Update a Deal about 7.5 min on staging).
+  open 120 s after the first; a first click counts only 90 s after sending and
+  a second click 180 s (developer, 2026-10-15; a click made about 1 min after
+  sending was never counted); the log shows 1 to 3 min after that (Update a
+  Deal about 7.5 min on staging).
 - **Not allowed:** exploring production through MCP, and any Jira write
   without QA's OK.

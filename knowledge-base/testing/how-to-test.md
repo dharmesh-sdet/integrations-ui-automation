@@ -36,6 +36,12 @@ over this page.
    again too early is silently dropped [dev kit: sh-email-sent-run.sh]. The
    kit's `sleep 10` is for its API script only. In a UI test, wait until the
    UI shows the prospect removed (see "UI waits vs dev kit waits" below).
+7. A new account's test sequence must have an always-on sending schedule
+   (Settings > Sending Schedule > Add Schedule covering all days and hours)
+   before any timed run. HubSpot's default window (Mon-Fri 09:00-18:00) will
+   queue step emails as "Scheduled Tomorrow" and fail any row that runs
+   outside it, as a timing artifact, not a product bug [QA, 2026-10-18,
+   Unsubscribed AL-4015: Create a Deal rows 1 and 2 failed this way].
 
 ## Test data
 
@@ -53,6 +59,10 @@ over this page.
   matching CSV refreshes the data of every workflow (a seed check did this on
   2026-10-14 while four runs were live; see `lessons.md`). The `playwright-test`
   MCP entry sets `KEEP_TEST_DATA=1` for the agents.
+
+- A run changes only its own workflow's CSV; other workflows' used rows are
+  replaced by their own next run [QA, 2026-10-15; `REFRESH_OTHER_USED=1`
+  restores the old behavior].
 
 - From a QA CSV in `automation/test-data/<integration>/`, used exactly as
   written, no name prefix [QA, 2026-10-08].
@@ -100,9 +110,33 @@ over this page.
 
 ## Waiting and verifying
 
+- A wait or timeout for a product event is set from a measured time or from
+  QA's stated manual steps, not guessed. If neither exists, ask QA how they do
+  it by hand, then copy that [QA, 2026-10-19].
+- Set the test timeout in `test.beforeEach`, before the first step, not inside
+  the trigger step. HubSpot pages took about 40 s each to load on the new
+  production portal, so creating a contact and 3 deals used the 5 minute
+  default before the trigger step raised it (Unsubscribed smoke 04 and 06,
+  [production, 2026-10-20]).
+  A later `test.setTimeout` replaces it (`runTrigger` did, 2026-10-20): after
+  changing a timeout, grep `setTimeout` in the spec and `src/flows/`, and
+  confirm the failure time moved.
 - Logs: refresh 15 seconds after the action, then every 10 seconds until the
   new entries show Success; give up after 3 minutes [QA, 2026-10-08]. Do not
   open log entries.
+- Prospect is Unsubscribed on production [QA, 2026-10-19]: Mark as Unsubscribe
+  in the UI does not trigger the workflow there, the real "Unsubscribe here"
+  link does (the sequence needs "Unsubscribe as Link" saved). Method: add the
+  prospect, Send now from the Emails tab if the email is scheduled, open the
+  delivered email in Mailinator, wait 93 seconds, open the link, go back to
+  the Prospects tab and hard refresh: the prospect shows Unsubscribed. Code:
+  `MailinatorPage.openUnsubscribeLink(email, subject, 93_000)` and
+  `SaleshandySequencePage.expectProspectStatusAfterRefresh()`
+  (`tests/hubspot/unsubscribed-smoke.spec.ts`). Passed for check 00
+  [production, 2026-10-19]. Staging's UI-vs-link equivalence stays open.
+  Full smoke (all 9 activities) passed [QA, 2026-10-20]. A prospect not in
+  any sequence that is unsubscribed manually does not trigger the workflow;
+  this is valid product behavior, not a bug [QA, 2026-10-20].
 - A Logs entry is the custom workflow's run, not one activity's result
   [QA, 2026-10-13]. Success does not prove a note, task, contact or deal was
   written: check the record in HubSpot. An activity selected alone (Create a
@@ -156,6 +190,11 @@ over this page.
   or scripting it. When QA answers with several behaviors in one message,
   list each as expected or bug and get a yes before writing any of them into
   a scenario or test [lessons.md 2026-10-13].
+- When QA changes an expected result, search the whole automation project for
+  the old text and fix the config line it comes from (for example
+  `loggedEmailContains`), not only the spec in front of you. A spec made by
+  copying rows re-reads every QA decision in that workflow's progress file
+  first [lessons.md 2026-10-14].
 - "Nothing should happen" checks wait out a window (15 s, then 10 s steps,
   about 45 s total) and confirm no new log entry and no change.
 - No fixed sleeps anywhere else; use the wait helpers in
@@ -188,12 +227,19 @@ most often look like failures:
   Contact" as From (AL-4113).
 - HubSpot refuses backward lifecycle stage moves.
 - Two companies created when HubSpot's company auto-create is on (AL-4029).
-- Saleshandy alert "You have reached the maximum daily sending limit for this sender email" rejects Send now late in a long run (sender limit 15 per day). Re-run the row. Create a Note 5 needs Create a Note 2 in the same run [staging, 2026-10-14].
+- Saleshandy alert "You have reached the maximum daily sending limit for this sender email" rejects Send now late in a long run (sender limit 15 per day). Re-run the row [staging, 2026-10-14].
+- No row depends on another row's prospect any more. Link Clicked's second-event rows (Create a Contact 6, Create a Note 5, Record 7) used to continue from Create a Contact 3, Create a Note 2 and Record 4 in the same run; they now run their own first event on their own prospect, so each can run alone [QA, 2026-10-15; all three passed alone on 2026-10-15, `reports/linkclick2`, 11.2 min]. Reply Received and Email Opened were already self-contained [project].
 
 Open or undeployed tickets are listed in each scenario file's intro and are
 not failures.
 
 ## After a run
+
+- Count tests with `npx playwright test <spec> --list`, not from memory: the
+  runner counts Setup too (Company Created: 19 cases plus Setup = 20).
+- The first run of a new spec is a learning run. After fixing, rerun only the
+  failed and not-yet-run rows (`KEEP_TEST_DATA=1`, `-g`); never restart the
+  whole chain (QA, 2026-10-15).
 
 - Failures are summarised in plain English in `automation/reports/failures.md`;
   say whether the likely cause is the script or the product.

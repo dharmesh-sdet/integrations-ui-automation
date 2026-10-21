@@ -1,0 +1,28 @@
+{
+  "type": "bug",
+  "project": "AL",
+  "priority": "Medium",
+  "environment": "Production",
+  "epic": "AL-3982",
+  "assignee": {
+    "name": "Darshan",
+    "accountId": "5af5d8dd244bc90a10605d4f"
+  },
+  "qa": {
+    "name": "Dharmesh Patel",
+    "accountId": "712020:c7dedb58-9cb3-4450-a98f-5b5b56f6556b"
+  },
+  "links": [
+    "AL-4015",
+    "AL-3984"
+  ],
+  "attachments": [],
+  "summary": "Prospect is Unsubscribed in Saleshandy: Create a Task in HubSpot activity shows Error status when the contact is not in HubSpot",
+  "description": "**Prerequisites:**\n- The HubSpot integration is connected to Saleshandy.\n- The Prospect is Unsubscribed in Saleshandy trigger is enabled with the Create a Task in HubSpot activity (Task Title: \"Follow up from the workflow\", Task Type: Call, Task Priority: Medium, Due In: 3 days).\n- The prospect is not a contact in HubSpot.\n\n**Steps to Reproduce:**\n1. Enable the Prospect is Unsubscribed in Saleshandy trigger and select Create a Task in HubSpot. Fill in the Extra Configuration, click Save, then click Save on the Triggers and Activities page.\n2. Add a prospect that is not already a contact in HubSpot to the active sequence.\n3. Mark the prospect as Unsubscribed (Prospects tab > Mark as Unsubscribe).\n4. Go to Settings > Integrations > HubSpot > Logs and check the workflow entry.\n\n**Actual Result:**\n- The \"Prospect is Unsubscribed in Saleshandy\" log entry shows Error status, not Success.\n\n**Expected Result:**\n- The workflow should log Success and create the contact with the configured task (title, type, priority, due date).\n\n**Note:**\n- Affected Environment - Staging.\n",
+  "sent": {
+    "key": "AL-4164",
+    "url": "https://saleshandy.atlassian.net/browse/AL-4164",
+    "problems": [],
+    "at": "2026-10-19T06:17:45.533Z"
+  }
+}

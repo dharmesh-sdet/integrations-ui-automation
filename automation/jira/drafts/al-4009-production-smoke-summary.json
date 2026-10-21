@@ -1,0 +1,12 @@
+{
+  "type": "comment",
+  "ticket": "AL-4009",
+  "body": "**Verification:** Production testing is done. Smoke tested the Company Created/Properties Updated in HubSpot trigger on Production, all 9 activities:\n\n| # | Activity | What was checked | Status |\n| --- | --- | --- | --- |\n| 1 | Add Prospect in Saleshandy | A company created with two contacts selected in the form adds both contacts as prospects (AL-4009). | Pass |\n| 2 | Move Prospect to another Sequence in Saleshandy | All three contacts of the company are moved to the configured sequence. | Pass |\n| 3 | Assign a tag to Prospect in Saleshandy | The prospect shows the configured tag. | Pass |\n| 4 | Mark Prospect as Paused in Saleshandy | The prospect in the configured sequence shows Paused. | Pass |\n| 5 | Mark prospect as Resume (Un-pause) in Saleshandy | The paused prospect is no longer Paused. | Pass |\n| 6 | Mark prospect as Replied in Saleshandy | The prospect in the configured sequence is marked as replied (sequence stops follow-ups on a reply). | Pass |\n| 7 | Mark prospect as Finished in Saleshandy | The prospect in the configured sequence shows Finished. | Pass |\n| 8 | Mark Prospect as Unsubscribed in Saleshandy | The prospect shows Unsubscribed. | Pass |\n| 9 | Blacklist a Domain in Saleshandy | The prospect's domain is on the Global Do Not Contact list and the prospect shows Blacklisted (list entry removed afterwards). | Pass |\n\n**Note:** AL-4059 (updating company properties does not trigger the workflow) is still open and not covered by this verification, so the Properties Updated path is not checked. A company created with no contact is not a valid scenario and is not checked.",
+  "waitingFor": "QA to check the wording. Evidence: Production run 2026-10-15 on account emailopenedprod, sequence 'HubSpot Company Created Smoke' (id 974278). Script (tests/hubspot/company-created-smoke.spec.ts) passed Add Prospect, Move, Assign a tag, Paused and Resume; Replied, Finished, Unsubscribed and Blacklist a domain were validated by hand by QA. Script result for Replied failed after 13.4 min (status not read); QA's manual check passed.",
+  "sent": {
+    "key": "AL-4009",
+    "url": "https://saleshandy.atlassian.net/browse/AL-4009",
+    "problems": [],
+    "at": "2026-10-16T05:05:55.866Z"
+  }
+}

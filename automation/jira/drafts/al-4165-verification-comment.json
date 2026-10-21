@@ -1,0 +1,12 @@
+{
+  "type": "comment",
+  "ticket": "AL-4165",
+  "body": "**Verification:** Retested on Staging after the fix. Prospect is Unsubscribed in Saleshandy trigger, Update a Deal in HubSpot activity, contact with 3 deals created one after the other: the latest created deal is now updated with the configured Pipeline Stage, Deal Type and Priority, and the older deals are left unchanged. Pass.",
+  "waitingFor": "QA to review wording and send via npm run jira.",
+  "sent": {
+    "key": "AL-4165",
+    "url": "https://saleshandy.atlassian.net/browse/AL-4165",
+    "problems": [],
+    "at": "2026-10-19T09:30:22.661Z"
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "type": "comment",
+  "ticket": "AL-4128",
+  "body": "Verified on production after deploy. Retested the scenario from this ticket and it works as expected.",
+  "waitingFor": "QA to confirm: covered by production smoke test 05 (Update a Deal, contact with 3 deals, Extra Configuration set, latest deal updated, the other two unchanged), passed 2026-10-14. Evidence: automation/test-results-emailopened-prod-smoke/.",
+  "sent": {
+    "key": "AL-4128",
+    "url": "https://saleshandy.atlassian.net/browse/AL-4128",
+    "problems": [],
+    "at": "2026-10-14T15:13:08.174Z"
+  }
+}

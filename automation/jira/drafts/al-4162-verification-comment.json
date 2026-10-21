@@ -1,0 +1,12 @@
+{
+  "type": "comment",
+  "ticket": "AL-4162",
+  "body": "**Verification:** Retested on Staging after the fix. Prospect is Unsubscribed in Saleshandy trigger, Create a Note in HubSpot activity paired with Create a Deal in HubSpot: a \"Note created via Saleshandy\" note now appears on both the created contact and the created deal, matching the Success status in Logs. Pass.",
+  "waitingFor": "QA to review wording and send via npm run jira.",
+  "sent": {
+    "key": "AL-4162",
+    "url": "https://saleshandy.atlassian.net/browse/AL-4162",
+    "problems": [],
+    "at": "2026-10-19T09:29:44.855Z"
+  }
+}

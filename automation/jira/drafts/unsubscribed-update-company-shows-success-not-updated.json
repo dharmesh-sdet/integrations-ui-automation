@@ -1,0 +1,30 @@
+{
+  "type": "bug",
+  "project": "AL",
+  "priority": "Medium",
+  "environment": "Production",
+  "epic": "AL-3982",
+  "assignee": {
+    "name": "Darshan",
+    "accountId": "5af5d8dd244bc90a10605d4f"
+  },
+  "qa": {
+    "name": "Dharmesh Patel",
+    "accountId": "712020:c7dedb58-9cb3-4450-a98f-5b5b56f6556b"
+  },
+  "links": [
+    "AL-4015",
+    "AL-3984",
+    "AL-4126",
+    "AL-4127"
+  ],
+  "attachments": [],
+  "summary": "Prospect is Unsubscribed in Saleshandy: Update a Company in HubSpot activity shows Success but does not update the company",
+  "description": "**Prerequisites:**\n- The HubSpot integration is connected to Saleshandy.\n- The Prospect is Unsubscribed in Saleshandy trigger is enabled with the Update a Company in HubSpot activity selected (no Extra Configuration).\n- The prospect's contact exists in HubSpot with one associated company.\n\n**Steps to Reproduce:**\n1. Enable the Prospect is Unsubscribed in Saleshandy trigger and select Update a Company in HubSpot. Save.\n2. In Saleshandy, change the prospect's City and State.\n3. Mark the prospect as Unsubscribed (Prospects tab > Mark as Unsubscribe).\n4. Go to Settings > Integrations > HubSpot > Logs and check the workflow entry.\n5. Open the associated company record in HubSpot and check City and State.\n\n**Actual Result:**\n- The log entry shows Success.\n- The company's City stays \"--\" and does not pick up the new value; State is unchanged too.\n\n**Expected Result:**\n- The company should show the new City and State values, matching the Success status in Logs.\n\n**Note:**\n- Affected Environment - Staging.\n- Same symptom as AL-4126 (Sequence Email is Opened trigger) and AL-4127 (Link is Clicked trigger), both fixed and Done. The fix does not appear to extend to the Prospect is Unsubscribed trigger's workflow definition.\n",
+  "sent": {
+    "key": "AL-4163",
+    "url": "https://saleshandy.atlassian.net/browse/AL-4163",
+    "problems": [],
+    "at": "2026-10-19T06:17:14.920Z"
+  }
+}

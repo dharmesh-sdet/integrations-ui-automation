@@ -1,0 +1,12 @@
+{
+  "type": "comment",
+  "ticket": "AL-4129",
+  "body": "**Verification:** Retested on Staging after the fix. Reply is Received in Saleshandy trigger, Record (log) an email activity in HubSpot activity paired with Update a deal in HubSpot: for a contact with 3 deals, after Mark as Replied the logged email on the latest created deal no longer shows \"Unknown Contact\". The deal is updated with the configured values and the logged email is also on the contact. Pass.",
+  "waitingFor": "QA to read the draft and send it from npm run jira. Evidence: automation/reports/replyreceived7/ (Record (log) an email activity > 6 passed 2026-10-15, 3.0 min; earlier failing run reports/replyreceived5/).",
+  "sent": {
+    "key": "AL-4129",
+    "url": "https://saleshandy.atlassian.net/browse/AL-4129",
+    "problems": [],
+    "at": "2026-10-15T05:45:35.701Z"
+  }
+}

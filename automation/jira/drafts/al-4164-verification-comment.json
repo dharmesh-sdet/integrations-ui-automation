@@ -1,0 +1,12 @@
+{
+  "type": "comment",
+  "ticket": "AL-4164",
+  "body": "**Verification:** Retested on Staging after the fix. Prospect is Unsubscribed in Saleshandy trigger, Create a Task in HubSpot activity, prospect not already a contact in HubSpot: the log entry now shows Success, and the contact is created along with the configured task. Pass.",
+  "waitingFor": "QA to review wording and send via npm run jira. The extra Note created in the same run is a separate problem, see al-4164-additional-bug-note-comment.json; send that one too if it still agrees with what you saw.",
+  "sent": {
+    "key": "AL-4164",
+    "url": "https://saleshandy.atlassian.net/browse/AL-4164",
+    "problems": [],
+    "at": "2026-10-19T09:30:20.485Z"
+  }
+}

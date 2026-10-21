@@ -1,0 +1,12 @@
+{
+  "type": "comment",
+  "ticket": "AL-4013",
+  "body": "**Verification:** Production testing is done. Smoke tested the Sequence Email is Opened in Saleshandy trigger on Production, all 9 activities:\n\n| # | Activity | What was checked | Status |\n| --- | --- | --- | --- |\n| 1 | Create a Contact in HubSpot | One open counts once (Opened 1), one log entry with Success, contact created with the mapped properties (AL-4013). | Pass |\n| 2 | Update a Contact in HubSpot | Workflow Success, contact shows the changed Job Title and City. | Pass |\n| 3 | Create a Deal in HubSpot | Deal created and associated to the contact. | Pass |\n| 4 | Update a Deal in HubSpot | With 3 deals and Extra Configuration set, the latest created deal gets the configured values and the other two are unchanged, not Success with nothing updated (AL-4128). | Pass |\n| 5 | Create a Company in HubSpot | One company created and associated to the contact. | Pass |\n| 6 | Update a Company in HubSpot | With 2 associated companies, the latest company shows the new City and State and the other is unchanged (AL-4126). | Pass |\n| 7 | Create a Task in HubSpot | Task created with the configured values. | Pass |\n| 8 | Create a Note in HubSpot | Paired with Create a Contact, the note is on the contact with Step 1 and Variant A. | Pass |\n| 9 | Record (log) an Email Activity in HubSpot | Paired with Update a Contact, the email is logged on the contact. | Pass |",
+  "waitingFor": "QA to check the wording and that rows 3, 5 and 7 may stay one-line. Evidence: automation/test-results-emailopened-prod-smoke/ (tests 1 to 9) and test-results-emailopened-prod-smoke-rec10/ (test 10, passed on rerun after a script fix). Run 2026-10-14.",
+  "sent": {
+    "key": "AL-4013",
+    "url": "https://saleshandy.atlassian.net/browse/AL-4013",
+    "problems": [],
+    "at": "2026-10-14T15:13:40.974Z"
+  }
+}

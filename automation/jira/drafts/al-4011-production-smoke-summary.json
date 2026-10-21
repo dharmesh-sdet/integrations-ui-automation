@@ -1,0 +1,12 @@
+{
+  "type": "comment",
+  "ticket": "AL-4011",
+  "body": "**Verification:** Production testing is done. Smoke tested the Reply is Received in Saleshandy trigger on Production, all 9 activities:\n\n| # | Activity | What was checked | Status |\n| --- | --- | --- | --- |\n| 1 | Create a Contact in HubSpot | Baseline: one reply counts once (1 Replied, Replied badge, one log entry with Success). Contact created with the mapped properties. | Pass |\n| 2 | Update a Contact in HubSpot | Workflow Success, contact shows the changed Job Title and City. | Pass |\n| 3 | Create a Deal in HubSpot | Deal created and associated to the contact. | Pass |\n| 4 | Update a Deal in HubSpot | With 3 deals and Extra Configuration set, the latest created deal gets the configured values and the other two are unchanged. A second reply updates the latest deal again with the new values (AL-4119). | Pass |\n| 5 | Create a Company in HubSpot | One company created and associated to the contact. | Pass |\n| 6 | Update a Company in HubSpot | With 2 associated companies, the latest company shows the new City and the other is unchanged. | Pass |\n| 7 | Create a Task in HubSpot | Task created with the configured values. | Pass |\n| 8 | Create a Note in HubSpot | Paired with Create a Deal, the note is on both the contact and the deal. | Pass |\n| 9 | Record (log) an Email Activity in HubSpot | Paired with Create a Deal, the email is logged on both the deal and the contact. Paired with Update a Deal, the email is logged on the latest created deal and the contact, and the deal does not show \"Unknown Contact\" (AL-4129). | Pass |",
+  "waitingFor": "QA to check the wording and send. Source: Reply Received production smoke, run 2026-10-15 (reports/replysmoke, sequence 974166, account emailopenedprod); 7 of 11 script tests passed; the 4 that failed in the script (02 Update a Contact, 08 Create a Note, 09 and 10 Record (log)) were checked by hand by QA and are Pass (QA, 2026-10-16). AL-4118 (note Sequence link host) is not cited because QA did not select it.",
+  "sent": {
+    "key": "AL-4011",
+    "url": "https://saleshandy.atlassian.net/browse/AL-4011",
+    "problems": [],
+    "at": "2026-10-16T04:59:17.254Z"
+  }
+}

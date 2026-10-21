@@ -1,0 +1,12 @@
+{
+  "type": "comment",
+  "ticket": "AL-4014",
+  "body": "**Verification:** Production testing is done. Smoke tested the Link is Clicked in Saleshandy trigger on Production, all 9 activities:\n\n| # | Activity | What was checked | Status |\n| --- | --- | --- | --- |\n| 1 | Create a Contact in HubSpot | One click counts once (Clicked 1), purple link icon, one log entry with Success, contact created with the mapped properties. | Pass |\n| 2 | Update a Contact in HubSpot | Workflow Success, contact shows the changed Job Title and City. | Pass |\n| 3 | Create a Deal in HubSpot | Deal created and associated to the contact. | Pass |\n| 4 | Update a Deal in HubSpot | With 3 deals and Extra Configuration set, the latest created deal gets the configured values and the other two are unchanged (AL-4103). | Pass |\n| 5 | Create a Company in HubSpot | One company created and associated to the contact. | Pass |\n| 6 | Update a Company in HubSpot | With 2 associated companies, the latest company shows the new City and the other is unchanged (AL-4127). | Pass |\n| 7 | Create a Task in HubSpot | Task created with the configured values. | Pass |\n| 8 | Create a Note in HubSpot | Paired with Create a Deal, the note is on both the contact and the deal and shows Click Count: 1 (AL-4121, AL-4120). | Pass |\n| 9 | Record (log) an Email Activity in HubSpot | Paired with Create a Deal, the email is logged on both the contact and the deal (AL-4122). Paired with Update a Deal, the latest created deal is updated and the email is logged on the contact's deals without \"Unknown Contact\" (AL-4123, AL-4130). | Pass, working as intended |\n\n",
+  "waitingFor": "QA to check the wording and send. Row 9: the logged email on the older deals is expected behavior per the developer (AL-4130), so it is Pass, working as intended. Evidence: automation/test-results-linkclicked-prod-smoke2/ (run 2026-10-15, sequence 974015, account emailopenedprod, click waits 90 s first and 180 s second per the developer's note). Production result: 10 of 11 passed; test 10 failed only on the older-deal assertion, now expected.",
+  "sent": {
+    "key": "AL-4014",
+    "url": "https://saleshandy.atlassian.net/browse/AL-4014",
+    "problems": [],
+    "at": "2026-10-15T12:41:08.948Z"
+  }
+}

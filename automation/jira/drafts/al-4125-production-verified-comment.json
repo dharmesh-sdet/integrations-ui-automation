@@ -1,0 +1,12 @@
+{
+  "type": "comment",
+  "ticket": "AL-4125",
+  "body": "**Verification:** Retested on Production (2026-10-15). Email is Bounced in Saleshandy trigger, Update a Company in HubSpot activity: with a contact that has two associated companies (City and State empty), marking the step 1 email as bounced shows Success in the HubSpot Logs, the latest associated company now has the prospect's City and State, and the other company is unchanged. Pass.",
+  "waitingFor": "QA to check the wording and send. Source: Email Bounced production smoke test 06 (Update a Company, 2 companies), passed 2026-10-15, sequence 973942, account emailopenedprod. Evidence: automation/test-results-bounced-prod-smoke/. The one-company case was not part of the production smoke (staging comment 78809 covers it).",
+  "sent": {
+    "key": "AL-4125",
+    "url": "https://saleshandy.atlassian.net/browse/AL-4125",
+    "problems": [],
+    "at": "2026-10-15T08:15:22.317Z"
+  }
+}

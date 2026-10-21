@@ -1,0 +1,30 @@
+{
+  "type": "bug",
+  "project": "AL",
+  "priority": "Medium",
+  "environment": "Production",
+  "epic": "AL-3982",
+  "assignee": {
+    "name": "Darshan",
+    "accountId": "5af5d8dd244bc90a10605d4f"
+  },
+  "qa": {
+    "name": "Dharmesh Patel",
+    "accountId": "712020:c7dedb58-9cb3-4450-a98f-5b5b56f6556b"
+  },
+  "links": [
+    "AL-4118",
+    "AL-4133",
+    "AL-4131"
+  ],
+  "attachments": [],
+  "summary": "Reply is Received in Saleshandy: Attach Note in Salesforce activity adds a Sequence link with the production host (my.saleshandy.com) on Staging",
+  "description": "**Prerequisites:**\n- Staging account (pyxis.lifeisgoodforlearner.com) connected to Salesforce.\n- Reply is Received in Saleshandy trigger enabled with the \"Create a Contact in Salesforce\" and \"Attach Note in Salesforce\" activities only.\n- Create a Contact in Salesforce and Attach Note in Salesforce have no Extra Configuration.\n- An active sequence with a prospect that is not in Salesforce.\n\n**Steps to Reproduce:**\n1. Add the prospect to the active sequence and wait until the step 1 email is sent.\n2. Open the sequence > Emails, open the menu on the prospect's Step 1 email and click Mark as replied.\n3. Open API & Integrations > Integrations > Salesforce > Logs and wait for the new \"Reply is Received in Saleshandy\" entry to show Success.\n4. Open the created Contact in Salesforce > Related > Notes & Attachments and open the \"reply-received\" note.\n5. Read the Sequence line in the note's Body.\n\n**Actual Result:**\n- The workflow shows Success and the note is created on the Contact.\n- The note's Sequence line is `Sequence: https://my.saleshandy.com/sequence/196746/steps`. It uses the production host (my.saleshandy.com) although the note was created from the Staging account.\n\n**Expected Result:**\n- The Sequence link in the note should use the host of the environment the note was created from.\n\n**Note:**\n- Affected Environment: Staging.\n- The same problem is already reported for the HubSpot \"Create a Note in HubSpot\" activity in AL-4118.\n",
+  "waitingFor": "Screenshot is at automation/context/salesforce/evidence/reply-2026-10-20/attach-note-sequence-link.png (the Salesforce note with the my.saleshandy.com Sequence line). Attach by hand after sending.",
+  "sent": {
+    "key": "AL-4167",
+    "url": "https://saleshandy.atlassian.net/browse/AL-4167",
+    "problems": [],
+    "at": "2026-10-20T10:42:16.609Z"
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "type": "bug",
+  "project": "AL",
+  "priority": "Medium",
+  "environment": "Production",
+  "epic": "AL-3982",
+  "assignee": {
+    "name": "Darshan",
+    "accountId": "5af5d8dd244bc90a10605d4f"
+  },
+  "qa": {
+    "name": "Dharmesh Patel",
+    "accountId": "712020:c7dedb58-9cb3-4450-a98f-5b5b56f6556b"
+  },
+  "links": [
+    "AL-4014",
+    "AL-4123"
+  ],
+  "attachments": [],
+  "summary": "Link is Clicked in Saleshandy: Record (log) an Email Activity in HubSpot activity logs the email on the older deals as well as the latest deal, when paired with Update a Deal in HubSpot activity",
+  "description": "**Prerequisites:**\n- Account connected to HubSpot.\n- Link is Clicked in Saleshandy trigger enabled with the \"Update a Deal in Hubspot\" activity (Pipeline: Sales Pipeline, Pipeline Stage: Follow-Up, Deal Type: New Business, Deal Priority: High, Closing Date: 0 Days) and the \"Record(log) an Email Activity in Hubspot\" activity selected.\n- Active sequence with Track link clicks on, 2 links in the step 1 email.\n- The prospect's contact exists in HubSpot with 3 deals, created one after the other (oldest, middle, latest).\n\n**Steps to Reproduce:**\n1. Add the prospect to the sequence and wait for the step 1 email to be sent.\n2. Wait 90 seconds after the email is sent, open it in the prospect's inbox and click the first link.\n3. Open API & Integrations > Integrations > HubSpot > Logs and wait for the new \"Link is Clicked in Saleshandy\" entry to show Success.\n4. In HubSpot, open the Activities tab of the oldest deal, then the middle deal and the latest deal.\n\n**Actual Result:**\n- The step 1 email was clicked (Clicked 1) and the log entry shows Success.\n- The latest deal is updated and shows the logged email.\n- The oldest deal and the middle deal also show the logged email (\"Logged email by ... via Saleshandy\"), although they are not updated.\n- A screenshot will be attached to the ticket manually.\n\n**Expected Result:**\n- The email is logged on the latest created deal and on the contact only.\n- The older deals have no logged email.\n\n**Note:**\n- Affected Environment - Staging and Production.\n- Production: the oldest deal showed the email in the smoke test (Link Clicked production smoke test 10); the middle deal was not read there. Staging (Record (log) an email activity in HubSpot > 6): both older deals showed the email.\n- Related: AL-4123 (same activity pairing, \"Unknown Contact\" on the logged email, QA Approved).\n",
+  "waitingFor": "QA to attach screenshots of the logged email on an older deal (production: Clari Deal 1 of contact Kenneth Mora, 3:59 PM, 2026-10-15) and of the Success log entry, then send with npm run jira. Evidence: automation/test-results-linkclicked-prod-smoke2/ (production test 10) and the staging re-run of Record (log) 6 (older deals 354817380044 and 354530116324 both show the email).",
+  "sent": {
+    "key": "AL-4130",
+    "url": "https://saleshandy.atlassian.net/browse/AL-4130",
+    "problems": [],
+    "at": "2026-10-15T11:03:05.377Z"
+  }
+}

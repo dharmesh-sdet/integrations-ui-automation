@@ -1,0 +1,29 @@
+{
+  "type": "bug",
+  "project": "AL",
+  "priority": "Medium",
+  "environment": "Production",
+  "epic": "AL-3982",
+  "assignee": {
+    "name": "Darshan",
+    "accountId": "5af5d8dd244bc90a10605d4f"
+  },
+  "qa": {
+    "name": "Dharmesh Patel",
+    "accountId": "712020:c7dedb58-9cb3-4450-a98f-5b5b56f6556b"
+  },
+  "links": [
+    "AL-4015",
+    "AL-3984",
+    "AL-4103"
+  ],
+  "attachments": [],
+  "summary": "Prospect is Unsubscribed in Saleshandy: Update a Deal in HubSpot activity updates the first created deal instead of the latest created deal when the contact has multiple deals",
+  "description": "**Prerequisites:**\n- The HubSpot integration is connected to Saleshandy.\n- The Prospect is Unsubscribed in Saleshandy trigger is enabled with the Update a Deal in HubSpot activity (Pipeline: Sales Pipeline, Pipeline Stage: Follow-Up, Deal Type: New Business, Deal Priority: High).\n- The prospect's contact exists in HubSpot with 3 deals, created one after the other.\n\n**Steps to Reproduce:**\n1. Enable the Prospect is Unsubscribed in Saleshandy trigger and select Update a Deal in HubSpot. Fill in the Extra Configuration, click Save, then click Save on the Triggers and Activities page.\n2. Create the prospect's contact in HubSpot with 3 deals, created one after the other.\n3. Mark the prospect as Unsubscribed (Prospects tab > Mark as Unsubscribe).\n4. Go to Settings > Integrations > HubSpot > Logs and check the workflow entry.\n5. Open the latest created deal in HubSpot and check Pipeline Stage, Deal Type and Priority.\n6. Open the first created deal and check the same fields.\n\n**Actual Result:**\n- The log entry shows Success.\n- The latest created deal is not updated: Pipeline Stage stays \"Prospecting\" (not \"Follow-Up\"), Deal Type stays \"--\" (not \"New Business\"), Priority stays \"--\" (not \"High\").\n- The first created deal is updated instead, with the configured values.\n\n**Expected Result:**\n- When the contact has multiple deals, Update a Deal in HubSpot should always update the latest created deal, not an older one.\n\n**Note:**\n- Affected Environment - Staging.\n- Same symptom as AL-4103 (Email sent from Saleshandy trigger, paired with Record an Email Activity), fixed and Done. The fix does not appear to extend to the Prospect is Unsubscribed trigger's workflow definition.\n",
+  "sent": {
+    "key": "AL-4165",
+    "url": "https://saleshandy.atlassian.net/browse/AL-4165",
+    "problems": [],
+    "at": "2026-10-19T06:31:30.471Z"
+  }
+}

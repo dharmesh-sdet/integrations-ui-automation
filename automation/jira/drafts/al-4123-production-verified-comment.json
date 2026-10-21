@@ -1,0 +1,12 @@
+{
+  "type": "comment",
+  "ticket": "AL-4123",
+  "body": "Verified on production after deploy. Retested the scenario from this ticket and it works as expected.",
+  "waitingFor": "QA to check and send. Source: Link Clicked production smoke test 10 (Record (log) paired with Update a Deal, 3 deals), 2026-10-15: the latest deal is updated, shows the logged email and does not say Unknown Contact. The test's last assertion (no email on older deals) failed and is now expected behavior (AL-4130); the contact check was not reached on production, it passed on staging. Evidence: automation/test-results-linkclicked-prod-smoke2/ (production run 2026-10-15, sequence 974015) and the staging re-run of Record (log) 6 (older deals 354817380044 and 354530116324 show the email).",
+  "sent": {
+    "key": "AL-4123",
+    "url": "https://saleshandy.atlassian.net/browse/AL-4123",
+    "problems": [],
+    "at": "2026-10-15T12:40:35.705Z"
+  }
+}

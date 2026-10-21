@@ -1,0 +1,30 @@
+{
+  "type": "bug",
+  "project": "AL",
+  "priority": "Medium",
+  "environment": "Production",
+  "epic": "AL-3982",
+  "assignee": {
+    "name": "Darshan",
+    "accountId": "5af5d8dd244bc90a10605d4f"
+  },
+  "qa": {
+    "name": "Dharmesh Patel",
+    "accountId": "712020:c7dedb58-9cb3-4450-a98f-5b5b56f6556b"
+  },
+  "links": [
+    "AL-4011",
+    "AL-4123",
+    "AL-4113"
+  ],
+  "attachments": [],
+  "summary": "Reply is Received in Saleshandy: Record (log) an Email Activity in HubSpot activity shows the logged email on the deal as \"Unknown Contact\" when paired with Update a Deal in HubSpot activity",
+  "description": "**Prerequisites:**\n- Staging account connected to HubSpot.\n- Reply is Received in Saleshandy trigger enabled with the \"Update a deal in HubSpot\" activity (Pipeline: Sales Pipeline, Pipeline Stage: Initial Contact, Deal Type: New Business, Deal Priority: High, Closing Date: 0 Days) and the \"Record (log) an email activity in HubSpot\" activity selected.\n- Active sequence with 2 steps.\n- The prospect's contact exists in HubSpot with 3 deals.\n\n**Steps to Reproduce:**\n1. Add the prospect to the sequence and wait for the step 1 email to show as Sent.\n2. Open the sequence > Emails tab, open Actions on the prospect's row and click Mark as Replied.\n3. Open Settings > Integrations > HubSpot > Logs and wait for the new \"Reply is received in Saleshandy\" entry to show Success.\n4. Open the latest created deal in HubSpot > Activities.\n\n**Actual Result:**\n- The Logs entry shows Success.\n- The latest created deal is updated with the configured Pipeline, Stage, Deal Type and Priority.\n- The logged email on the latest deal is headed \"Incoming email - Re: Save cost & achieve more! from Unknown Contact\" and \"to Unknown Contact\" (preview: \"Marked as replied in Saleshandy (no reply content)\").\n- A screenshot will be attached to the ticket manually.\n\n**Expected Result:**\n- The logged email on the deal shows the prospect as the contact, not \"Unknown Contact\".\n\n**Note:**\n- Affected Environment - Staging.\n- Seen on 2026-10-14 at about 4:43 PM IST. Logs execution ID not recorded.\n- Related: AL-4123 (same symptom on Link is Clicked in Saleshandy, QA Approved after a retest on 2026-10-14) and AL-4113 (same symptom on Prospect Outcome is updated in Saleshandy, Done).\n- The email being logged on the deal only, and not on the contact, is expected for this pairing (QA, 2026-10-13).\n",
+  "waitingFor": "QA to attach a screenshot of the logged email on the deal and of the Logs entry, and to send the draft from npm run jira.",
+  "sent": {
+    "key": "AL-4129",
+    "url": "https://saleshandy.atlassian.net/browse/AL-4129",
+    "problems": [],
+    "at": "2026-10-14T12:09:03.311Z"
+  }
+}

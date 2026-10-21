@@ -1,0 +1,12 @@
+{
+  "type": "comment",
+  "ticket": "AL-4121",
+  "body": "Verified on production after deploy. Retested the scenario from this ticket and it works as expected.",
+  "waitingFor": "QA to check and send. Source: Link Clicked production smoke test 08 (Create a Note paired with Create a Deal: note on contact and deal), passed 2026-10-15. Evidence: automation/test-results-linkclicked-prod-smoke2/ (run 2026-10-15, sequence 974015, account emailopenedprod, click waits 90 s first and 180 s second per the developer's note).",
+  "sent": {
+    "key": "AL-4121",
+    "url": "https://saleshandy.atlassian.net/browse/AL-4121",
+    "problems": [],
+    "at": "2026-10-15T11:06:43.014Z"
+  }
+}

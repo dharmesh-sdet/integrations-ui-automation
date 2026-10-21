@@ -1,0 +1,29 @@
+{
+  "type": "bug",
+  "project": "AL",
+  "priority": "Medium",
+  "environment": "Production",
+  "epic": "AL-3982",
+  "assignee": {
+    "name": "Darshan",
+    "accountId": "5af5d8dd244bc90a10605d4f"
+  },
+  "qa": {
+    "name": "Dharmesh Patel",
+    "accountId": "712020:c7dedb58-9cb3-4450-a98f-5b5b56f6556b"
+  },
+  "links": [
+    "AL-4015",
+    "AL-3984",
+    "AL-4121"
+  ],
+  "attachments": [],
+  "summary": "Prospect is Unsubscribed in Saleshandy: Create a Note in HubSpot activity shows Success but the note is not created, paired with Create a Deal in HubSpot",
+  "description": "**Prerequisites:**\n- The HubSpot integration is connected to Saleshandy.\n- The Prospect is Unsubscribed in Saleshandy trigger is enabled with the Create a Deal in HubSpot activity (Pipeline: Sales Pipeline, Pipeline Stage: Initial Contact, Deal Type: New Business, Deal Priority: High, Closing Date: 0 Days) and the Create a Note in HubSpot activity selected.\n- The prospect is not a contact in HubSpot.\n\n**Steps to Reproduce:**\n1. Enable the Prospect is Unsubscribed in Saleshandy trigger and select Create a Deal in HubSpot and Create a Note in HubSpot.\n2. Fill in the Create a Deal Extra Configuration, click Save, then click Save on the Triggers and Activities page.\n3. Add a prospect that is not already a contact in HubSpot to the active sequence.\n4. Mark the prospect as Unsubscribed (Prospects tab > Mark as Unsubscribe).\n5. Go to Settings > Integrations > HubSpot > Logs and check the workflow entry.\n6. Open the created contact and deal in HubSpot and check Activities.\n\n**Actual Result:**\n- The log entry shows Success.\n- The contact and deal are both created and associated correctly.\n- No \"Note created via Saleshandy\" note appears on the contact's or the deal's Activity feed, even after waiting.\n\n**Expected Result:**\n- When Create a Note in HubSpot is paired with Create a Deal in HubSpot, a note should appear on both the created contact and the created deal, matching the Success status in Logs.\n\n**Note:**\n- Affected Environment - Staging.\n- Same symptom as AL-4121 (fixed, Done) on the Link is Clicked in Saleshandy trigger. The fix does not appear to extend to the Prospect is Unsubscribed trigger's workflow definition.\n",
+  "sent": {
+    "key": "AL-4162",
+    "url": "https://saleshandy.atlassian.net/browse/AL-4162",
+    "problems": [],
+    "at": "2026-10-19T06:17:03.913Z"
+  }
+}

@@ -45,7 +45,6 @@ const flow = createFlow({
   // AL-4120: the note's "Click Count:" line was empty. After the first click
   // (step 1) it must show 1.
   noteContains: (row, step) => [`Step: ${step}`, 'Variant: A', `Prospect Email: ${row['Email']}`, ...(step === 1 ? ['Click Count: 1'] : [])],
-  sendStep1Now: true,
   step2Events: true,
   secondEventRows: true,
   // step 2: Send now first (days away); link: 0 = first link, 1 = second.

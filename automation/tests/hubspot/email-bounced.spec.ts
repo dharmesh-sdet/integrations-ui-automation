@@ -622,20 +622,21 @@ test.describe('Email is Bounced in Saleshandy', () => {
       expect(await hubspotContacts.contactExists(row['Email'], fullName(row)), `contact ${row['Email']} in HubSpot`).toBe(false);
     });
   });
-  // Create a Task, Phase 1: the modal only, nothing is typed or selected and no
-  // prospect is bounced (scenario file, QA 2026-10-12). Same modal and
-  // assertions as Email Opened, seen on staging 2026-10-13: Save is disabled
-  // from the start; after touching the fields only Task Title (input-error)
-  // and Due In (bs-input-number-error) turn red.
+  // Create a Task, Phase 1: the modal only, no prospect is bounced. The account
+  // already has saved Create a Task values (Phase 2 saves them and they cannot be
+  // cleared), so the modal opens filled (QA 2026-10-14). Row 1 checks that
+  // saved state; row 2 clears Task Title and Due In by hand, which are the two
+  // fields that turn red (input-error, bs-input-number-error) on staging.
   test('Create a Task in HubSpot > 1: Extra Configuration modal just opened', async ({ saleshandyIntegration }) => {
     await test.step('Select Create a Task, touch nothing', async () => {
       await flow.startClean(saleshandyIntegration);
       await saleshandyIntegration.selectActivity(TRIGGER, CREATE_TASK);
     });
-    await test.step('No field is highlighted red and Save is disabled', async () => {
+    await test.step('The saved values show, no field is red and Save is enabled', async () => {
       const dialog = saleshandyIntegration.extraConfiguration();
+      await expect(saleshandyIntegration.configTextbox('Task Title'), 'Task Title').not.toHaveValue('');
       await expect(dialog.locator('.input-error, .bs-input-number-error'), 'fields highlighted red').toHaveCount(0);
-      await expect(saleshandyIntegration.configSaveButton(), 'Save').toBeDisabled();
+      await expect(saleshandyIntegration.configSaveButton(), 'Save').toBeEnabled();
     });
     await test.step('Close the dialog and remove Create a Task', async () => {
       await saleshandyIntegration.cancelExtraConfiguration();
@@ -649,33 +650,17 @@ test.describe('Email is Bounced in Saleshandy', () => {
       await flow.startClean(saleshandyIntegration);
       await saleshandyIntegration.selectActivity(TRIGGER, CREATE_TASK);
     });
-    await test.step('Click into each field and leave it, typing and selecting nothing', async () => {
-      await dialog.locator('.mb-3').nth(0).locator('input').click();
-      await dialog.locator('.mb-3').nth(1).locator('.bs-select-box').click();
-      await dialog.getByText('Extra Configuration').click();
-      await dialog.locator('.mb-3').nth(2).locator('.bs-select-box').click();
-      await dialog.getByText('Extra Configuration').click();
-      await dialog.locator('.mb-3').nth(3).locator('input').click();
-      await dialog.locator('.mb-3').nth(4).locator('input').click();
+    await test.step('Clear Task Title and Due In', async () => {
+      await saleshandyIntegration.configTextbox('Task Title').fill('');
+      await saleshandyIntegration.dueIn().fill('');
       await dialog.getByText('Extra Configuration').click();
     });
-    await test.step('Task Title and Due In are red; Save stays disabled', async () => {
+    await test.step('Task Title and Due In are red; Save is disabled', async () => {
       await expect(dialog.locator('.mb-3').nth(0).locator('.input-error'), 'Task Title red').toHaveCount(1);
       await expect(dialog.locator('.mb-3').nth(3).locator('.bs-input-number-error'), 'Due In red').toHaveCount(1);
       await expect(saleshandyIntegration.configSaveButton(), 'Save').toBeDisabled();
     });
-    // Scenario: "each empty field is highlighted red". Task Type, Task Priority
-    // and Task Associated With did not turn red when touched on staging
-    // (Email Opened, 2026-10-13); recorded for QA, not asserted.
-    await test.step('Record the other fields (Task Type, Task Priority, Task Associated With), not asserted', async () => {
-      const notRed: string[] = [];
-      for (const [i, label] of [[1, 'Task Type'], [2, 'Task Priority'], [4, 'Task Associated With']] as const) {
-        const cls = await dialog.locator('.mb-3').nth(i).evaluate((el) => [...el.querySelectorAll('*')].flatMap((e) => [...e.classList]).filter((c) => /error/i.test(c)));
-        if (cls.length === 0) notRed.push(label);
-      }
-      test.info().annotations.push({ type: 'Not highlighted red when touched', description: notRed.join(', ') || 'none' });
-    });
-    await test.step('Close the dialog and remove Create a Task', async () => {
+    await test.step('Close the dialog without saving and remove Create a Task', async () => {
       await saleshandyIntegration.cancelExtraConfiguration();
       await saleshandyIntegration.removeActivity(TRIGGER, CREATE_TASK);
     });

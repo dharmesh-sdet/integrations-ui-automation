@@ -1,9 +1,10 @@
 import type { Page } from '@playwright/test';
 import { BasePage } from '../base.page.ts';
 
-// Portal of the saved HubSpot test account, seen in every URL during the
-// 2026-10-08 walkthrough (e.g. /contacts/247419080/...).
-export const HUBSPOT_PORTAL_ID = '247419080';
+// Portal of the saved HubSpot test account (dharmesh+int@saleshandy.com), seen
+// in the session saved 2026-10-19 (e.g. /contacts/247734202/...). The
+// 2026-10-08 portal was 247419080.
+export const HUBSPOT_PORTAL_ID = '247734202';
 
 export abstract class HubSpotPage extends BasePage {
   readonly platform = 'hubspot' as const;

@@ -745,3 +745,32 @@ Link Clicked is stopped; the `linkclick` account and `reports/linkclick` are fre
 - Production sequence: Claude may create it on `emailopenedprod` once the Email Opened smoke run has ended (not before; do not touch triggers or its run).
 - Run day: later, QA tells Claude. Spec stays ready.
 - Done since the last save: KB updated (c6f3177), scope and rules in `notes/production-testing/README.md` (3ba2246), post-deploy log monitoring dropped from smoke (QA 2026-10-14). Earlier "kb-update not done" and "scope fix pending QA OK" lines above are stale.
+
+## Jira status and stop point (session a2, 2026-10-14 night)
+
+- AL-4014: In QA (not approved yet). AL-4120, AL-4121, AL-4122, AL-4123, AL-4127: QA Approved. AL-4103: Done.
+- Waiting on QA: OK to draft the AL-4014 staging verification comment (46 of 48 pass, 2 skipped by design) and the transition. No Jira write done.
+- Production smoke (`tests/hubspot/link-clicked-smoke.spec.ts`) is NOT run. Next: after the Email Opened smoke run ends, create sequence "HubSpot Link Clicked Smoke" on `emailopenedprod`, confirm trigger name on production, run only when QA says.
+- No runs live from this session.
+
+## Update 2026-10-15: second-event rows no longer depend on another row (session local-project-76)
+
+QA, 2026-10-15: no row may depend on another row. Create a Contact 6, Create a Note 5 and Record (log) 7 in `src/flows/activity-rows.ts` now run their own first event on their own prospect (rows added to `test-data/hubspot/link-clicked.csv`), then the second event. The `carried`/`fromRow` chain is removed. Shared file: Reply Received does not use these rows (`step2Events` is Link Clicked only).
+
+Run `reports/linkclick2` (3 tests, 11.2 min, chromium): Create a Contact 6 PASS (3.4 min), Create a Note 5 PASS (3.9 min), Record (log) 7 PASS (3.9 min).
+
+Same day, rule change (QA): Update a deal + Record (log) puts the email on both the latest deal and the contact. Record 6 and the smoke spec now check the contact; not re-run on Link Clicked yet.
+
+## Production smoke run, 2026-10-15 (session local-project-f3)
+
+- First run (`reports/linkclick-prod-smoke`, stopped after tests 00 and 01): Clicked stayed 0 for 10 min. Click came about 1 min after sending; the tracking domain answered 302. Cause: too early (developer's note: first click 90 s, second 180 s after sending). Not a product bug.
+- Sequence "HubSpot Link Clicked Smoke" id 974015 on emailopenedprod, completed by `tests/setup/link-clicked-smoke-sequence.spec.ts` (resume path added).
+- Second run (`test-results-linkclicked-prod-smoke2`, 54.4 min, waits 90 s / 180 s): 10 passed, 1 failed. Test 10 (Record (log) paired with Update a Deal, AL-4123): older deal 1 Activities shows the logged email (3:59 PM). Latest deal check passed; contact check not reached. QA bug-or-not pending.
+- Jira drafts (not sent): al-4014-production-smoke-summary, al-4103, al-4120, al-4121, al-4122, al-4127 production-verified comments.
+- Test 10 finding (QA 2026-10-15: "This is the bug"): Record (log) + Update a Deal logs the email on every deal of the contact. Staging re-run of Record (log) 6 shows it on both older deals (OBSERVATION lines, ids 354817380044 and 354530116324); the row passes because it never asserted older deals. Bug draft: jira/drafts/link-clicked-record-email-logged-on-older-deals.json (not sent).
+- 2026-10-15 evening: AL-4130 (email logged on older deals) - the developer says this is expected behavior and will move the ticket. Rule to apply: Record (log) + Update a Deal logs the email on every deal of the contact; production test 10 and staging Record (log) 6 older-deal assertions must be changed (proposed, not applied). Drafts: al-4130-intended-behavior-comment, al-4123-production-verified-comment, al-4014 row 9 now "Pass, working as intended".
+
+## Closed 2026-10-15 (session local-project-f3)
+- QA: Link Clicked workflow passed and production approved. Production smoke 10 of 11, test 10 (AL-4130) expected per the developer.
+- Still open, not applied (needs QA's OK): change older-deal assertion in production test 10 and staging Record (log) 6 to "email on all deals of the contact"; use `enable()` instead of `enableOnly` in the smoke spec before any further run on emailopenedprod; read Triggers & Activity on emailopenedprod to see which triggers my run switched off.
+- Jira drafts in jira/drafts not sent (QA sends): al-4014 summary, al-4103/4120/4121/4122/4123/4127 one-liners, al-4130 clarification.

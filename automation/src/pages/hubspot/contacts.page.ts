@@ -16,6 +16,17 @@ export class HubSpotContactsPage extends HubSpotPage {
     await this.page.locator('[data-test-id="create-object-dropdown-create-object"]').click();
 
     await this.createPanel.getByRole('textbox', { name: 'Email' }).fill(contact.email);
+    // An email that already belongs to a contact keeps Job title and Create
+    // disabled, and the test sat there for its whole timeout (production smoke,
+    // 2026-10-15: a generated name matched an older contact, 25 minutes lost).
+    // Fail at once; new test data is the fix, not a longer wait.
+    const exists = await this.createPanel
+      .getByText('This email address already belongs to a contact')
+      .waitFor({ timeout: 5_000 })
+      .then(() => true, () => false);
+    if (exists) {
+      throw new Error(`HubSpot already has a contact with ${contact.email}; use a new person in the test data (not created by this test).`);
+    }
     await this.createPanel.getByRole('textbox', { name: 'First name' }).fill(contact.firstName);
     await this.createPanel.getByRole('textbox', { name: 'Last name' }).fill(contact.lastName);
     // Job title is disabled until Email is filled; fill() waits for it.

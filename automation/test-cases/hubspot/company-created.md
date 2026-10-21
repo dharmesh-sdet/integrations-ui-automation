@@ -26,23 +26,22 @@ treat these as failures.
   properties as in the workflow context).
 - In Settings > Integrations > HubSpot > Triggers & Activities, enable only
   "Company Created/Properties Updated in HubSpot", select the row's
-  activity, fill its Extra Configuration, then Save. Other triggers are
-  disabled.
+  activity, fill its Extra Configuration, then Save. Other triggers are left
+  as they are (QA, 2026-10-15).
 - Two Saleshandy sequences: Sequence A (where prospects are moved) and
   Sequence B (used only to check that a status is not applied).
 - Logs: Settings > Integrations > HubSpot > Logs. Refresh 15 seconds after
   creating the company, then every 10 seconds until the new entry is Success.
 - Prospect check: search each contact in the Saleshandy Prospects list.
-- Run order (chain): Baseline > Add Prospect > Move Prospect to Another
+- Run order (chain): Add Prospect > Move Prospect to Another
   sequence > Assign a tag > Paused > Resume > Replied > Finished >
   Unsubscribed > Blacklist a domain. Sections below follow the product UI
   order.
 
-## Trigger behavior (baseline)
-
-| # | Scenario | Do | Expected | Ticket |
-|---|---|---|---|---|
-| 1 | Company with no associated contact (Add Prospect selected) | Create the company in HubSpot | Success. Nothing changes in Saleshandy | None |
+Not a valid scenario (QA, 2026-10-15): a company created with no associated
+contact. The workflow fails for it, and adding a contact to the company later
+does not trigger the workflow (that is a company property update, AL-4059).
+The earlier "Trigger behavior (baseline)" row was removed.
 
 ## Add Prospect in Saleshandy
 
@@ -50,9 +49,9 @@ Extra Configuration: None.
 
 | # | Scenario | Do | Expected | Ticket |
 |---|---|---|---|---|
-| 1 | 1 contact (C1), not in Saleshandy | Create the company with C1 | Success. C1 added as a prospect | None |
-| 2 | 3 contacts (C2, C3, C4), not in Saleshandy | Create the company with C2, C3, C4 | Success. All 3 added as prospects | None |
-| 3 | Mixed: C4 already a prospect, C5 and C6 not in Saleshandy | Create the company with C4, C5, C6 | Success. C5 and C6 added, C4 not duplicated | None |
+| 1 | C1 not in Saleshandy | Create company with C1 | Success. C1 added as prospect | None |
+| 2 | C2, C3, C4 not in Saleshandy | Create company with C2, C3, C4 | Success. All 3 added as prospects | None |
+| 3 | C4 already a prospect, C5 and C6 not in Saleshandy | Create company with C4, C5, C6 | Success. C5 and C6 added, C4 not duplicated | None |
 
 ## Move Prospect to Another sequence in Saleshandy
 
@@ -60,9 +59,9 @@ Extra Configuration: Sequence = Sequence A, Sequence Steps = Step 1.
 
 | # | Scenario | Do | Expected | Ticket |
 |---|---|---|---|---|
-| 1 | 1 contact (C1), prospect in no sequence | Create the company with C1 | Success. C1 in Sequence A | None |
-| 2 | 3 contacts (C2, C3, C4), prospects in no sequence | Create the company with C2, C3, C4 | Success. All 3 in Sequence A | None |
-| 3 | 2 contacts (C5, C6), prospects in no sequence | Create the company with C5, C6 | Success. Both in Sequence A | None |
+| 1 | C1 in no sequence | Create company with C1 | Success. C1 in Sequence A | None |
+| 2 | C2, C3, C4 in no sequence | Create company with C2, C3, C4 | Success. All 3 in Sequence A | None |
+| 3 | C5, C6 in no sequence | Create company with C5, C6 | Success. Both in Sequence A | None |
 
 ## Mark Prospect as unsubscribed in Saleshandy
 
@@ -70,7 +69,7 @@ Extra Configuration: None.
 
 | # | Scenario | Do | Expected | Ticket |
 |---|---|---|---|---|
-| 1 | 2 contacts (C5, C6), prospects in Sequence A | Create the company with C5, C6 | Success. Both marked Unsubscribed | None |
+| 1 | C5, C6 in Sequence A | Create company with C5, C6 | Success. Both marked Unsubscribed | None |
 
 ## Mark prospect as Finished in Saleshandy
 
@@ -78,8 +77,8 @@ Extra Configuration: Sequence = Sequence A (row 2: Sequence B).
 
 | # | Scenario | Do | Expected | Ticket |
 |---|---|---|---|---|
-| 1 | 1 contact (C1), prospect in Sequence A | Create the company with C1 | Success. C1 marked Finished | None |
-| 2 | Extra Configuration Sequence B, C4 in Sequence A only | Create the company with C4 | Success. C4 status not changed | None |
+| 1 | C1 in Sequence A | Create company with C1 | Success. C1 marked Finished | None |
+| 2 | Extra Configuration Sequence B, C4 in Sequence A only | Create company with C4 | Success. C4 status unchanged | None |
 
 ## Mark prospect as Replied in Saleshandy
 
@@ -87,8 +86,8 @@ Extra Configuration: Sequence = Sequence A (row 2: Sequence B).
 
 | # | Scenario | Do | Expected | Ticket |
 |---|---|---|---|---|
-| 1 | 2 contacts (C2, C3), prospects in Sequence A | Create the company with C2, C3 | Success. Both marked Replied | None |
-| 2 | Extra Configuration Sequence B, C4 in Sequence A only | Create the company with C4 | Success. C4 status not changed | None |
+| 1 | C2, C3 in Sequence A | Create company with C2, C3 | Success. Both Latest Status Finished (sequence stops follow-ups on reply; QA, 2026-10-15) | None |
+| 2 | Extra Configuration Sequence B, C4 in Sequence A only | Create company with C4 | Success. C4 status unchanged | None |
 
 ## Mark Prospect as Paused in Saleshandy
 
@@ -97,9 +96,9 @@ in Days = value recorded in the walkthrough.
 
 | # | Scenario | Do | Expected | Ticket |
 |---|---|---|---|---|
-| 1 | 1 contact (C1), prospect in Sequence A | Create the company with C1 | Success. C1 marked Paused | None |
-| 2 | 3 contacts (C2, C3, C4), prospects in Sequence A | Create the company with C2, C3, C4 | Success. All 3 marked Paused | None |
-| 3 | Extra Configuration Sequence B, C5 and C6 in Sequence A only | Create the company with C5, C6 | Success. Status of both not changed | None |
+| 1 | C1 in Sequence A | Create company with C1 | Success. C1 marked Paused | None |
+| 2 | C2, C3, C4 in Sequence A | Create company with C2, C3, C4 | Success. All 3 marked Paused | None |
+| 3 | Extra Configuration Sequence B, C5 and C6 in Sequence A only | Create company with C5, C6 | Success. Both status unchanged | None |
 
 ## Mark prospect as Resume (Un-pause) in Saleshandy
 
@@ -107,8 +106,8 @@ Extra Configuration: Sequence = Sequence A.
 
 | # | Scenario | Do | Expected | Ticket |
 |---|---|---|---|---|
-| 1 | 1 contact (C1), Paused in Sequence A | Create the company with C1 | Success. C1 no longer Paused | None |
-| 2 | 3 contacts (C2, C3, C4), Paused in Sequence A | Create the company with C2, C3, C4 | Success. All 3 no longer Paused | None |
+| 1 | C1 Paused in Sequence A | Create company with C1 | Success. C1 resumed | None |
+| 2 | C2, C3, C4 Paused in Sequence A | Create company with C2, C3, C4 | Success. All 3 resumed | None |
 
 ## Assign a tag to Prospect in Saleshandy
 
@@ -116,8 +115,8 @@ Extra Configuration: Tag = one tag, recorded in the walkthrough.
 
 | # | Scenario | Do | Expected | Ticket |
 |---|---|---|---|---|
-| 1 | 1 contact (C1), prospect in Saleshandy | Create the company with C1 | Success. C1 has the tag | None |
-| 2 | 3 contacts (C2, C3, C4), prospects in Saleshandy | Create the company with C2, C3, C4 | Success. All 3 have the tag | None |
+| 1 | C1 prospect in Saleshandy | Create company with C1 | Success. C1 has the tag | None |
+| 2 | C2, C3, C4 prospects in Saleshandy | Create company with C2, C3, C4 | Success. All 3 have the tag | None |
 
 ## Blacklist a domain in Saleshandy
 
@@ -125,7 +124,7 @@ Extra Configuration: None.
 
 | # | Scenario | Do | Expected | Ticket |
 |---|---|---|---|---|
-| 1 | 1 contact (C4), prospect in Sequence A | Create the company with C4 | Success. C4's email domain (mailinator.com) on the Do Not Contact list, C4 Latest Status Blacklisted. Afterwards the spec removes mailinator.com from the list | None |
+| 1 | C4 in Sequence A | Create company with C4 | Success. mailinator.com on Do Not Contact list, C4 Latest Status Blacklisted. Spec removes mailinator.com from the list afterwards | None |
 
 ## Open questions
 

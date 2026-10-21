@@ -40,6 +40,12 @@ const STEP_1_SUBJECT = process.env.SMOKE_STEP1_SUBJECT ?? '';
 
 // Production timing. A click registers in Saleshandy within 1 to 1.5 minutes and
 // the log shows 1 to 3 minutes after that, so allow 10 minutes for each.
+// Developer's note (QA, 2026-10-15): a click registers when it comes 90 s after the
+// email is sent (first click) and 180 s (second click). The first run clicked about
+// 1 minute after sending and nothing was counted in 45 minutes. Step 1 is the
+// prospect's first click, step 2 the second.
+const FIRST_CLICK_WAIT_MS = 90_000;
+const SECOND_CLICK_WAIT_MS = 180_000;
 const CLICK_SETTLE_MS = 30_000;
 const CLICK_TIMEOUT_MS = 10 * 60_000;
 const CLICK_REFRESH_MS = 15_000;
@@ -67,15 +73,20 @@ const flow = createFlow({
   emailSubject: STEP_1_SUBJECT,
   // The production account's Default Schedule can be closed (step 1 stays
   // "Scheduled"); send now from the Emails tab, as the Email Opened smoke does.
-  sendStep1Now: true,
-  // Header HubSpot shows for the logged email (QA picked it, 2026-10-14).
-  loggedEmailContains: () => ['Logged email by Link Clicked via Saleshandy'],
+  // The card reads "Logged email by <integration name> via Saleshandy" and the
+  // name is the account's (production: "rehan integration", seen 2026-10-15 on
+  // the Email Bounced smoke run), so only the common prefix is matched.
+  loggedEmailContains: () => ['Logged email by'],
   // AL-4120: after the first click (step 1) the note must show Click Count: 1.
   noteContains: (row, step) => [`Step: ${step}`, 'Variant: A', `Prospect Email: ${row['Email']}`, ...(step === 1 ? ['Click Count: 1'] : [])],
   // Step 1 is sent by Saleshandy; the event is the click in Mailinator.
   fireEvent: async ({ sequence, mailinator }, row, step) => {
     test.setTimeout(TEST_TIMEOUT_MS);
     const before = await sequence.clickedCount(SEQUENCE_ID, fullName(row), step);
+    const wait = step === 1 ? FIRST_CLICK_WAIT_MS : SECOND_CLICK_WAIT_MS;
+    await test.step(`Wait ${wait / 1000} seconds so the tracked link is live`, async () => {
+      await sequence.page.waitForTimeout(wait);
+    });
     await test.step(`Click link 1 in the step ${step} email (Mailinator)`, async () => {
       await mailinator!.clickFirstLink(row['Email'], STEP_1_SUBJECT, 0);
     });
@@ -413,16 +424,16 @@ test.describe('Production smoke: Link Clicked in Saleshandy', () => {
         expect(await hubspotDeals.summary(dealIds[2]), 'latest created deal').toMatchObject({ pipeline: 'Sales Pipeline', stage: 'Follow-Up', dealType: 'New Business', priority: 'High' });
       }).toPass({ timeout: 90_000 });
     });
-    // QA, 2026-10-13: Update a deal + Record email logs the email on the latest
-    // deal only; the contact gets nothing. The card must not say "Unknown Contact".
-    await test.step('Check HubSpot: email logged on the latest deal only, not "Unknown Contact"', async () => {
+    // QA, 2026-10-15: Update a deal + Record email logs the email on the latest
+    // deal and the contact, not on the two older deals. The card must not say "Unknown Contact".
+    await test.step('Check HubSpot: email logged on the latest deal and the contact, not "Unknown Contact"', async () => {
       const contactId = await findContact(hubspotContacts, row);
       await expectOnRecord(hubspotContacts, '0-3', dealIds[2], flow.loggedEmailContains(row, 1), 'Logged email on the deal');
       expect(await hubspotContacts.activitiesText('0-3', dealIds[2]), 'deal Activities').not.toContain('Unknown Contact');
       for (const [i, id] of dealIds.slice(0, 2).entries()) {
         expect(await hubspotContacts.activitiesText('0-3', id), `older deal ${i + 1} Activities`).not.toContain(flow.loggedEmailContains(row, 1)[0]);
       }
-      expect(await hubspotContacts.activitiesText('0-1', contactId), 'contact Activities').not.toContain(flow.loggedEmailContains(row, 1)[0]);
+      await expectOnRecord(hubspotContacts, '0-1', contactId, flow.loggedEmailContains(row, 1), 'Logged email on the contact');
     });
   });
 });

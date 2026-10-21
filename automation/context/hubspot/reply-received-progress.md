@@ -538,3 +538,137 @@ Shared files changed this session (tell Link Clicked, Email Opened, Email Bounce
 - `src/data/global-setup.ts`: only the CSVs of the specs being run are
   refreshed; `REFRESH_OTHER_USED=1` restores the old refresh of every CSV.
 - `knowledge-base/lessons.md`: new Proposed entry (2026-10-13).
+
+## 18-row run 2026-10-14 (session local-project-e3, REPORTS_DIR=reports/replyreceived, 1.1 h)
+
+Result: 14 passed, 4 failed. No baseline in this run. Run was `-g` on the 18 rows that failed or did not run on 2026-10-13.
+
+Passed (14): Update a company 1 to 4; Create a Task 1, 2; Create a Note 3, 4, 6; Record (log) 3, 4, 5; Update a deal 3 (second reply); Create a Note 5 (second reply).
+
+Failed (4), causes NOT proven:
+- Create a Note 1 (58.6 s): `createAndAddProspect` waited 30 s for "Search & Add" / "Add Prospects" on the sequence Prospects tab and found neither. Failure screenshot is a blank white page. Looks like the tab did not render (script comment at `sequence.page.ts:40` says the tab can render blank for > 5 s). Not yet known if product or slow page.
+- Create a Note 2 (5.0 m): test timeout 300 s exceeded; stopped in `startClean` > `openTriggers` waiting for the trigger rows (`div:has(> .switchToggle)`). Failure screenshot is blank white. Browser-closed message is the timeout, not the cause.
+- Record (log) 6 (4.1 m): HubSpot deal Activities for the third deal show "Incoming email - Re: Save cost & achieve more! from Unknown Contact / to Unknown Contact"; assertion `not.toContain('Unknown Contact')` failed. Passed on 2026-10-13. QA to say bug or not.
+- Record (log) 7, second reply (6 m): "Farid Othman" count on HubSpot contact 569267880665 expected >= 4, received 3 after 180 s. Earlier failure of this row was the sender cap; not confirmed this time.
+
+Next: re-run Create a Note 1 and 2 alone (look like blank-page/timing); QA decision on Record (log) 6 and 7.
+
+## Update 2026-10-14 (after the 18-row run, session local-project-e3)
+
+- Create a Note 1 and 2 re-run alone (REPORTS_DIR=reports/replyreceived): both PASSED (3.3 m and 3.1 m). The first-run failures were a blank Prospects tab and Triggers tab, no script change. Total for the 18 rows: 16 passed, 2 open.
+- Record (log) 6: bug filed by QA, AL-4129 (sent 2026-10-14, Epic AL-3982, links AL-4011, AL-4123, AL-4113). Logged email on the latest deal is headed "Unknown Contact". Same symptom as AL-4123 (Link Clicked, QA Approved) and AL-4113 (Prospect Outcome, Done). Draft: `jira/drafts/reply-received-update-deal-record-email-unknown-contact.json`. The "no Unknown Contact" check was added to the shared row on 2026-10-14, so the 2026-10-13 pass did not check it.
+- Record (log) 7 (second reply): still open. The prospect's name was on the contact 3 times, 4 expected, after 180 s. Cause not known; sender cap not checked. QA to decide whether to read the Emails tab and re-run.
+- Record (log) 7 re-run 2026-10-14 (about 18:00 IST, REPORTS_DIR=reports/replyreceived): FAILED before the trigger. Step 1 email to the prospect (Carter Campbell) still "Scheduled, Tomorrow, 09:00 AM" after 3 minutes (`ensureSent`). That is the sender daily cap (KB how-to-test, "Sender daily cap"), not a product result. Sender settings not touched. The earlier failure of this row (contact count 3, expected 4) is therefore still not explained. Stopped per plan rule 9; re-run when the sender cap resets (tomorrow after 09:00 AM).
+- Record (log) 7 re-run with Send now (2026-10-14, about 18:30 IST): PASSED, 5.4 m. Change: `sendStep1Now: true` in the flow config of `tests/hubspot/reply-received.spec.ts` (QA's instruction: Send now sends the step 1 email when it shows "Scheduled, Tomorrow"). Total for the 18 rows: 17 passed, 1 failed on a product bug (Record (log) 6, AL-4129). The first failure of this row (count 3, expected 4) was not reproduced; cause not known.
+
+## Full run in progress, interim save 2026-10-14 20:20 IST (session local-project-b5fb)
+
+Saved early because QA's laptop battery may die (message from the Link Clicked session). Nothing below is a final result.
+
+- Run started 19:57 IST: `REPORTS_DIR=reports/replyreceived TEST_DATA_ONLY=hubspot/reply-received REPORT_OPEN=never npx playwright test tests/hubspot/reply-received.spec.ts --project=chromium --workers=1 --reporter=list --output=reports/replyreceived/test-results-full-run`. Log: session scratchpad `reply-full-run.log` (lost if /tmp is cleared); results file `reports/replyreceived/results.json` appears only when the run ends cleanly.
+- QA decisions today: accept the 2 skips (Create a Contact 1, Update a Contact 1: Extra Configuration already saved on this account), chromium only, no new account, stop after test 20 and continue tomorrow.
+- Tests are independent (checked in code 2026-10-14): none needs another to run first, so tests 21 to 46 can be run alone with `-g`. The `carried`/`fromRow` rows are not generated for Reply.
+- Seen in the log at 20:19 (tests 1 to 16 of 46): 14 passed, 2 skipped as above, 0 failed. Tests 1 (baseline), 4 to 16 passed: Create a Contact 5, 2; Create a Task 3, 4; Record (log) 1, 2; Update a Contact 2; Create a deal 3, 1, 2, 4, 5; Create a company 3.
+- Tests 17 to 20 (Update a deal 1, 2, 4, 5) were still to run. A watcher was set to stop the run right after test 20; if the laptop died first, treat 17 to 46 as not run.
+- Test 21 and later (Update a deal 6 onward): not run, 26 tests.
+- Sender: QA's own senders (150/day, 40 to 55 s); do not change. If a step 1 email shows "Scheduled, Tomorrow", the cap is used up: tell QA.
+- Record (log) 6 is expected to fail on AL-4129 (product bug).
+
+## Full run stopped after test 20, 2026-10-14 20:29 IST (session local-project-b5fb) - RESUME HERE
+
+Read from the run log (`reply-full-run.log`, session scratchpad), chromium only, account replyreceived, QA stopped the run on purpose after test 20 to continue next day.
+
+Result of tests 1 to 20: 18 passed, 2 skipped by design, 0 failed.
+- Passed (18): baseline 1; Create a Contact 5, 2; Create a Task 3, 4; Record (log) 1, 2; Update a Contact 2; Create a deal 3, 1, 2, 4, 5; Create a company 3; Update a deal 1, 2, 4, 5.
+- Skipped (2, accepted by QA): Create a Contact 1, Update a Contact 1 (Extra Configuration already saved on this account).
+- Test 21 (Update a deal 6) was interrupted by the stop 720 ms after it began. It is not a result and not a failure; it does not need a data fix (the global setup replaces every row at the next run).
+- Not run (26): tests 21 to 46.
+
+Needs a rerun: none from tests 1 to 20. Product bugs known: Record (log) 6 is expected to fail on AL-4129.
+
+Run tomorrow (after the sender cap resets, 09:00 AM; do not change sender settings; if a step 1 email shows "Scheduled, Tomorrow", tell QA). The 26 remaining tests (checked with `--list`: 26 tests):
+
+    cd automation && REPORTS_DIR=reports/replyreceived2 TEST_DATA_ONLY=hubspot/reply-received REPORT_OPEN=never npx playwright test tests/hubspot/reply-received.spec.ts --project=chromium --workers=1 --reporter=list --output=reports/replyreceived2/test-results -g '(Update a deal in HubSpot > [36]:|Create a Contact in HubSpot > [34]:|Update a Contact in HubSpot > [34]:|Create a company in HubSpot > [124]:|Update a company in HubSpot > [1-4]:|Create a Task in HubSpot > [12]:|Create a Note in HubSpot > [123456]:|Record \(log\) an email activity in HubSpot > [3-7]:)'
+
+- Expected about 1.5 h. Use its own REPORTS_DIR (shown above) so the first 20 results in `reports/replyreceived/` are kept.
+- Tests do not depend on each other (checked in code 2026-10-14), so running them with `-g` is safe.
+- Check first that no other session is running Reply Received: `pgrep -af '[r]eply-received.spec'` from its own command.
+- The log of tests 1 to 20 is saved at `reports/replyreceived/reply-full-run-tests-1-20.log` (copied 2026-10-14 20:29 IST).
+- Still open after the run: `kb-update` (including the stale "Create a Note 5 needs Create a Note 2" line in `how-to-test.md`), "Fail, AL-xxxx" marks in test-cases, QA's OK on the Proposed lesson from 2026-10-13, Edge not run.
+
+## Full pass finished for the night, 2026-10-14 22:10 IST (session local-project-b5fb) - RESUME HERE
+
+QA stopped for the day; continue tomorrow. Chromium only, account replyreceived. Everything below is read from the run logs.
+
+Logs (kept in the repo): `reports/replyreceived/reply-full-run-tests-1-20.log` (run 1), `reports/replyreceived2-run.log` (run 2), `reports/replyreceived3-run.log` (re-run, interrupted by QA's stop). Failure screenshots and error-context files are in `reports/replyreceived2/test-results/` (the folder is emptied by the next run that uses the same REPORTS_DIR; copy first).
+
+### Result for all 46 tests
+
+- Passed: 41. Skipped by design: 2 (Create a Contact 1, Update a Contact 1; Extra Configuration already saved on this account, accepted by QA). Not passing yet: 3.
+- Run 1 (tests 1 to 20, 19:57 to 20:29): 18 passed, 2 skipped.
+- Run 2 (tests 21 to 46, 20:46 to 21:58): 22 passed, 4 failed. Create a Note 6 failed there, then PASSED on its re-run (2.4 min, 21:58).
+
+### The 3 that still need a pass (run them tomorrow)
+
+1. Record (log) an email activity > 5 (paired with Create a deal): failed in run 2 at the page save, "Configuration Updated Successfully" toast not seen within 5 s. Re-run started and was interrupted by the stop, so it has no new result.
+2. Record (log) an email activity > 6 (paired with Update a deal): same toast error in run 2, at 5 s. Not re-run. The AL-4129 check (no "Unknown Contact" on the deal) was NOT reached, so it is still untested in this pass.
+3. Record (log) an email activity > 7 (second reply): "Kristaps Berzins" shown 3 times on the HubSpot contact, expected at least 4, after 180 s. Same count (3, expected 4) as its earlier failure today; it passed once earlier with Send now. Cause not known. Not re-run.
+
+My guess on 1 and 2 (not proven): the save after selecting a second activity (`usePaired` in `src/flows/activity-rows.ts`) waits only 5 s for the toast, while `useOnly` waits 30 s for a Create a Deal save. That file is shared with the Link Clicked session, so tell it before changing the wait. Do not change it without telling the owner.
+
+Correction: earlier in the day I expected Record (log) 6 to fail on AL-4129. It failed at the save toast instead, so there is no new evidence on AL-4129 from this pass.
+
+### Run tomorrow (3 tests, about 15 to 20 min)
+
+    cd automation && REPORTS_DIR=reports/replyreceived5 TEST_DATA_ONLY=hubspot/reply-received REPORT_OPEN=never npx playwright test tests/hubspot/reply-received.spec.ts --project=chromium --workers=1 --reporter=list --output=reports/replyreceived5/test-results -g '(Record \(log\) an email activity in HubSpot > [567]:)'
+
+- First check that nothing is running Reply Received: `pgrep -af 'playwright.*[r]eply-received'` from its own command.
+- Sender cap resets after 09:00 AM. If a step 1 email shows "Scheduled, Tomorrow" or Send now says the daily limit is reached, tell QA; do not change sender settings.
+- If Record 5 and 6 fail at the toast again, read the failure screenshot before touching the script and tell the Link Clicked session about the shared wait. If Record 7 fails with count 3 of 4 a third time, ask QA bug-or-not (the second reply's logged email may not be written); read the Logs entry detail after the run, not during.
+
+### Still open after that
+
+- `kb-update` (including the stale "Create a Note 5 needs Create a Note 2" line in `knowledge-base/testing/how-to-test.md`, which is true only for Link Clicked).
+- "Fail, AL-xxxx" marks in `test-cases/hubspot/reply-received.md`.
+- QA's OK on the Proposed lesson from 2026-10-13 (test-data refresh touched another workflow's CSVs).
+- Edge has not been run for this workflow.
+- `RESUME.md` still points the Reply row at the "Update 2026-10-14" section; repoint it to this one (shared file, tell the other sessions).
+
+## Re-run 2026-10-15 (session local-project-76) - RESUME HERE
+
+Ran the 3 open tests on staging, chromium, account replyreceived: `reports/replyreceived5-run.log`, results in `reports/replyreceived5/` (8.3 min).
+
+- Record (log) 5, Paired with Create a deal: PASS (2.2 min).
+- Record (log) 6, Paired with Update a deal, contact has 3 deals: FAIL (2.8 min) at `activity-rows.ts:939`, deal Activities contains "Unknown Contact". This is AL-4129 (already filed by QA, still failing). Not the save toast; the toast failure of 2026-10-14 did not repeat. Trace: `reports/replyreceived5/test-results/hubspot-reply-received-Rep-48ea5--a-deal-contact-has-3-deals-chromium/trace.zip`.
+- Record (log) 7, Second reply, pairing from row 4: PASS (3.2 min); it failed twice on 2026-10-14 with 3 of 4, cause not known.
+
+Execution id for Record 6 (QA, 2026-10-15): `6ad052ff67ee0feb46d50bad` (created 2026-10-15 04:13:51 UTC, COMPLETED). The trace also shows `6ad053ac67ee0feb46d531cc` (04:16:44 UTC, COMPLETED); QA picked the first.
+
+### Totals
+46 run: 43 pass, 2 skipped by design (Create a Contact 1, Update a Contact 1), 1 fail (Record 6, AL-4129). No test case is left to run or script.
+
+### Still open
+- kb-update (QA said yes): stale "Create a Note 5 needs Create a Note 2" line in `knowledge-base/testing/how-to-test.md` (true only for Link Clicked); proposal shown to QA.
+- QA's OK on the 2026-10-13 lesson in `knowledge-base/lessons.md` (test-data refresh touched another workflow's CSVs).
+- Edge not run for this workflow.
+
+### Update 2026-10-15 (later): AL-4129 retest and rule change
+- AL-4129 fixed by the product (QA). Retest `reports/replyreceived6`: "Unknown Contact" gone on the deal, then failed on the old check "contact must not have the logged email".
+- QA, 2026-10-15: for Update a deal + Record (log), the email goes on both the latest deal and the contact, in every workflow (was "deal only"). Changed in `activity-rows.ts`, `email-opened-phase2.spec.ts`, `email-bounced-phase2.spec.ts`, `link-clicked-smoke.spec.ts`; test cases for Reply Received, Link Clicked, Email Opened; `00-overview.md`.
+- Re-run `reports/replyreceived7`: Record (log) 6 PASS (3.0 min). Reply Received totals: 44 pass, 2 skipped by design, 0 fail.
+- Not re-run with the new rule: Email Opened row 4, Email Bounced Record 5, Link Clicked Record 6 (and its smoke spec).
+- Still open: kb-update (QA's OK), QA's OK on the 2026-10-13 lesson, Edge not run.
+
+## Production smoke prep 2026-10-15 (background fork, session local-project-ed)
+
+- Checklist drafted: `notes/production-testing/05-reply-received.md` (all 9 activities, AL-4129 and AL-4119, AL-4118 listed as not covered). Awaiting QA approval; no smoke spec written yet. Row 05 added in `notes/production-testing/README.md`.
+- Production sequence created by `tests/setup/reply-received-smoke-sequence.spec.ts` (account `emailopenedprod`): "HubSpot Reply Received Smoke", id **974166**, Step 1 Quick email ("Save cost & achieve more!"), Step 2 Upselling, Active. Sender and schedule left as account defaults; Stop on reply not opened or changed (not checked by the script). No prospect added, no trigger changed, nothing sent.
+- First setup run created the sequence and step 1, then timed out at "Add Step" because the spec used the `page` fixture, which is not the builder's page (blank screenshot). Fixed with `builder.page`, resumed with `RESUME_FROM_STEP=2` (passed, 59 s). Read-only check `tests/setup/reply-received-smoke-check.spec.ts` shows the sequence in the list and Active.
+- Jira: nothing sent. Per QA (2026-10-15) only drafts go in `jira/drafts`; QA sends them.
+
+
+## Production smoke spec written 2026-10-15 (background fork, not run)
+
+- QA approved `notes/production-testing/05-reply-received.md`. AL-4118 is covered: the note's Sequence link must use my.saleshandy.com; a staging host fails test 08 and QA reopens AL-4118 (no Jira write).
+- Spec `tests/hubspot/reply-received-smoke.spec.ts`: 11 tests (00 to 10), account emailopenedprod, sequence 974166 (env `SMOKE_SEQUENCE_ID`), fireEvent = `markAsReplied`, Send now for step 1. Test 04 holds the AL-4119 second reply, test 10 the AL-4129 "Unknown Contact" check. Data `test-data/hubspot/reply-received-smoke*.csv` (gitignored, 11 rows). tsc clean, `--list` shows 11 tests. Not run: another session runs the Company Created smoke on the same account; QA runs this one manually.
+- No shared `src/flows` file changed.

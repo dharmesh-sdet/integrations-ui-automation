@@ -22,7 +22,7 @@ Release scope note: Only the Company Created part is in release scope. The Compa
 - Contacts can be associated to the company while creating it (existing HubSpot contacts, or contacts created just before the company). A company can have several contacts; keep 2 to 4 per company so the data stays traceable (QA, 2026-10-09). This replaces the earlier note that the creation form has no contact field.
 - Every activity acts on all contacts associated with the company. For example, Add Prospect adds every associated contact as a prospect, and Move Prospect to Another sequence moves all of them (QA, 2026-10-09).
 - Mixed contacts: associated contacts not in Saleshandy yet are created as prospects, existing prospects are not duplicated, and the activity applies to every contact that qualifies (QA, 2026-10-09).
-- Company created with no associated contact: Success in Logs, nothing changes in Saleshandy, for all 9 activities (QA, 2026-10-09).
+- Company created with no associated contact: not a valid scenario (QA, 2026-10-15). The workflow fails for it (Add Prospect gets an empty prospectList, 400), and adding a contact to the company later does not trigger the workflow, because that is a company property update (AL-4059). This replaces the 2026-10-09 answer that expected Success.
 - The Properties Updated path stays out of scope (AL-4059).
 
 ## Activities
@@ -73,9 +73,8 @@ The Select box is disabled until the trigger is on. Cancelling an Extra Configur
 QA, 2026-10-09:
 
 1. Create 2 to 4 contacts from the CSV in HubSpot, one at a time (tests associate only contacts they created).
-2. Create the company: Companies > Add companies > Create new, Company domain name and Company name, Create (ignore the "Gosh ..." list of similar companies). The form has no contact field.
-3. On the new company's record: Contacts card > Add > Add existing, search each contact, tick it, Save.
-4. Check Logs, then the prospects in Saleshandy.
+2. Create the company: Companies > Add companies > Create new, Company domain name and Company name, then "Associate Company with > Contact": open the dropdown, search each contact's email, pick it (the contact must already exist in HubSpot), Create (ignore the "Gosh ..." list of similar companies). The field is disabled until the domain and name are filled (QA fixed the form, 2026-10-15; walked on staging).
+3. Check Logs, then the prospects in Saleshandy. Do not associate contacts on the record afterwards: the workflow has already run with an empty contact list.
 
 Each run creates a new company. Prospects for the later activities come from chaining earlier runs (Add Prospect, then Move Prospect to Another sequence, and so on) with the same contacts.
 

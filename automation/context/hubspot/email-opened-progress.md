@@ -556,3 +556,192 @@ Task 1 to 4, Create a deal 1 to 5, Create a Note 1 to 4, Update a deal 2, 4.
 Blocked: HubSpot login for `emailopened` (QA: npm run login:hubspot --
 emailopened). Then rerun: baseline 3, 4, 5; Create a Task 1, 2; Update a deal
 1, 3; Create a Contact 3, 6; Record 3 to 6.
+
+## Phase 2 run 2 (2026-10-14 15:00 IST on, `test-results-emailopened-phase2-run2`)
+
+At 16:24: 22 passed in a row (Create a Contact 2 to 6, Update a Contact 2,
+Create a Task 1 to 4, Create a deal 1 to 5, Update a deal 1, 2, 4, Create a
+Note 1 to 4), no network drop retried. Record 3, 4, 5 failed, Record 6 timed
+out, Update a deal 3 still running.
+- Record 3, 4, 5 (paired with Create a Contact, Update a Contact, Create a
+  deal): the logged email IS on the HubSpot record, the Activities card reads
+  "Logged email by Email Opened via Saleshandy" (error-context line 96/110),
+  the spec waits for "Logged email with <First Last>" and gives up after 180 s.
+  On 2026-10-13 these three passed with "Logged email with <name>". QA decided
+  on 2026-10-14 that the "by Email Opened via Saleshandy" card is RIGHT for
+  Record 6 (Update a deal, 3 deals); no QA decision yet for 3, 4 and 5. AL-4123
+  (Link Clicked, Record + Update a deal, "Unknown Contact", QA Approved) looks
+  like the same family; not confirmed. Spec NOT changed, waiting for QA.
+- Record 6: 10 min test timeout, error "waiting for Refresh" on Logs with the
+  page closed; the 10 min is the per-test limit set in runTrigger. It passed
+  at 12:13 today. Needs a rerun alone (cause of the slowness not known).
+- Phase 2 run 2 FINAL (16:29, 1.5 h): 23 passed, 4 failed. Update a deal 3
+  passed (5.8 min). Failed: Record 3, 4, 5 (card wording, waiting for QA),
+  Record 6 (10 min timeout on Logs "Refresh" wait, rerun alone started 16:30).
+- 16:37 Record 6 rerun alone PASSED (5.7 min, `test-results-emailopened-record6-rerun2`):
+  the 10 min timeout was not reproduced (cause of the slow run not known).
+  Phase 1 reruns started: baseline 3, 4, 5, Create a Task 1, 2
+  (`test-results-emailopened-p1-rerun`).
+- 2026-10-14 16:55 Phase 1 rerun (`test-results-emailopened-p1-rerun`, 3.7 min):
+  baseline 5 PASSED (2.5 min, the logEntries fix works); baseline 3 and 4
+  SKIPPED (Create a Contact setup needs an empty configuration; saved values
+  block it, same as baseline 2); Create a Task 1 passed; Create a Task 2 failed
+  the same way twice. Cause (screenshot): the Create a Task dialog opens
+  PRE-FILLED with the saved values (Task Title "Follow up from the workflow",
+  Call, Medium, 3 Days) because Phase 2 Create a Task 3 and 4 saved them; fields
+  cannot be "left empty". Not a product bug. Fix: `skipIfTaskConfigSaved` in
+  `email-opened.spec.ts` for Create a Task 1 and 2 (same rule as `useOnly`); both
+  now skip on this account and need the new account. Verified by a run: 2
+  skipped, typecheck clean.
+- 2026-10-14 17:05 QA: "Logged email by Email Opened via Saleshandy" is the
+  right card for Record 3, 4 and 5 too (as decided for Record 6). Spec changed:
+  `email-opened-phase2.spec.ts` Record 3, 4 and Record 5 (contact check) expect
+  that text instead of "Logged email with <name>". Record 5's deal check keeps
+  the old expectation until a run shows what the deal card reads. Rerun
+  started: `test-results-emailopened-record345`.
+- Record 3, 4, 5 rerun with the corrected card (`test-results-emailopened-record345`,
+  15.1 min): Record 3 PASSED (3.2 min). Record 5: the contact check now passes;
+  the DEAL check fails: the deal card also reads "Logged email by Email Opened
+  via Saleshandy" (spec still expects "Logged email with <name>" there; not
+  changed, QA's answer was given for the card in general: asking). Record 4: not
+  a product result: HubSpot's Create Contact form blocked ("This email address
+  already belongs to a contact": fleur.smits@mailinator.com, test-failed-2.png),
+  so setup timed out at 5 min. Data issue (a generated person HubSpot already
+  held); the row is rerun, data not renamed.
+- 2026-10-14 17:05 Record 4 rerun alone PASSED (4.3 min,
+  `test-results-emailopened-record4`) with a new person and the corrected card
+  ("Logged email by Email Opened via Saleshandy"). Phase 2 now 26 of 27 passed;
+  Record 5 left (deal check: card text, waiting for QA's yes).
+
+## Production smoke (2026-10-14)
+
+- Checklist: `notes/production-testing/01-email-opened.md` (QA approved).
+  Covers AL-4013, AL-4126, AL-4128; AL-4123 and AL-4113 listed as not covered.
+- Script: `tests/hubspot/email-opened-smoke.spec.ts`, 10 tests in checklist
+  order, bodies copied from the staging rows (source row named in each
+  comment). Data: `test-data/hubspot/email-opened-smoke*.csv`.
+- Production switch: account `emailopenedprod` (`environment: 'production'` in
+  `src/config/accounts.ts`), `baseUrlFor()` in `src/config/environments.ts`
+  (my.saleshandy.com, `PROD_URL` overrides), used by fixtures and login.ts.
+  Staging runs unchanged. delete-prospect.ts and delete-hubspot-contact.ts
+  still point at staging.
+- Typechecked and listed (10 tests), NOT run. Needs from QA: production login
+  email (TODO in accounts.ts), `npm run login:saleshandy -- emailopenedprod`
+  and `npm run login:hubspot`, production sequence id and step 1 subject
+  (`SMOKE_SEQUENCE_ID`, `SMOKE_STEP1_SUBJECT`), field mapping saved on the
+  production account.
+- Production timing in the spec: wait 75 s after Sent before the open (first
+  open counts after 60 s), up to 10 min for the count and for Logs, 15 min for
+  Update a Deal.
+
+## Production setup, 2026-10-14 (evening)
+
+- Login: QA passed the Cloudflare check headed; session saved
+  (`auth/saleshandy-emailopenedprod-chromium.json`). Headless login is blocked by
+  the Cloudflare check, so QA does the login (not bypassed).
+- Production account "rehan integration"; sender dharmesh+prodint@saleshandy.com
+  (Google Workspace, 15/day, already on the new sequence).
+- Field mapping (Contact, Company, Deal): saved, setup spec 3 passed.
+- Sequence "HubSpot Email Opened Smoke" created: id 973096, step 1 subject
+  "Save cost & achieve more!" (Library template 1, variables in the body).
+  First create hit the LinkedIn Automation intro popup (script issue); fixed in
+  `SequenceBuilderPage.skipIntro()` (waits 10 s, then the backdrop), rename now
+  public.
+- BLOCKED: Track email opens cannot be turned on: dialog "Custom Domain
+  Required". Settings > Custom Tracking Domain on production lists no domain.
+  Sequence not activated yet. Waiting for QA.
+- UNBLOCKED (QA gave domain link.saleshandy.com): added on production
+  (Add Custom Domain, CNAME link to watch.saleshandy.com, Verify & Save OK, shown
+  as Default for dharmesh+prodint@saleshandy.com). Track email opens turned on
+  ("Enable Open Tracking for Emails?" > Enable Anyway), still on after reload.
+  Sequence 973096 activated (Activate Sequence > Yes), active after reload.
+- Smoke run started: SMOKE_SEQUENCE_ID=973096, SMOKE_STEP1_SUBJECT="Save cost &
+  achieve more!", output test-results-emailopened-prod-smoke.
+
+## Resume: production smoke (2026-10-14 evening, QA going offline)
+
+State: setup done (see above). First full run stopped after test 01 failed with a
+blank Prospects tab (30 s wait for Add Prospects/Search & Add; standalone
+session loads the tab fine, so likely a one-off). Test 01 alone was rerun at
+18:22 (log /tmp/claude-1002/prod-smoke1.log, output
+test-results-emailopened-prod-smoke). Tests 02 to 10 NOT run. Plan: QA resumes
+from home.
+
+Run the remaining tests (from automation/):
+  SMOKE_SEQUENCE_ID=973096 SMOKE_STEP1_SUBJECT='Save cost & achieve more!' \
+  TEST_DATA_ONLY=hubspot/email-opened-smoke REPORTS_DIR=reports/emailopened-prod-smoke \
+  npx playwright test tests/hubspot/email-opened-smoke.spec.ts --project=chromium \
+  --workers=1 --reporter=list --output=test-results-emailopened-prod-smoke
+  (add -g "02 Create" etc. for single tests; KEEP_TEST_DATA=1 keeps the people
+  of an earlier run). Expect about 1 hour; needs internet the whole time and the
+  machine awake. Sessions: auth/saleshandy-emailopenedprod-chromium.json
+  (saved 17:53; about a week) and auth/hubspot-chromium.json.
+Open idea (not applied, QA OK needed): reload once in
+createAndAddProspect() when Add Prospects / Search & Add does not show in 15 s.
+- 18:30 IST test 01 rerun: the Prospects tab loaded this time (blank page was a
+  one-off). New failure: step 1 to Randall Chaves stayed "Scheduled, Tomorrow,
+  09:00 AM" (production Default Schedule is closed in the evening), so it was
+  not sent in 3 min. Not a product bug. Fix in the smoke spec only:
+  `sendStep1Now: true` (Send now on the Emails tab; sender and schedule
+  settings untouched). Typechecked, NOT rerun. That prospect will be sent by
+  Saleshandy tomorrow 09:00 (a mailinator address, harmless; it may also add one
+  Email Opened log if opened, which nobody does).
+  Needs QA's OK: it departs from the 2026-10-09 rule "never Send now on step 1
+  for one prospect" (reason above).
+- 2026-10-14 QA approved both: (1) `sendStep1Now: true` in the smoke spec (Send
+  now for step 1, production schedule closed in the evening); (2) reload once in
+  `createAndAddProspect()` (src/pages/saleshandy/sequence.page.ts) when "Search
+  & Add" / "Add Prospects" does not show within 15 s. Typechecked, not run.
+  Shared file: all workflows using createAndAddProspect get the reload.
+
+## Production smoke run 2 (2026-10-14, started 19:35 IST, saved 20:19 IST)
+
+Command as in "Resume: production smoke" above (chromium, output
+`test-results-emailopened-prod-smoke`, log `/tmp/claude-1002/prod-smoke-run2.log`).
+Result so far: tests 01 to 09 PASSED (01 3.5, 02 3.3, 03 4.1, 04 4.0, 05 Update a
+Deal 3 deals 5.4, 06 3.7, 07 Update a Company AL-4126 6.4, 08 4.4, 09 3.5 min).
+Test 10 (Record (log) paired with Update a Contact) was running at 20:19. No
+failures, no product issues noted. QA asked to be notified when it ends.
+If the laptop dies mid-run: only 10 is unknown; rerun it alone with
+`-g "10 Record"` (same env vars as above, KEEP_TEST_DATA=1 not needed).
+Shared account `emailopenedprod`: Link Clicked production smoke (not run) uses it
+too, so do not run both at once; sender limit 15 per day.
+
+- 2026-10-14 20:20 IST production smoke run 2 ENDED (45.4 min): 9 passed, 1 failed.
+  Failed: 10 Record (log) paired with Update a Contact. Logs Success; the email
+  IS logged on the contact (card "Logged email by rehan integration via
+  Saleshandy" + content preview), but the spec waits for "Logged email with
+  <First Last>" (copied from staging Record 4) and gave up after 180 s. Same
+  card-wording family as AL-4123 / AL-4113 (not covered by the checklist); QA
+  accepted "Logged email by <name> via Saleshandy" on staging for Record 3 to 6.
+  Not a product failure in the checklist's sense. Spec NOT changed, not rerun.
+  Needs QA: accept the "by ... via Saleshandy" card and expect that? Evidence:
+  `test-results-emailopened-prod-smoke/hubspot-email-opened-smoke-fbb89-aired-with-Update-a-Contact-chromium/`.
+
+- 2026-10-14 production smoke test 10 rerun (alone, `test-results-emailopened-prod-smoke-rec10`):
+  spec expectation changed to `/Logged email by .+ via Saleshandy/` (card header
+  carries the account's integration name; production "rehan integration"). See
+  result line below. Lesson entry "A QA decision was fixed in one spec, not where
+  the expectation lives" is Proposed in knowledge-base/lessons.md (3 edits wait for QA).
+- Result: test 10 PASSED (4.1 min, 20:3x IST). Production smoke now 10 of 10 passed (9 in run 2 plus test 10 rerun).
+
+## Saved 2026-10-14 night (QA closing the editor; session local-project-8d)
+
+State in one line: Email Opened production smoke is DONE, 10 of 10 passed.
+- Run 2 (19:35 to 20:20 IST): tests 01 to 09 passed. Test 10 failed on a script
+  expectation (card text), fixed in `email-opened-smoke.spec.ts` (pattern
+  `/Logged email by .+ via Saleshandy/`), rerun alone passed (4.1 min).
+- Jira drafts written, NOT sent (QA sends with `npm run jira`, bugs first):
+  `jira/drafts/al-4126-production-verified-comment.json`,
+  `al-4128-production-verified-comment.json`,
+  `al-4013-production-smoke-summary.json` (9 rows, no Note).
+- Checklist `notes/production-testing/01-email-opened.md`: stale "Not covered:
+  AL-4123 and AL-4113" line removed (QA yes; AL-4123 is in 02, AL-4113 is Prospect Outcome).
+- Lesson 2026-10-14 "A QA decision was fixed in one spec, not where the
+  expectation lives": edits 1 and 2 applied (how-to-test.md, 00-overview.md).
+  Edits 3 (ui-test-from-workflow SKILL.md Stage 3) and 4 (jira/CLAUDE.md rule 12)
+  were blocked by the permission classifier: waiting for QA.
+- Open for QA: Update a Deal and Create a Task empty-configuration rows need a
+  new staging account; commit (nothing committed by this session).
+- No run is active; none started. Sender limit 15 per day on `emailopenedprod`
+  is shared with the Link Clicked and Email Bounced production smokes.

@@ -477,14 +477,14 @@ function activityTests(flow: Flow, title: string, options: { skip?: string[] } =
           expect(await hubspotDeals.summary(dealIds[2]), 'latest created deal').toMatchObject({ pipeline: 'Sales Pipeline', stage: 'Follow-Up', dealType: 'New Business', priority: 'High' });
         }).toPass({ timeout: 3 * 60_000 });
       });
-      // QA, 2026-10-13: Update a deal + Record email logs the email on the
-      // latest deal only; the contact gets nothing (expected). The card on the
-      // deal must name the prospect; it shows "Unknown Contact" (bug, draft in
-      // jira/drafts/link-clicked-update-deal-record-email-unknown-contact.json).
-      await test.step('Check HubSpot: email logged on the latest deal naming the prospect, not on the contact', async () => {
+      // QA, 2026-10-15: Update a deal + Record email logs the email on both the
+      // latest deal and the contact (was "deal only" on 2026-10-13), in every
+      // workflow. The card on the deal must name the prospect, not "Unknown
+      // Contact" (AL-4123, AL-4129).
+      await test.step('Check HubSpot: email logged on the latest deal naming the prospect, and on the contact', async () => {
         const contactId = await findContact(hubspotContacts, row);
         await expectOnRecord(hubspotContacts, '0-3', dealIds[2], flow.loggedEmailContains(row, 1), 'Logged email on the deal');
-        expect(await hubspotContacts.activitiesText('0-1', contactId), 'contact Activities').not.toContain('Logged email with');
+        await expectOnRecord(hubspotContacts, '0-1', contactId, flow.loggedEmailContains(row, 1), 'Logged email on the contact');
       });
     });
 
@@ -693,8 +693,14 @@ async function runTrigger(f: { fireEvent: typeof flow.fireEvent }, ctx: TriggerC
     markUsed(CSV, row['Email']);
   });
   if (beforeSend) await beforeSend();
-  await test.step('Wait until Saleshandy sends step 1', async () => {
-    await ctx.sequence.ensureSent(SEQUENCE_ID, fullName(row), 1);
+  // QA 2026-10-14: use Send now, so a step 1 left "Scheduled, Tomorrow" (sender
+  // at its daily cap or outside the schedule) does not stop the run. Send now
+  // does nothing when the row already says "Sent". The row can take a moment to
+  // show after the prospect is added, so it is retried.
+  await test.step('Send step 1 with Send now (skipped if already Sent)', async () => {
+    await expect(async () => {
+      await ctx.sequence.sendNow(SEQUENCE_ID, fullName(row), 1);
+    }, `Step 1 email to ${fullName(row)} could not be sent with Send now within 3 minutes`).toPass({ timeout: 3 * 60_000, intervals: [10_000] });
   });
   await f.fireEvent(ctx, row, 1);
 }

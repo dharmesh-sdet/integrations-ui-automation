@@ -171,10 +171,14 @@ positions further down the list than the deal's current stage [QA,
   receive the note (QA, 2026-10-14, confirmed with the developer; it was
   recorded as "deal only" on 2026-10-13 and the product showed both).
 - **Record (log) an email activity paired with Update a deal (3 deals):** the
-  email is logged on the latest created deal only, not on the contact
-  [staging, 2026-10-14, passed on Email Opened]. The card header reads "Logged
-  email by Email Opened via Saleshandy" on the Email Opened trigger (QA,
-  2026-10-14); on Link Clicked the header must name the prospect (AL-4123).
+  email is logged on the latest created deal and on the contact, in every
+  workflow (QA, 2026-10-15; it was "deal only" on 2026-10-13 and 2026-10-14,
+  and staging showed both on 2026-10-15 in Reply Received). The card header reads "Logged
+  email by <integration name> via Saleshandy" (QA, 2026-10-14). The name is the
+  account's integration, not the trigger or the prospect: "Email Opened" and
+  "Link Clicked" on the staging accounts, "rehan integration" on production
+  [production smoke, 2026-10-14]. Match it by pattern, not by name. On Link
+  Clicked the header must name the prospect (AL-4123).
 - **Seen on staging, Sequence Email is Opened > Update a deal:** on 2026-10-13
   the Search deal step filtered `dealname = <prospect email>`, found 0 deals
   and the log still said Success, so the deal was not updated (AL-4128). On

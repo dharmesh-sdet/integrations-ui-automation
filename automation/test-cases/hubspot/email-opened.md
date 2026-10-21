@@ -70,18 +70,18 @@ Not covered, still open: none known.
 
 | # | Scenario | Do | Expected | Ticket |
 |---|---|---|---|---|
-| 1 | Trigger off before the test | Enable "Sequence Email is Opened in Saleshandy", select an activity, click Save | "Configuration Updated Successfully" | None |
-| 2 | Prospect received the step 1 email | Open the email in Mailinator | Within about 10 s the Opened count in Sequences > Emails is 1. Then a new Logs entry for the opened workflow shows Success | None |
-| 3 | Prospect's own first open done (own prospect, not row 2's), then 10 s pass | Open the same email again | Opened count goes from 1 to 2, then a new Logs entry shows Success | None |
-| 4 | Own prospect, first open done, then moved to step 2 and sent with Send now | Open the step 2 email | New Logs entry shows Success (the note or logged email shows Step 2, see the Create a Note rows) | None |
-| 5 | Only another trigger (Email Sent) enabled | Open the email | Opened count goes up, no Logs entry for the opened workflow | None |
+| 1 | Trigger off | Enable "Sequence Email is Opened in Saleshandy", select an activity, click Save | "Configuration Updated Successfully" | None |
+| 2 | Prospect received step 1 email | Open the email in Mailinator | Opened count in Sequences > Emails reaches 1 within ~10 s. Logs entry shows Success | None |
+| 3 | Own prospect, first open done, 10 s passed | Open the same email again | Opened count reaches 2. Logs entry shows Success | None |
+| 4 | First open done, moved to step 2, sent with Send now | Open the step 2 email | Logs entry shows Success (note or logged email shows Step 2, see Create a Note rows) | None |
+| 5 | Only another trigger (Email Sent) enabled | Open the email | Opened count increases. No Logs entry for the opened workflow | None |
 
 ### Create a Contact in HubSpot: Extra Configuration empty
 
 | # | Scenario | Do | Expected | Ticket |
 |---|---|---|---|---|
 | 1 | Contact not in HubSpot | Open the email | Success. Contact created with the mapped fields. Lifecycle Stage and Lead Status are set by HubSpot itself | None |
-| 2 | Contact already in HubSpot, prospect details changed in Saleshandy | Open the email | Success. Contact shows the new mapped values | None |
+| 2 | Contact in HubSpot, prospect details changed | Open the email | Success. Contact shows the new mapped values | None |
 
 ### Update a Contact in HubSpot: Extra Configuration empty
 
@@ -97,7 +97,7 @@ The prospect has no Deal Value and no Closing Date unless the row says so.
 
 | # | Scenario | Do | Expected | Ticket |
 |---|---|---|---|---|
-| 1 | Contact in HubSpot, no deal | Open the email | Success. Deal created and associated. Pipeline, Stage, Deal Type and Priority filled in by HubSpot. Amount and close date empty (--) | None |
+| 1 | Contact in HubSpot, no deal | Open the email | Success. Deal created and associated. Pipeline, Stage, Deal Type, Priority set by HubSpot. Amount and close date empty (--) | None |
 | 2 | Contact not in HubSpot | Open the email | Success. Contact and deal created and associated | None |
 | 3 | Contact already has 1 deal | Open the email | New deal created, the contact now has 2 deals | None |
 | 4 | Prospect has a Deal Value | Open the email | Deal Amount = Deal Value, close date empty (--) | None |
@@ -108,7 +108,7 @@ The prospect has no Deal Value and no Closing Date unless the row says so.
 |---|---|---|---|---|
 | 1 | Contact has 1 deal | Open the email | Open: run once, QA decides | None |
 | 2 | Contact has 3 deals | Open the email | Open: run once, QA decides | None |
-| 3 | Contact in HubSpot with 0 deals | Open the email | Nothing created or updated | None |
+| 3 | Contact in HubSpot, no deals | Open the email | Nothing created or updated | None |
 | 4 | Contact not in HubSpot | Open the email | Nothing created or updated | None |
 
 ### Create a company in HubSpot: no Extra Configuration
@@ -116,9 +116,9 @@ The prospect has no Deal Value and no Closing Date unless the row says so.
 | # | Scenario | Do | Expected | Ticket |
 |---|---|---|---|---|
 | 1 | Contact in HubSpot, prospect has company details | Open the email | Success. One company created and associated | None |
-| 2 | A company with the same domain already exists | Open the email | New company created anyway and associated | None |
+| 2 | Company with same domain exists | Open the email | New company created anyway and associated | None |
 | 3 | Contact not in HubSpot | Open the email | Contact and company created and associated | None |
-| 4 | Prospect has empty company details, only a company domain | Open the email | Company created from the company domain | None |
+| 4 | Prospect has company domain only, no other company details | Open the email | Company created from the domain | None |
 
 ### Update a company in HubSpot: no Extra Configuration
 
@@ -138,7 +138,7 @@ Nothing is typed or selected and no email is opened.
 | # | Scenario | Do | Expected | Ticket |
 |---|---|---|---|---|
 | 1 | Extra Configuration modal just opened | Look at the modal, touch nothing | No field is highlighted red. Save is disabled | None |
-| 2 | Same modal, all fields empty | Click into each field (Task title, Task Type, Task Priority, Due in, Task Associated With), type or select nothing, then leave it | Task title and Due in are highlighted red. Save stays disabled. Task Type, Task Priority and Task Associated With are not highlighted (seen on staging 2026-10-13; QA: not a bug) | None |
+| 2 | Same modal, all fields empty | Click into each field (Task title, Task Type, Task Priority, Due in, Task Associated With), type nothing, leave | Task title and Due in highlighted red. Save stays disabled. Task Type, Task Priority, Task Associated With not highlighted (staging 2026-10-13; QA: not a bug) | None |
 
 ### Create a Note in HubSpot: paired with activities left empty
 
@@ -190,8 +190,8 @@ cleared): Create a Contact rows first.
 |---|---|---|---|---|
 | 1 | Contact not in HubSpot | Open the email | Success. Contact created: Lead Status Open, Lifecycle Stage Marketing Qualified Lead, mapped fields | None |
 | 2 | Contact already at a later Lifecycle Stage (Customer) | Open the email | Success. Lifecycle Stage stays Customer | None |
-| 3 | Values saved before | Reopen Extra Configuration, try to clear both | No empty option; picking the same value keeps it | None |
-| 4 | Contact exists, details changed again, second open | Open the same email again | New log entry Success; contact shows the new values | None |
+| 3 | Values already saved | Reopen Extra Configuration, try to clear both | No empty option; picking same value keeps it | None |
+| 4 | Contact exists, details changed, second open | Open the same email again | New log entry Success; contact shows new values | None |
 
 **Update a Contact in HubSpot: Update Lead Status Connected, Update Lead Lifecycle Sales Qualified Lead**
 
@@ -215,7 +215,7 @@ cleared): Create a Contact rows first.
 |---|---|---|---|---|
 | 1 | Contact has 1 deal at Prospecting | Open the email | Deal Stage Follow-Up (two ahead) - Pass (2026-10-14, AL-4128 not reproducible) | AL-4128 |
 | 2 | Contact has 3 deals | Open the email | Latest created deal updated, the others unchanged - Pass (2026-10-14, AL-4128 not reproducible) | AL-4128 |
-| 3 | Values changed after row 1, second open | Change the saved values, open the same email again | New log entry Success; deal shows the new values - Pass (2026-10-14, AL-4128 not reproducible) | AL-4128 |
+| 3 | Values changed after row 1, second open | Change saved values, open same email again | New log entry Success; deal shows new values - Pass (2026-10-14, AL-4128 not reproducible) | AL-4128 |
 | 4 | Closing Date 51 Days | Open the email | Close date = today + 51 - Pass (2026-10-14, AL-4128 not reproducible) | AL-4128 |
 
 **Create a Task in HubSpot: title "Follow up from the workflow", Call, Medium, due in 3 days**
@@ -234,4 +234,4 @@ cleared): Create a Contact rows first.
 | 1 | Create a Note + Create a deal | Open the email | Note on the contact and on the deal | None |
 | 2 | Create a Note + Update a deal (1 deal) | Open the email | Note on the contact and on the deal (QA, 2026-10-14, confirmed with the developer; was deal only on 2026-10-13) | None |
 | 3 | Record (log) + Create a deal | Open the email | Email logged on the contact and on the deal | None |
-| 4 | Record (log) + Update a deal (3 deals) | Open the email | Email logged on the latest deal only; the card reads "Logged email by Email Opened via Saleshandy" (QA, 2026-10-14) - Pass (2026-10-14) | None |
+| 4 | Record (log) + Update a deal (3 deals) | Open the email | Email logged on the latest deal and on the contact (QA, 2026-10-15; was "latest deal only" on 2026-10-14); the card reads "Logged email by Email Opened via Saleshandy" (QA, 2026-10-14) - Pass on 2026-10-14 under the old rule, re-run pending for the contact check | None |

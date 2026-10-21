@@ -144,6 +144,18 @@ async function expectOnRecord(contacts: HubSpotContactsPage, id: string, texts: 
   });
 }
 
+// Create a Task rows 1 and 2 need an EMPTY Extra Configuration dialog. Saved
+// values can never be cleared and Phase 2 saves them, so on a used account the
+// dialog opens pre-filled (seen 2026-10-14: "Follow up from the workflow", Call,
+// Medium, 3 Days). Same rule as useOnly: skip, the row needs a new account.
+async function skipIfTaskConfigSaved(integration: HubSpotIntegrationPage): Promise<void> {
+  const title = await integration.extraConfiguration().locator('.mb-3').nth(0).locator('input').inputValue();
+  if (title.trim() !== '') {
+    await integration.cancelExtraConfiguration();
+    test.skip(true, `Create a Task already has saved Extra Configuration on this account (Task Title: ${title.trim()}); this row needs a new account`);
+  }
+}
+
 const CREATE_CONTACT_LABELS = ['Lead Status', 'Lead Lifecycle'];
 const UPDATE_CONTACT_LABELS = ['Update Lead Status', 'Update Lead Lifecycle'];
 
@@ -664,6 +676,7 @@ test.describe('Sequence Email is Opened in Saleshandy', () => {
     await test.step('Select Create a Task, touch nothing', async () => {
       await flow.startClean(saleshandyIntegration);
       await saleshandyIntegration.selectActivity(TRIGGER, CREATE_TASK);
+      await skipIfTaskConfigSaved(saleshandyIntegration);
     });
     await test.step('No field is highlighted red and Save is disabled', async () => {
       const dialog = saleshandyIntegration.extraConfiguration();
@@ -681,6 +694,7 @@ test.describe('Sequence Email is Opened in Saleshandy', () => {
     await test.step('Select Create a Task', async () => {
       await flow.startClean(saleshandyIntegration);
       await saleshandyIntegration.selectActivity(TRIGGER, CREATE_TASK);
+      await skipIfTaskConfigSaved(saleshandyIntegration);
     });
     await test.step('Click into each field and leave it, typing and selecting nothing', async () => {
       await dialog.locator('.mb-3').nth(0).locator('input').click();

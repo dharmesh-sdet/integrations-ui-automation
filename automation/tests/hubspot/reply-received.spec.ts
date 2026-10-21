@@ -27,6 +27,8 @@ const flow = createFlow({
   trigger: TRIGGER,
   sequenceId: SEQUENCE_ID,
   csv: 'hubspot/reply-received.csv',
+  // QA 2026-10-14: when the sender has used its daily cap the step 1 email
+  // shows "Scheduled, Tomorrow"; Send now sends it (as Link Clicked does).
   // The Reply note reads "Step: 1 (Variant A)" and "Prospect email: <email>"
   // (seen on a contact 2026-10-12), unlike the shared default.
   noteContains: (row, step) => [`Step: ${step} (Variant A)`, `Prospect email: ${row['Email']}`],

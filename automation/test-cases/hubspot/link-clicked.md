@@ -67,7 +67,7 @@ not checked). Do not treat these as failures.
 | # | Scenario | Do | Expected | Ticket |
 |---|---|---|---|---|
 | 1 | Trigger off before the test | Enable "Link Clicked in Saleshandy", select an activity, click Save | "Configuration Updated Successfully" | None |
-| 2 | Prospect received the step 1 email | Click the link | Within about 1.5 min: Sequences > Emails clicked count is 1 and Sequence > Prospects shows the link clicked icon in purple. Then a new log entry for Link Clicked in Saleshandy - Pass, 2026-10-14 | None |
+| 2 | Prospect received step 1 email | Click the link | Within ~1.5 min: clicked count is 1 in Sequences > Emails, link clicked icon purple in Sequence > Prospects. New log entry for Link Clicked in Saleshandy - Pass, 2026-10-14 | None |
 
 ## Create a Contact in HubSpot
 
@@ -76,12 +76,12 @@ skipped.
 
 | # | Scenario | Do | Expected | Ticket |
 |---|---|---|---|---|
-| 1 | Contact not in HubSpot, Extra Configuration skipped | Click the link | Success. Contact created with the mapped fields. Only on an account where Create a Contact was never configured; not run on linkclick (values saved by row 5 first, 2026-10-09) | None |
-| 2 | Contact not in HubSpot, Lead Status and Lead Lifecycle set | Click the link | Success. Contact created with the configured Lead Status and Lifecycle Stage | None |
-| 3 | Contact already in HubSpot, prospect details changed in Saleshandy | Click the link | Success. Contact shows the new mapped values | None |
-| 4 | Contact already at a later Lifecycle Stage than the configured one | Click the link | Lifecycle Stage stays at the later stage (HubSpot blocks backward moves, not a defect) | None |
-| 5 | Lead Status and Lead Lifecycle saved before | Reopen Extra Configuration and try to clear both | Fields cannot be made empty again (expected) | None |
-| 6 | Row 3 done (first link clicked), prospect details changed again | Click the second link | Clicked count goes from 1 to 2, then a new log entry with Success. Contact shows the new values | None |
+| 1 | Contact not in HubSpot, Extra Configuration skipped | Click the link | Success. Contact created with mapped fields. Only on an account where Create a Contact was never configured; not run on linkclick (values saved by row 5 first, 2026-10-09) | None |
+| 2 | Contact not in HubSpot, Lead Status and Lifecycle set | Click the link | Success. Contact created with configured Lead Status and Lifecycle Stage | None |
+| 3 | Contact in HubSpot, prospect details changed | Click the link | Success. Contact shows new mapped values | None |
+| 4 | Contact at a later Lifecycle Stage than configured | Click the link | Lifecycle Stage stays at the later stage (HubSpot blocks backward moves) | None |
+| 5 | Lead Status and Lifecycle already saved | Reopen Extra Configuration, try to clear both | Fields cannot be cleared (expected) | None |
+| 6 | Row 3 done (first link clicked), prospect details changed again | Click the second link | Clicked count 1 to 2, new log entry with Success. Contact shows new values | None |
 
 ## Update a Contact in HubSpot
 
@@ -90,10 +90,10 @@ the UI), or skipped.
 
 | # | Scenario | Do | Expected | Ticket |
 |---|---|---|---|---|
-| 1 | Contact in HubSpot, prospect details changed in Saleshandy, Extra Configuration skipped | Click the link | Success. Contact shows the new mapped values | None |
-| 2 | Contact in HubSpot, Update Lead Status and Update Lead Lifecycle set | Click the link | Success. Contact shows the configured Lead Status and Lifecycle Stage | None |
+| 1 | Contact in HubSpot, prospect details changed, Extra Configuration skipped | Click the link | Success. Contact shows new mapped values | None |
+| 2 | Contact in HubSpot, Update Lead Status and Lifecycle set | Click the link | Success. Contact shows configured Lead Status and Lifecycle Stage | None |
 | 3 | Contact not in HubSpot | Click the link | Success, no contact created | None |
-| 4 | Contact in HubSpot, prospect details not changed in Saleshandy | Click the link | Contact not updated (properties unchanged) | None |
+| 4 | Contact in HubSpot, prospect details unchanged | Click the link | Contact not updated | None |
 
 ## Create a deal in HubSpot
 
@@ -102,10 +102,10 @@ Extra Configuration: Pipeline, Pipeline Stage, Deal Type, Deal Priority
 
 | # | Scenario | Do | Expected | Ticket |
 |---|---|---|---|---|
-| 1 | Contact in HubSpot, no deal, Closing Date 0 Days | Click the link | Success. Deal created and associated to the contact with the configured Pipeline, Stage, Type and Priority, no close date | None |
+| 1 | Contact in HubSpot, no deal, Closing Date 0 Days | Click the link | Success. Deal created and associated with configured Pipeline, Stage, Type, Priority; no close date | None |
 | 2 | Contact not in HubSpot | Click the link | Contact and deal created and associated | None |
-| 3 | Contact already has 1 deal | Click the link | New deal created, contact now has 2 deals | None |
-| 4 | Prospect has Deal Value, Extra Configuration Closing Date 1 Day | Click the link | Deal Amount = Deal Value, close date 1 day from today | None |
+| 3 | Contact has 1 deal | Click the link | New deal created, contact now has 2 deals | None |
+| 4 | Prospect has Deal Value, Closing Date 1 Day | Click the link | Deal Amount = Deal Value, close date 1 day from today | None |
 | 5 | Closing Date 51 Days | Click the link | Close date 51 days from today, not 50 | None |
 
 ## Update a deal in HubSpot
@@ -115,11 +115,11 @@ Closing Date as given in each row.
 
 | # | Scenario | Do | Expected | Ticket |
 |---|---|---|---|---|
-| 1 | Contact has 1 deal | Click the link | Success. Deal shows the configured Pipeline, Stage, Type and Priority | None |
-| 2 | Contact has 3 deals | Click the link | The latest created deal is updated, the 2 older ones are unchanged | AL-4103 |
-| 3 | Deal updated in row 1, Extra Configuration values changed | Click the second link | Deal shows the new values | None |
+| 1 | Contact has 1 deal | Click the link | Success. Deal shows configured Pipeline, Stage, Type, Priority | None |
+| 2 | Contact has 3 deals | Click the link | Latest created deal updated, 2 older ones unchanged | AL-4103 |
+| 3 | Deal updated in row 1, Extra Configuration values changed | Click the second link | Deal shows new values | None |
 | 4 | Contact has 1 deal, Closing Date 51 Days | Click the link | Close date 51 days from today | None |
-| 5 | Contact in HubSpot with 0 deals | Click the link | Nothing created or updated | None |
+| 5 | Contact in HubSpot, 0 deals | Click the link | Nothing created or updated | None |
 | 6 | Contact not in HubSpot | Click the link | Nothing created or updated | None |
 
 ## Create a company in HubSpot
@@ -128,10 +128,10 @@ Extra Configuration: None.
 
 | # | Scenario | Do | Expected | Ticket |
 |---|---|---|---|---|
-| 1 | Contact in HubSpot, prospect has company details | Click the link | Success. One company created and associated to the contact | None |
-| 2 | A company with the same domain already exists | Click the link | New company created anyway and associated | None |
+| 1 | Contact in HubSpot, prospect has company details | Click the link | Success. Company created and associated to the contact | None |
+| 2 | Company with same domain exists | Click the link | New company created and associated | None |
 | 3 | Contact not in HubSpot | Click the link | Contact and company created and associated | None |
-| 4 | Prospect has empty company details, only a company domain | Click the link | Company created from the company domain | None |
+| 4 | Prospect has only company domain (other company details empty) | Click the link | Company created from the domain | None |
 
 ## Update a company in HubSpot
 
@@ -140,10 +140,10 @@ are changed in Saleshandy.
 
 | # | Scenario | Do | Expected | Ticket |
 |---|---|---|---|---|
-| 1 | Contact has 1 associated company | Click the link | Success. Company shows the new values (not the name, AL-4104) - Pass after Field Mapping fix, AL-4127 | AL-4127 |
-| 2 | Contact has 2 associated companies | Click the link | The latest associated company is updated, the other is unchanged - Pass after Field Mapping fix, AL-4127 | AL-4127 |
-| 3 | Contact in HubSpot, no associated company | Click the link | Success, nothing created or updated | None |
-| 4 | Contact not in HubSpot | Click the link | Success, nothing created or updated | None |
+| 1 | Contact has 1 associated company | Click the link | Success. Company shows new values (not the name, AL-4104) - Pass after Field Mapping fix, AL-4127 | AL-4127 |
+| 2 | Contact has 2 associated companies | Click the link | Latest associated company updated, other unchanged - Pass after Field Mapping fix, AL-4127 | AL-4127 |
+| 3 | Contact in HubSpot, no associated company | Click the link | Nothing created or updated | None |
+| 4 | Contact not in HubSpot | Click the link | Nothing created or updated | None |
 
 ## Create a Task in HubSpot
 
@@ -152,7 +152,7 @@ UI), Due in 3 Days.
 
 | # | Scenario | Do | Expected | Ticket |
 |---|---|---|---|---|
-| 1 | Contact in HubSpot | Click the link | Success. Task on the contact with the configured title, type and priority, due date 3 days from today. Log action label "Create task for existing contact" | None |
+| 1 | Contact in HubSpot | Click the link | Success. Task on contact with configured title, type, priority; due 3 days from today. Log action label "Create task for existing contact" | None |
 | 2 | Contact not in HubSpot | Click the link | Contact created, task created on it | None |
 | 3 | Due in set to 0 | Try to Save the modal | Cannot be saved | None |
 | 4 | Task title empty | Try to Save the modal | Cannot be saved | None |
@@ -164,12 +164,12 @@ above.
 
 | # | Scenario | Do | Expected | Ticket |
 |---|---|---|---|---|
-| 1 | Paired with Create a Contact (Lead Status and Lifecycle set), contact not in HubSpot | Click the link | Success. Contact created, note on it shows Step 1, Variant A and the Prospect Outcome | None |
-| 2 | Paired with Update a Contact, contact in HubSpot | Click the link | Success. Note on the contact; step 1 note contains "Click Count: 1" - Pass after fix, AL-4120 | AL-4120 |
-| 3 | Paired with Create a deal, prospect has Deal Value and Closing Date | Click the link | Success. Note on both the contact and the deal - Pass after fix, AL-4121 | None |
-| 4 | Paired with Update a deal, contact has 1 deal, prospect has no Closing Date (AL-4096) | Click the link | Success. The deal is updated and the note is on both the contact and the deal (QA, 2026-10-14, confirmed with the developer; it was deal only on 2026-10-13) - Pass, 2026-10-14 | None |
-| 5 | Pairing from row 2, step 2 sent | Send now on step 2, click its link | New note shows Step 2, Variant A | None |
-| 6 | Create a Note selected alone | Click the link | Success in Logs (the custom workflow runs); no note on any contact, company or deal | None |
+| 1 | Paired with Create a Contact (Lead Status and Lifecycle set), contact not in HubSpot | Click the link | Success. Contact created, note shows Step 1, Variant A and Prospect Outcome | None |
+| 2 | Paired with Update a Contact, contact in HubSpot | Click the link | Success. Note on contact; step 1 note contains "Click Count: 1" - Pass after fix, AL-4120 | AL-4120 |
+| 3 | Paired with Create a deal, prospect has Deal Value and Closing Date | Click the link | Success. Note on both contact and deal - Pass after fix, AL-4121 | None |
+| 4 | Paired with Update a deal, contact has 1 deal, no Closing Date (AL-4096) | Click the link | Success. Deal updated, note on both contact and deal (QA, 2026-10-14; was deal only on 2026-10-13) - Pass, 2026-10-14 | None |
+| 5 | Paired with Update a Contact, contact in HubSpot, step 2 sent after step 1 click (own prospect, QA 2026-10-15) | Click step 1 link, then Send now on step 2 and click its link | New note shows Step 2, Variant A - Pass (2026-10-15, 3.9 min) | None |
+| 6 | Create a Note selected alone | Click the link | Success in Logs; no note on any contact, company or deal | None |
 
 ## Record (log) an email activity in HubSpot
 
@@ -180,8 +180,8 @@ above.
 |---|---|---|---|---|
 | 1 | Activity selected | Hover the activity | Tooltip: "Logging an email alone would result in failure. Please create/update contact or deal to associate an email." | None |
 | 2 | Only this activity selected | Click Save | Saved | None |
-| 3 | Paired with Create a Contact (Lead Status and Lifecycle set), contact not in HubSpot | Click the link | Success. Email logged on the contact with From, To, "logged email by", date and time, and the step body | None |
-| 4 | Paired with Update a Contact, prospect has Deal Value and Closing Date | Click the link | Success. Email logged on the contact | None |
-| 5 | Paired with Create a deal, prospect has Deal Value and Closing Date | Click the link | Success. Email logged on both the deal and the contact - Pass after fix, AL-4122 | None |
-| 6 | Paired with Update a deal, contact has 3 deals | Click the link | Success. Latest created deal updated; the email is logged on that deal only (the contact gets no logged email, QA 2026-10-13), and its header names the prospect, not "Unknown Contact" - Pass after fix, AL-4123 | AL-4103 |
-| 7 | Pairing from row 4, step 2 sent | Send now on step 2, click its link | Step 2 email appears as a separate activity | None |
+| 3 | Paired with Create a Contact (Lead Status and Lifecycle set), contact not in HubSpot | Click the link | Success. Email logged on contact with From, To, "logged email by", date/time, step body | None |
+| 4 | Paired with Update a Contact, prospect has Deal Value and Closing Date | Click the link | Success. Email logged on contact | None |
+| 5 | Paired with Create a deal, prospect has Deal Value and Closing Date | Click the link | Success. Email logged on both deal and contact - Pass after fix, AL-4122 | None |
+| 6 | Paired with Update a deal, contact has 3 deals | Click the link | Success. Latest deal updated; email logged on that deal and contact (QA 2026-10-15; was deal only, QA 2026-10-13), header names the prospect, not "Unknown Contact" - Pass after fix, AL-4123; re-run pending for contact check | AL-4103 |
+| 7 | Paired with Update a Contact, contact in HubSpot, step 2 sent after step 1 click (own prospect, QA 2026-10-15) | Click step 1 link, then Send now on step 2 and click its link | Step 2 email appears as separate activity - Pass (2026-10-15, 3.9 min) | None |

@@ -466,3 +466,203 @@ email activity in Phase 2.
   email logged on the contact. Fifth real bounce.
 - The full-suite command was started by mistake earlier (QA had asked for this
   row only) and stopped at Baseline 4 (failed after 2.3 min, not investigated).
+
+## Full-suite run `npm run test:email-bounced` (2026-10-14, session of QA's "run it")
+
+- Phase 1: 13 passed, 2 failed, 22 skipped (47.6 min). Phase 2: 20 passed, 1
+  failed, 1 skipped (1.8 h; Record 6 skipped, real-bounce cap used up).
+- Create a Task 1 and 2 (Phase 1) FAILED, cause: account state, not product.
+  The emailbounced account already has saved Extra Configuration for Create a
+  Task (Phase 2 saved it), so the modal opens filled (Task Title "Follow up
+  from the workflow", Call, Medium, Due In 3): Save enabled, no red field.
+  Seen in test-failed-1.png of both. These two rows have no "already has saved
+  Extra Configuration" self-skip like the other Phase 1 rows; they passed on
+  2026-10-13 before the values were saved. They need a new account.
+- Create a deal 2 (Phase 2) FAILED, cause: environment, not product or data.
+  Step 1 was sent at 1.4 min; the Emails tab then loaded a blank page and the
+  wait for the "Clicked" column ran to the 10 min timeout. Trace: that last
+  load of /sequence/196432/emails got HTML pointing at
+  assets/index-BrWlJEsP.js, which returned 404 (a script hash not seen in any
+  earlier load; earlier loads all returned 200). Looks like a staging deploy
+  or CDN mismatch during the run. Not re-run yet.
+- Proposed, not applied (waiting for QA's OK): (1) self-skip Create a Task 1
+  and 2 on an account with saved values; (2) `openEmails` reloads once when
+  the Clicked header does not show within about 30 s, instead of waiting for
+  the test timeout.
+
+## Third sender attached (2026-10-14, QA asked: "add all 3 email accounts to the active sequence")
+
+- Sequence 196432 > Settings > Email Account: added "Automation Framework"
+  (dharmesh+automation@saleshandy.com, daily limit 15, 0 sent). Verified after
+  reload: three senders attached, sender rotation on, Google Workspace total
+  115/day. Today's use: +6 50/50 (capped), +7 4/50, Automation Framework 0/15.
+- No sender settings (limits, intervals) were changed. This is a sequence
+  attachment only; sender settings stay read only (QA 2026-10-13).
+- Reason: Create a deal 2 (Phase 2) failed because its step 1 email was
+  "Scheduled, Tomorrow 09:00 AM" while +6 was at the 50/50 cap. Not re-run yet.
+
+## Create a deal 2 (Phase 2) re-runs 2 and 3 (2026-10-14)
+
+- Re-run 2 (isolated): FAIL 3.5 min, step 1 "Scheduled, Tomorrow 09:00 AM", +6 at 50/50.
+- Re-run 3 (isolated, after Automation Framework attached, +7 at 4/50, 0/15 on
+  the new one): FAIL 3.7 min, same symptom, same error at "Wait until
+  Saleshandy sends step 1". Not a blank page; no asset 404. Sender assigned to
+  the prospect is not known. Output: `test-results-emailbounced-phase2-deal2-run3/`.
+- Cap on +6 therefore does not explain re-run 3 on its own. Not established:
+  sending schedule hours ("Default Schedule") of sequence 196432 vs the time of
+  the runs (both about 18:20 to 18:30 IST). Not checked yet.
+
+## Create a deal 2 (Phase 2) re-run 4 with Send now (2026-10-14, about 19:50)
+
+- QA: use Send now. `runTrigger` in `email-bounced-phase2.spec.ts` now calls
+  `sequence.sendNow` for step 1 (retried up to 3 min; skips if already Sent)
+  instead of `ensureSent`, which only waited. Applies to every Phase 2 row.
+- FAILED at "Send step 1 with Send now" (3.0 min). Send now was clicked and the
+  product answered with a red toast: "Oops! You have reached the maximum daily
+  sending limit for this sender email, please wait for the quota reset." Step 1
+  stays "Scheduled, Tomorrow 09:00 AM", sender "-". Not a script problem.
+  Screenshot: `test-results-emailbounced-phase2-deal2-run4/.../test-failed-1.png`.
+- Emails tab at that moment: 117 total, 3 Scheduled, 101 Bounced. Sender
+  settings stay read only (QA 2026-10-13), so no limit change was made.
+- Needs QA: wait for the quota reset tomorrow, or allow raising/adding a sender.
+
+## Create a deal 2 (Phase 2) re-run 5 (2026-10-14, about 19:50, after QA removed the exhausted sender)
+
+- Send now worked: step 1 for Sanne Hendriks went out via Automation Framework
+  and was marked Hard Bounced at 07:50 PM. The earlier quota block is gone.
+- FAILED at "Check HubSpot: contact created" (5.3 min): contact
+  sanne.hendriks@mailinator.com not found after 180 s. The HubSpot search page
+  showed "Our website provider is having trouble loading this page", request ID
+  A4A73C686CC53FED, 19:52:29 IST. HubSpot-side error, so whether the workflow
+  created the contact is NOT known (not checked by hand). Not a script bug.
+- Re-run 6 started right after.
+- Re-run 6 (about 20:00): PASSED (2.8 min). Send now sent step 1, bounce marked,
+  HubSpot contact created with one associated deal. Create a deal 2 (Phase 2)
+  is closed. The earlier 8 failed attempts today were sender quota (caps) and
+  one HubSpot error page, not the product's deal logic.
+
+## waitForPageLoad added (2026-10-14, QA request, shared files)
+
+- `src/utils/wait.ts`: `waitForPageLoad(page)` waits for `load`, then treats
+  an empty body (5 s grace) or HubSpot's "having trouble loading this page" as a
+  load problem: reload 5, 10, 20 s apart, then fail with a clear message. It is
+  called from `gotoWithRetry`, so every `goto` of every page object gets it.
+- `src/pages/base.page.ts`: `BasePage.waitForPageLoad()` for pages reached by a
+  click or redirect. Typecheck clean. NOT yet run against a real error page (the
+  re-run 6 above started before the edit); first real use will show in a log
+  line "Page load problem (...)". Shared files: tell the other sessions.
+
+## Create a Task 1 and 2 (Phase 1) rewritten for the saved state (2026-10-14, QA: "go ahead with both")
+
+- Task 1 now asserts the modal opens with the saved values (Task Title not
+  empty), no red field, Save enabled. Task 2 clears Task Title and Due In by
+  hand, then asserts both red and Save disabled; dialog cancelled, nothing saved.
+- Scenario rows reworded in `test-cases/hubspot/email-bounced.md`. Typecheck
+  clean. Both PASSED (18.8 s and 11.1 s, `-g "Create a Task in HubSpot > [12]:"`).
+- Note: Task 1 now needs an account WITH saved values (emailbounced has them);
+  on a fresh account its "Save is enabled" would fail.
+
+## Saved 2026-10-14 (final status, resume here; saved on a "battery low" message from session local-project-a2)
+
+- Email Bounced regression is DONE. Phase 1: 37 of 37 have a passing result
+  (13 in the final full run, 22 self-skipped on this account but passed
+  2026-10-12 to 2026-10-13, Create a Task 1 and 2 rewritten and passed today).
+  Phase 2: 22 of 22 pass (Create a deal 2 re-run 6 PASSED, Record (log) 6 passed
+  on its own re-run). AL-4125 (Update a company) is QA Approved. No run is live
+  from this session.
+- Code changed today (all typechecked): Phase 2 `runTrigger` uses Send now for
+  step 1; `waitForPageLoad` in `src/utils/wait.ts` (called from `gotoWithRetry`)
+  and `BasePage.waitForPageLoad()` (shared files, other sessions NOT told yet,
+  never met a real error page); Task 1 and 2 (Phase 1) rewritten for the saved
+  state; scenario rows reworded.
+- Not covered: other 21 Phase 2 rows ran before the Send now / waitForPageLoad
+  change; duplicate "Error" log entry on real bounces is not looked at (QA rule,
+  Logs not read); real bounces used 5 (plan cap was 3, QA allowed more).
+- Pending QA: KB update proposal (AL-3984 tree); `RESUME.md` row for Email
+  Bounced is stale; product smoke scenarios: scope not defined (asked QA which
+  workflows, environment, rows per activity; defaults: one happy-path row per
+  trigger, staging, one row each).
+- Shared-account note from Link Clicked: production smoke specs use account
+  `emailopenedprod` (Email Opened and Link Clicked); never run both at once,
+  sender limit 15 per day. Email Bounced does not use that account.
+
+## Production smoke checklist drafted (2026-10-14, no run)
+
+- `notes/production-testing/03-email-bounced.md` written in the format of 01 and
+  02 (baseline + 9 activities, AL-4016, AL-4125 only). QA answers: account
+  `emailopenedprod` with a new sequence (shared with Email Opened and Link
+  Clicked: never at the same time, 15 sends a day), Note and Record paired with
+  Create a Deal, Logs checked for Success.
+- Not done: README row in `notes/production-testing/README.md` (shared file),
+  smoke spec (waits for QA's OK on the checklist), any run.
+
+## Production smoke spec written (2026-10-14 about 21:00, QA: "Let's start with the Production smoke testing")
+
+- `tests/hubspot/email-bounced-smoke.spec.ts`: 10 tests, 00 to 09, same order as
+  `notes/production-testing/03-email-bounced.md` (baseline, Create/Update a
+  Contact, Create/Update a Deal, Create/Update a Company, Create a Task, Note and
+  Record paired with Create a Deal). Typechecked, listed, NOT run. Built from
+  `link-clicked-smoke.spec.ts`; event = Mark as bounced on the step 1 row after
+  Send now; account `emailopenedprod`; ticket tag only on 06 (AL-4125).
+- Data: `test-data/hubspot/email-bounced-smoke.csv` (10 rows, copied from staging
+  Phase 1 and Phase 2 rows) + `-deals` (3) + `-companies` (2). Gitignored.
+- TODO(needs-input) in the spec: checklist baseline says "Latest Status is
+  Bounced" (CRM > All Prospects); no locator for it exists, so the baseline checks
+  the Emails tab row (Bounced) and Logs only.
+- Not done / needs QA before a run: a NEW production sequence (2 steps, Active,
+  sender dharmesh+prodint@saleshandy.com) and its id for `SMOKE_SEQUENCE_ID`;
+  confirm no Email Opened / Link Clicked smoke run is live (same account, 15
+  sends a day, this spec sends 10). Production exploring through MCP is not
+  allowed (smoke README), so Claude does not create the sequence.
+
+## Saved 2026-10-14 night (resume tomorrow, 2026-10-15)
+
+Email Bounced regression is DONE (Phase 1 37 of 37, Phase 2 22 of 22, AL-4125 QA
+Approved). No run is live from this session.
+
+Pending for Email Bounced production smoke:
+- Spec `tests/hubspot/email-bounced-smoke.spec.ts` (10 tests, typechecked, not
+  run), data `test-data/hubspot/email-bounced-smoke*.csv`, checklist
+  `notes/production-testing/03-email-bounced.md` (Latest Status check dropped).
+- Setup spec `tests/setup/email-bounced-smoke-sequence.spec.ts` (creates
+  "HubSpot Email Bounced Smoke", step 1 only, activates; gated by
+  SETUP_SMOKE_SEQUENCE=1) written, NOT typechecked or run. The Bash command that
+  would typecheck and run it was denied by the permission classifier
+  ("Production Deploy"); QA wanted Claude to create the sequence. Decision for
+  QA: allow the setup run, create the sequence by hand, or stop. Then
+  `SMOKE_SEQUENCE_ID=<id> TEST_DATA_ONLY=hubspot/email-bounced-smoke npx
+  playwright test tests/hubspot/email-bounced-smoke.spec.ts --project=chromium
+  --workers=1`. Never at the same time as the Email Opened or Link Clicked
+  smoke runs (account emailopenedprod, 15 sends a day shared; this spec sends
+  10).
+
+Playwright agents rule (QA, 2026-10-14), applied:
+- `CLAUDE.md` line, `plan.md` section 0 rule 12, `ui-test-from-workflow` skill
+  updated (planner, generator, healer through the Agent tool).
+- Seeds per account: `tests/seeds/<account>.seed.spec.ts` for contactupdated,
+  contactcreated, dealcreated, companycreated, emailsent, outcomeupdated,
+  unsubscribed. Agents take the seed as `seedFile`, project `chromium`. Typechecked,
+  agents never run end to end. Old `tests/seed.spec.ts` kept for now.
+- First workflow: Prospect is Unsubscribed (AL-4015). Account NOT ready, context
+  comes 2026-10-15. Link Clicked, Email Opened, Email Bounced and Reply Received
+  stay hand-written.
+- Needed from QA: headed logins `npm run login:saleshandy -- <account>` for each
+  account (start with unsubscribed), workflow order, the Unsubscribed context.
+
+Shared files changed today, other sessions NOT messaged: `src/utils/wait.ts`
+(waitForPageLoad, called from gotoWithRetry), `src/pages/base.page.ts`.
+Housekeeping: `RESUME.md` Email Bounced row is stale; KB update (AL-3984 tree)
+waits for QA's OK.
+
+## Update 2026-10-15: Record (log) 5 re-run under the "email on both contact and deal" rule (session local-project-76)
+
+QA, 2026-10-15: Update a deal + Record (log) puts the email on both the latest deal and the contact, in every workflow. `email-bounced-phase2.spec.ts` (Record 5) now checks the contact positively instead of "not 'Logged email with'".
+
+Run `reports/email-bounced-phase2b`: Record (log) an email activity > 5 PASS (10.0 min, chromium, no real bounce used). Command: `REPORTS_DIR=reports/email-bounced-phase2b TEST_DATA_ONLY=hubspot/email-bounced-phase2 npx playwright test tests/hubspot/email-bounced-phase2.spec.ts --project=chromium --workers=1 -g "Record \(log\) an email activity in HubSpot > 5:"`.
+
+## Update 2026-10-15: Production smoke DONE (10 of 10)
+
+- Sequence "HubSpot Email Bounced Smoke" created on production by the setup spec (id 973942, step 1, Active). Run 1: 8 passed, tests 00 and 09 failed on script problems. Re-run of 00 and 09: both passed.
+- Script fixes: `sequence.page.ts` createAndAddProspect clicks the Prospects tabpanel's "Search & Add" (strict mode violation on a new sequence); the logged-email check matches "Logged email by" (production names the integration "rehan integration", staging showed "Email Bounced"). Same prefix fix applied to `link-clicked-smoke.spec.ts`. Other sessions NOT messaged.
+- Evidence: test-results-bounced-prod-smoke/, test-results-bounced-prod-smoke-rerun/. Draft: jira/drafts/al-4016-production-smoke-summary.json (not sent).
+- Next: Link Clicked production smoke, needs its own sequence (2 tracked links) and the sender limit (15 a day shared, Bounced used about 12).

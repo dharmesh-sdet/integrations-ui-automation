@@ -61,25 +61,25 @@ Not covered, still open: none known.
 | # | Scenario | Do | Expected | Ticket |
 |---|---|---|---|---|
 | 1 | Trigger off before the test | Enable "Email is Bounced in Saleshandy", select an activity, click Save | "Configuration Updated Successfully" | None |
-| 2 | Prospect in the Emails tab, sequence Active | Mark as bounced | The contact is created in HubSpot with the prospect's data | None |
-| 3 | Prospect in the Emails tab, sequence paused after being Active | Mark as bounced | Same as row 2 | None |
-| 4 | Only another trigger (Email Sent) enabled | Mark as bounced | No contact is created in HubSpot | None |
-| 5 | Create a Contact selected, Extra Configuration empty, real-bounce address, contact not in HubSpot | Send the email and wait for the real bounce | Email shows Bounced in Saleshandy. Contact created in HubSpot with the prospect's data (same as Create a Contact 1) | None |
+| 2 | Prospect in Emails tab, sequence Active | Mark as bounced | Contact created in HubSpot with prospect's mapped data | None |
+| 3 | Prospect in Emails tab, sequence paused after being Active | Mark as bounced | Same as row 2 | None |
+| 4 | Only another trigger (Email Sent) enabled | Mark as bounced | No contact created in HubSpot | None |
+| 5 | Create a Contact selected, Extra Configuration empty, real-bounce address, contact not in HubSpot | Send the email, wait for real bounce | Email shows Bounced in Saleshandy. Contact created in HubSpot with prospect's mapped data | None |
 
 ### Create a Contact in HubSpot: Extra Configuration empty
 
 | # | Scenario | Do | Expected | Ticket |
 |---|---|---|---|---|
-| 1 | Contact not in HubSpot | Bounce the email | Contact created with the mapped fields, including company name, industry and country. Lifecycle Stage and Lead Status are set by HubSpot itself | None |
-| 2 | Contact already in HubSpot, prospect details changed in Saleshandy | Bounce the email | Contact shows the new mapped values | None |
+| 1 | Contact not in HubSpot | Bounce the email | Contact created with mapped fields (company name, industry, country). Lifecycle Stage and Lead Status set by HubSpot | None |
+| 2 | Contact in HubSpot, prospect details changed | Bounce the email | Contact shows new mapped values | None |
 
 ### Update a Contact in HubSpot: Extra Configuration empty
 
 | # | Scenario | Do | Expected | Ticket |
 |---|---|---|---|---|
-| 1 | Contact in HubSpot, prospect details changed | Bounce the email | Contact shows the new mapped values | None |
+| 1 | Contact in HubSpot, prospect details changed | Bounce the email | Contact shows new mapped values | None |
 | 2 | Contact not in HubSpot | Bounce the email | No contact created | None |
-| 3 | Contact in HubSpot, prospect details not changed | Bounce the email | Contact not updated | None |
+| 3 | Contact in HubSpot, prospect details unchanged | Bounce the email | Contact unchanged | None |
 
 ### Create a deal in HubSpot: Extra Configuration empty
 
@@ -87,10 +87,10 @@ The prospect has no Deal Value and no Closing Date unless the row says so.
 
 | # | Scenario | Do | Expected | Ticket |
 |---|---|---|---|---|
-| 1 | Contact in HubSpot, no deal | Bounce the email | Deal created and associated to the contact. Pipeline, Stage, Deal Type and Priority are filled in by HubSpot. Amount empty (--), close date empty (--) | None |
-| 2 | Contact not in HubSpot | Bounce the email | Contact and deal created and associated, deal values as in row 1 | None |
-| 3 | Contact already has 1 deal | Bounce the email | New deal created, the contact now has 2 deals | None |
-| 4 | Prospect has a Deal Value | Bounce the email | Deal Amount = Deal Value, close date empty (--) | None |
+| 1 | Contact in HubSpot, no deal | Bounce the email | Deal created and associated. Pipeline, Stage, Deal Type, Priority set by HubSpot. Amount empty (--), close date empty (--) | None |
+| 2 | Contact not in HubSpot | Bounce the email | Contact and deal created and associated, deal values as row 1 | None |
+| 3 | Contact has 1 deal | Bounce the email | New deal created, contact now has 2 deals | None |
+| 4 | Prospect has Deal Value | Bounce the email | Deal Amount = Deal Value, close date empty (--) | None |
 
 ### Update a deal in HubSpot: Extra Configuration empty
 
@@ -98,17 +98,17 @@ The prospect has no Deal Value and no Closing Date unless the row says so.
 |---|---|---|---|---|
 | 1 | Contact has 1 deal | Bounce the email | Open: run once, QA decides | None |
 | 2 | Contact has 3 deals | Bounce the email | Open: run once, QA decides | None |
-| 3 | Contact in HubSpot with 0 deals | Bounce the email | Nothing created or updated | None |
+| 3 | Contact in HubSpot, 0 deals | Bounce the email | Nothing created or updated | None |
 | 4 | Contact not in HubSpot | Bounce the email | Nothing created or updated | None |
 
 ### Create a company in HubSpot: no Extra Configuration
 
 | # | Scenario | Do | Expected | Ticket |
 |---|---|---|---|---|
-| 1 | Contact in HubSpot, prospect has company details | Bounce the email | One company created and associated | None |
-| 2 | A company with the same domain already exists | Bounce the email | New company created anyway and associated | None |
+| 1 | Contact in HubSpot, prospect has company details | Bounce the email | Company created and associated | None |
+| 2 | Company with same domain exists | Bounce the email | New company created and associated anyway | None |
 | 3 | Contact not in HubSpot | Bounce the email | Contact and company created and associated | None |
-| 4 | Prospect has empty company details, only a company domain | Bounce the email | Company created from the company domain | None |
+| 4 | Prospect has only company domain, other company details empty | Bounce the email | Company created from company domain | None |
 
 ### Update a company in HubSpot: no Extra Configuration
 
@@ -116,28 +116,28 @@ Company details are changed in Saleshandy before each row.
 
 | # | Scenario | Do | Expected | Ticket |
 |---|---|---|---|---|
-| 1 | Contact has 1 associated company | Bounce the email | Company shows the new values (not the name) | None |
-| 2 | Contact has 2 associated companies | Bounce the email | Latest associated company updated, the other unchanged | None |
+| 1 | Contact has 1 associated company | Bounce the email | Company shows new values (not the name) | AL-4125 |
+| 2 | Contact has 2 associated companies | Bounce the email | Latest associated company updated, other unchanged | AL-4125 |
 | 3 | Contact in HubSpot, no associated company | Bounce the email | Nothing created or updated | None |
 | 4 | Contact not in HubSpot | Bounce the email | Nothing created or updated | None |
 
-### Create a Task in HubSpot: Extra Configuration empty (modal only)
+### Create a Task in HubSpot: Extra Configuration modal (UI only)
 
-Nothing is typed or selected in these rows, and no prospect is bounced.
+No prospect is bounced. On an account that already has saved Create a Task values (emailbounced does, after Phase 2) the modal opens filled and the values cannot be cleared (QA, 2026-10-14).
 
 | # | Scenario | Do | Expected | Ticket |
 |---|---|---|---|---|
-| 1 | Extra Configuration modal just opened | Look at the modal, touch nothing | No field is highlighted red. Save is disabled | None |
-| 2 | Same modal, all fields empty | Click into each field (Task title, Task Type, Task Priority, Due in), type or select nothing, then leave it | Task Title and Due In are highlighted red. Save stays disabled. Task Type, Task Priority and Task Associated With do not turn red (QA, 2026-10-14) | None |
+| 1 | Extra Configuration modal opened (saved values) | Look at the modal, touch nothing | Saved values shown, no field highlighted red, Save enabled | None |
+| 2 | Task Title and Due In cleared | Clear Task Title and Due In, leave the field | Task Title and Due In highlighted red. Save disabled (QA, 2026-10-14) | None |
 
 ### Create a Note in HubSpot: paired with activities left empty
 
 | # | Scenario | Do | Expected | Ticket |
 |---|---|---|---|---|
-| 1 | Paired with Create a Contact, contact not in HubSpot | Bounce the email | Contact created, note shows Step 1, Variant A and the Prospect Outcome | None |
+| 1 | Paired with Create a Contact, contact not in HubSpot | Bounce the email | Contact created, note shows Step 1, Variant A, Prospect Outcome | None |
 | 2 | Paired with Update a Contact, contact in HubSpot | Bounce the email | Note on the contact | None |
-| 3 | Paired with Update a Contact, contact in HubSpot, prospect moved to step 2 before the bounce (a prospect already bounced on step 1 cannot be moved to step 2: expected behavior, QA 2026-10-13) | Move the prospect to step 2, then mark the step 2 row as bounced | New note shows Step 2, Variant A | None |
-| 4 | Create a Note selected alone | Bounce the email | No contact and no note are created in HubSpot | None |
+| 3 | Paired with Update a Contact, contact in HubSpot, prospect moved to step 2 before bounce (prospect bounced on step 1 cannot move to step 2: expected, QA 2026-10-13) | Move prospect to step 2, mark step 2 row as bounced | New note shows Step 2, Variant A | None |
+| 4 | Create a Note selected alone | Bounce the email | No contact and no note created | None |
 
 ### Record (log) an email activity in HubSpot: paired with activities left empty
 
@@ -145,9 +145,9 @@ Nothing is typed or selected in these rows, and no prospect is bounced.
 |---|---|---|---|---|
 | 1 | Activity selected | Hover the activity | Tooltip: "Logging an email alone would result in failure. Please create/update contact or deal to associate an email." | None |
 | 2 | Only this activity selected | Click the page's Save | Saved | None |
-| 3 | Paired with Create a Contact, contact not in HubSpot | Bounce the email | Email logged on the contact with From, To, "logged email by", date and time, step body | None |
+| 3 | Paired with Create a Contact, contact not in HubSpot | Bounce the email | Email logged on contact with From, To, "logged email by", date/time, step body | None |
 | 4 | Paired with Update a Contact | Bounce the email | Email logged on the contact | None |
-| 5 | Paired with Update a Contact, contact in HubSpot, prospect moved to step 2 before the bounce (a prospect already bounced on step 1 cannot be moved to step 2: expected behavior, QA 2026-10-13) | Move the prospect to step 2, then mark the step 2 row as bounced | The step 2 email is logged on the contact | None |
+| 5 | Paired with Update a Contact, contact in HubSpot, prospect moved to step 2 before bounce (prospect bounced on step 1 cannot move to step 2: expected, QA 2026-10-13) | Move prospect to step 2, mark step 2 row as bounced | Step 2 email logged on the contact | None |
 
 ## Phase 2: Extra Configuration filled
 
@@ -164,22 +164,22 @@ there are no "second bounce" rows (QA, 2026-10-14).
 | # | Scenario | Do | Expected | Ticket |
 |---|---|---|---|---|
 | 1 | Contact not in HubSpot | Bounce the email | Contact created: Lead Status Open, Lifecycle Stage Marketing Qualified Lead, mapped fields | None |
-| 2 | Contact already at a later Lifecycle Stage (Customer, set by hand in HubSpot) | Bounce the email | Lifecycle Stage stays Customer | None |
-| 3 | Values saved before | Reopen Extra Configuration, try to clear both | No empty option; picking the same value keeps it | None |
+| 2 | Contact at later Lifecycle Stage (Customer, set manually in HubSpot) | Bounce the email | Lifecycle Stage stays Customer | None |
+| 3 | Values saved before | Reopen Extra Configuration, try to clear both | No empty option; picking same value keeps it | None |
 
 **Update a Contact in HubSpot: Update Lead Status Connected, Update Lead Lifecycle Sales Qualified Lead**
 
 | # | Scenario | Do | Expected | Ticket |
 |---|---|---|---|---|
-| 1 | Contact in HubSpot at Lifecycle Stage Lead | Bounce the email | Lead Status Connected, Lifecycle Stage Sales Qualified Lead (two ahead of Lead) | None |
+| 1 | Contact in HubSpot, Lifecycle Stage Lead | Bounce the email | Lead Status Connected, Lifecycle Stage Sales Qualified Lead (two ahead) | None |
 
 **Create a deal in HubSpot: Sales Pipeline, Initial Contact, New Business, High**
 
 | # | Scenario | Do | Expected | Ticket |
 |---|---|---|---|---|
-| 1 | Contact in HubSpot, no deal, Closing Date 0 Days | Bounce the email | Deal created with the 4 values; close date empty (--) | None |
+| 1 | Contact in HubSpot, no deal, Closing Date 0 Days | Bounce the email | Deal created with 4 values; close date empty (--) | None |
 | 2 | Contact not in HubSpot | Bounce the email | Contact and deal created and associated | None |
-| 3 | Contact already has 1 deal | Bounce the email | New deal created, contact has 2 deals | None |
+| 3 | Contact has 1 deal | Bounce the email | New deal created, contact has 2 deals | None |
 | 4 | Prospect has Deal Value, Closing Date 1 Day | Bounce the email | Amount = Deal Value; close date = today + 1 | None |
 | 5 | Closing Date 51 Days | Bounce the email | Close date = today + 51 | None |
 
@@ -188,25 +188,25 @@ there are no "second bounce" rows (QA, 2026-10-14).
 | # | Scenario | Do | Expected | Ticket |
 |---|---|---|---|---|
 | 1 | Contact has 1 deal at Prospecting | Bounce the email | Deal Stage Follow-Up (two ahead) | None |
-| 2 | Contact has 3 deals | Bounce the email | Latest created deal updated, the others unchanged | None |
+| 2 | Contact has 3 deals | Bounce the email | Latest deal updated, others unchanged | None |
 | 3 | Closing Date 51 Days | Bounce the email | Close date = today + 51 | None |
 
 **Create a Task in HubSpot: title "Follow up from the workflow", Call, Medium, due in 3 days**
 
 | # | Scenario | Do | Expected | Ticket |
 |---|---|---|---|---|
-| 1 | Contact in HubSpot | Bounce the email | Task on the contact: title, type, priority, due today + 3 | None |
+| 1 | Contact in HubSpot | Bounce the email | Task on contact: title, type, priority, due today + 3 | None |
 | 2 | Contact not in HubSpot | Bounce the email | Contact and task created | None |
-| 3 | Due In set to 0 | Fill everything, leave Due In at 0 | Save cannot be clicked | None |
-| 4 | Task title empty | Fill type, priority, Due In 3, empty title | Save cannot be clicked | None |
+| 3 | Due In set to 0 | Fill everything, leave Due In at 0 | Save disabled | None |
+| 4 | Task title empty | Fill type, priority, Due In 3, leave title empty | Save disabled | None |
 
 **Create a Note and Record (log) an email activity: paired with an activity that has values**
 
 | # | Scenario | Do | Expected | Ticket |
 |---|---|---|---|---|
-| Note 1 | Create a Note + Create a deal | Bounce the email | Note on the contact and on the deal | None |
-| Note 2 | Create a Note + Update a deal (1 deal) | Bounce the email | Note on the contact and on the deal | None |
-| Note 3 | Create a Note + Create a Contact with values set | Bounce the email | Note on the contact; contact has Lead Status Open, Lifecycle Stage Marketing Qualified Lead | None |
-| Record 4 | Record (log) + Create a deal | Bounce the email | Email logged on the contact and on the deal | None |
-| Record 5 | Record (log) + Update a deal (3 deals) | Bounce the email | Email logged on the contact and on the latest deal | None |
-| Record 6 | Record (log) + Create a Contact with values set | Real bounce (third and last, QA 2026-10-14) | Email logged on the contact; contact has the values | None |
+| Note 1 | Create a Note + Create a deal | Bounce the email | Note on contact and deal | None |
+| Note 2 | Create a Note + Update a deal (1 deal) | Bounce the email | Note on contact and deal | None |
+| Note 3 | Create a Note + Create a Contact with values set | Bounce the email | Note on contact; contact has Lead Status Open, Lifecycle Stage Marketing Qualified Lead | None |
+| Record 4 | Record (log) + Create a deal | Bounce the email | Email logged on contact and deal | None |
+| Record 5 | Record (log) + Update a deal (3 deals) | Bounce the email | Email logged on contact and latest deal (QA, 2026-10-15, all workflows) - Pass (2026-10-15, 10.0 min) | None |
+| Record 6 | Record (log) + Create a Contact with values set | Real bounce (third and last, QA 2026-10-14) | Email logged on contact; contact has the values | None |

@@ -46,10 +46,6 @@ export type FlowConfig = {
   // True when the shared "second event on the same email" row (Update a deal
   // 3) should be added. Default false: Reply Received writes its own.
   secondEventRows?: boolean;
-  // True when step 1 should be sent with "Send now" right after the prospect
-  // is added, instead of waiting for Saleshandy's own send (QA, 2026-10-12, for
-  // Link Clicked). Default false: single prospects wait for Saleshandy.
-  sendStep1Now?: boolean;
   // Subject of the step 1 email, for checks on the logged email (optional).
   emailSubject?: string;
   // Texts the HubSpot note must contain. Default: Step, Variant and the
@@ -192,7 +188,8 @@ export function createFlow(cfg: FlowConfig) {
   // trigger event. Returns the log ids that existed before the event.
   async function runTrigger(ctx: FlowContext, row: Row, beforeSend?: () => Promise<void>): Promise<Set<string>> {
     // Waits for the send, the event and the sync.
-    test.setTimeout(10 * 60_000);
+    // Never lowers a longer timeout a spec set earlier (a spec's own set-up can take minutes).
+    test.setTimeout(Math.max(test.info().timeout, 10 * 60_000));
     await test.step('Add the prospect to the sequence', async () => {
       await ctx.sequence.createAndAddProspect(sequenceId, row);
       markUsed(csv, row['Email']);
@@ -201,7 +198,7 @@ export function createFlow(cfg: FlowConfig) {
     // Email Sent: the send is the event, so take the log ids before it.
     const known = await knownLogIds(ctx.integration);
     await test.step('Wait until Saleshandy sends step 1', async () => {
-      await ctx.sequence.ensureSent(sequenceId, fullName(row), 1, { bulk: cfg.sendStep1Now });
+      await ctx.sequence.ensureSent(sequenceId, fullName(row), 1);
     });
     await cfg.fireEvent(ctx, row, 1);
     return known;
@@ -249,6 +246,8 @@ export function createFlow(cfg: FlowConfig) {
     deals: sideCsv('deals'),
     companies: sideCsv('companies'),
     rowFor,
+    // For a spec that creates the row's HubSpot contact before the prospect is added.
+    markUsed: (row: Row) => markUsed(csv, row['Email']),
     startClean,
     useOnly,
     knownLogIds,

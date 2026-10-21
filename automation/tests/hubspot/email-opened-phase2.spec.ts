@@ -897,6 +897,7 @@ function activityTests(flow: Flow, title: string, options: { skip?: string[] } =
       });
     });
 
+    // QA 2026-10-14: the card "Logged email by Email Opened via Saleshandy" is the right one for Record 3, 4 and 5 (as for Record 6), not "Logged email with <name>".
     test('Record (log) an email activity in HubSpot > 3: Paired with Create a Contact, contact not in HubSpot', async ({ saleshandyIntegration, saleshandySequence, saleshandyCrm, mailinator, hubspotContacts }) => {
       const row = flow.rowFor('Record (log) an email activity in HubSpot > 3');
       await test.step('Select Create a Contact (Open, Marketing Qualified Lead) and Record (log) an Email Activity', async () => {
@@ -908,7 +909,7 @@ function activityTests(flow: Flow, title: string, options: { skip?: string[] } =
       });
       await test.step('Check HubSpot: contact created, email logged on it', async () => {
         const contactId = await findContact(hubspotContacts, row);
-        await expectOnRecord(hubspotContacts, '0-1', contactId, flow.loggedEmailContains(row, 1), 'Logged email');
+        await expectOnRecord(hubspotContacts, '0-1', contactId, ['Logged email by Email Opened via Saleshandy'], 'Logged email');
       });
     });
 
@@ -926,7 +927,7 @@ function activityTests(flow: Flow, title: string, options: { skip?: string[] } =
         await flow.expectNewLogsSuccess(saleshandyIntegration, known);
       });
       await test.step('Check HubSpot: email logged on the contact', async () => {
-        await expectOnRecord(hubspotContacts, '0-1', contactId, flow.loggedEmailContains(row, 1), 'Logged email');
+        await expectOnRecord(hubspotContacts, '0-1', contactId, ['Logged email by Email Opened via Saleshandy'], 'Logged email');
       });
     });
 
@@ -942,7 +943,7 @@ function activityTests(flow: Flow, title: string, options: { skip?: string[] } =
       await test.step('Check HubSpot: email logged on both the deal and the contact', async () => {
         const contactId = await findContact(hubspotContacts, row);
         const [deal] = await newDealsOf(hubspotContacts, contactId, 1, []);
-        await expectOnRecord(hubspotContacts, '0-1', contactId, flow.loggedEmailContains(row, 1), 'Logged email on the contact');
+        await expectOnRecord(hubspotContacts, '0-1', contactId, ['Logged email by Email Opened via Saleshandy'], 'Logged email on the contact');
         await expectOnRecord(hubspotContacts, '0-3', deal.id, flow.loggedEmailContains(row, 1), 'Logged email on the deal');
       });
     });
@@ -967,14 +968,14 @@ function activityTests(flow: Flow, title: string, options: { skip?: string[] } =
           expect(await hubspotDeals.summary(dealIds[2]), 'latest created deal').toMatchObject({ pipeline: 'Sales Pipeline', stage: 'Follow-Up', dealType: 'New Business', priority: 'High' });
         }).toPass({ timeout: 60_000 });
       });
-      // QA, 2026-10-13: Update a deal + Record email logs the email on the
-      // latest deal only; the contact gets nothing (expected). QA, 2026-10-14:
-      // on this trigger the card on the deal reading "Logged email by Email
-      // Opened via Saleshandy" is the right one (not "Logged email with <name>").
-      await test.step('Check HubSpot: email logged on the latest deal ("Logged email by Email Opened via Saleshandy"), not on the contact', async () => {
+      // QA, 2026-10-15: Update a deal + Record email logs the email on both the
+      // latest deal and the contact (was "deal only" on 2026-10-13), in every
+      // workflow. QA, 2026-10-14: on this trigger the card reading "Logged email
+      // by Email Opened via Saleshandy" is the right one (not "Logged email with <name>").
+      await test.step('Check HubSpot: email logged on the latest deal and on the contact ("Logged email by Email Opened via Saleshandy")', async () => {
         const contactId = await findContact(hubspotContacts, row);
         await expectOnRecord(hubspotContacts, '0-3', dealIds[2], ['Logged email by Email Opened via Saleshandy'], 'Logged email on the deal');
-        expect(await hubspotContacts.activitiesText('0-1', contactId), 'contact Activities').not.toContain('Logged email with');
+        await expectOnRecord(hubspotContacts, '0-1', contactId, ['Logged email by Email Opened via Saleshandy'], 'Logged email on the contact');
       });
     });
 

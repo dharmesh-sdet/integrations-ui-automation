@@ -9,6 +9,11 @@ Read the page you need, not all of them.
 |---|---|
 | What a Saleshandy area does and what to test in it | [product/saleshandy.md](product/saleshandy.md) |
 | HubSpot integration: screens, names, URLs seen on staging | [product/hubspot-integration.md](product/hubspot-integration.md) |
+| Salesforce integration: how it works, user journeys, what is not known yet (online docs only, not yet checked on staging) | [product/salesforce-integration.md](product/salesforce-integration.md) |
+| Salesforce Leads: form fields, required fields, Lead record layout, actions (from hands-on exploration) | [product/salesforce-leads.md](product/salesforce-leads.md) |
+| Salesforce Opportunities: form, Stage values, success message behavior | [product/salesforce-opportunities.md](product/salesforce-opportunities.md) |
+| Salesforce Contacts: related lists, campaign membership, Notes & Attachments | [product/salesforce-contacts.md](product/salesforce-contacts.md) |
+| Salesforce field mapping: how users map fields, all available fields per object (Lead 60, Opportunity 46, Account 66) | [product/salesforce-field-mapping.md](product/salesforce-field-mapping.md) |
 | HubSpot integration: workflows, activities, intended behavior, field mapping | [../automation/context/hubspot/00-overview.md](../automation/context/hubspot/00-overview.md) (single source, not copied here) |
 | How we test: environments, data, timing, verification, false failures | [testing/how-to-test.md](testing/how-to-test.md) |
 | Reusable test code and the checklist for a new integration (Salesforce next) | [testing/reusable-building-blocks.md](testing/reusable-building-blocks.md) |
@@ -28,6 +33,7 @@ Every fact carries its source, so a reader knows how far to trust it:
 | `[project]` | From a project file (context, test case, page object, QA answer). Path given when useful. |
 | `[staging]` | Seen on staging in an MCP walkthrough or a test run, with the date. |
 | `[public docs]` | From docs.saleshandy.com (Saleshandy help center). Not yet checked on staging; the product may differ. |
+| `[Salesforce docs]` | From help.salesforce.com, developer.salesforce.com or Trailhead. Describes Salesforce itself; org settings differ, so check in the test org. |
 | `[QA]` | Told by QA in chat, with the date. |
 | `[dev kit]` | From the developer's kit in `../integration-skills/` (next to this folder). Found through API calls and workflow JSON, not the UI: rely on what it says happens, check it on staging before a UI test depends on it, and never copy its wait values. |
 

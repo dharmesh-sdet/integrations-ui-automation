@@ -15,6 +15,90 @@ Entry shape:
 - Status: Proposed | Applied | Rejected
 ```
 
+## 2026-10-20: Replied without reading the no-ai-slop skill (Salesforce status replies)
+- What went wrong: replies in the session used bold labels, a numbered list for three items and "I'd" hedges. The rule (CLAUDE.md "Replies" bullet, memory note, both hooks) was in place; I followed only the one-line hook summary and never opened `.claude/skills/no-ai-slop/SKILL.md` until QA asked.
+- Why: the hooks carry a summary, not the rules, and the first fix I proposed (invoke the skill through the Skill tool) does not work: `.claude/settings.local.json` has `"no-ai-slop": "off"`, so the Skill tool refuses it.
+- Change: `CLAUDE.md` "Replies" bullet: before the first reply of a session, Read `.claude/skills/no-ai-slop/SKILL.md` (the Skill tool is off for it), then follow General Response Mode. Existing rule failed, so this changes how it is written, not a second copy.
+- Status: Applied (QA OK 2026-10-20), now in `CLAUDE.md` "Replies" bullet
+
+## 2026-10-20: Timeout fix undone by another setTimeout (Unsubscribed smoke 04, 06)
+- What went wrong: after the 5 minute failures I set a 20 minute timeout in `beforeEach`; the next run still died at exactly 10.0 min. `runTrigger` in the shared flow called `test.setTimeout(10 * 60_000)` and replaced it.
+- Why: I did not search for other `setTimeout` calls, and did not check in a trace that the new limit applied.
+- Change: `runTrigger` now keeps the longer value (`Math.max(test.info().timeout, 10 * 60_000)`). Rule in `knowledge-base/testing/how-to-test.md` ("Waiting and verifying"): after changing a timeout, grep `setTimeout` in the spec and `src/flows/`, and confirm the failure time moved.
+- Status: Applied (QA OK 2026-10-20)
+
+## 2026-10-20: Copied a stale assertion from a sibling workflow (Unsubscribed smoke 10)
+- What went wrong: check 10 expected older deals to have no logged email. AL-4130 (developer, 2026-10-15) made "email on every deal" expected behavior; `link-clicked-progress.md` said "proposed, not applied", and the spec was copied from Link Clicked without reading it.
+- Why: the source workflow's open decisions were not checked before copying.
+- Change: `.claude/skills/ui-test-from-workflow/SKILL.md`, new step 3-copy: search the source `*-progress.md` for "proposed, not applied" and open QA decisions before copying a spec, assertion or data rows.
+- Status: Applied (QA OK 2026-10-20)
+
+## 2026-10-20: Test timeout raised too late (Unsubscribed smoke 04, 06)
+- What went wrong: both tests hit the 5 minute default during HubSpot set-up (contact plus 3 deals or 2 companies); the 20 minute timeout was set later, inside `fireEvent`.
+- Why: set-up time on the new portal (about 40 s per page) was never measured.
+- Change: `knowledge-base/testing/how-to-test.md`, "Waiting and verifying": set the timeout in `test.beforeEach`. Done in `unsubscribed-smoke.spec.ts`.
+- Status: Applied (QA OK 2026-10-20)
+
+## 2026-10-20: Row left unused after a failed run (Unsubscribed smoke 02)
+- What went wrong: the first 02 run created the HubSpot contact, then failed in Saleshandy before the row was marked used. The next run stopped with "HubSpot already has a contact".
+- Why: `markUsed` ran only after the prospect was added.
+- Change: `flow.markUsed(row)` called inside `newContact` right after the contact is created; `markUsed` skips duplicates; gotcha in `knowledge-base/testing/ui-gotchas.md`.
+- Status: Applied (QA OK 2026-10-20)
+
+## 2026-10-20: Data rows did not match the test titles (Unsubscribed smoke 04, 06)
+- What went wrong: the spec read the "> 1" rows (1 deal, 1 company) for tests that need 3 deals and 2 companies.
+- Why: no check of row counts against the titles before handing the spec over.
+- Change: `npm run data:check -- <slug>` (`scripts/check-data.ts`) prints deals and companies per row and warns on repeated countries, titles and companies; required by the data step in `SKILL.md`.
+- Status: Applied (QA OK 2026-10-20)
+
+## 2026-10-19: Named a cause from a guess, not from the trace (Unsubscribed smoke)
+- What went wrong: first run failed with the row still "Scheduled"; I said the sender might have hit its daily limit. The trace showed `POST /emails/send` returned 201 and the toast showed. The real cause was the Emails list not refreshing, found by QA's question.
+- Why: I read the screenshot and error line, not the trace, before naming a cause. The 2026-10-14 lesson only covered Field Mapping.
+- Change: `.claude/skills/ui-test-from-workflow/SKILL.md`, "first run is a learning run" step: read the failing test's trace before naming a cause; otherwise write "cause not proven".
+- Status: Applied (QA OK 2026-10-19: `.claude/skills/ui-test-from-workflow/SKILL.md`)
+
+## 2026-10-19: Test filter matched nothing and a run was wasted
+- What went wrong: launched checks 00 and 01 with a `-g` pattern containing "›"; Playwright matches `-g` against the title without it, so "No tests found" came back after the launch.
+- Why: the filter was not checked before launching.
+- Change: same step in `SKILL.md`: run the same command with `--list` first and confirm it lists the intended tests.
+- Status: Applied (QA OK 2026-10-19: `.claude/skills/ui-test-from-workflow/SKILL.md`)
+
+## 2026-10-19: Fixed waits set without evidence (Unsubscribed smoke)
+- What went wrong: the final Prospects check was set to 15s, reload once, with no evidence of how long the status takes. It failed twice, costing runs of about 8 and 14 minutes.
+- Why: a short window was picked to follow "no unnecessary waits" and treated as the whole requirement.
+- Change: `knowledge-base/testing/how-to-test.md` "Waiting and verifying": a wait or timeout for a product event comes from a measured time or QA's manual steps, not a guess.
+- Status: Applied (QA OK 2026-10-19: `testing/how-to-test.md`)
+
+## 2026-10-18: 63-row full spec built without checking feasibility first (Unsubscribed, AL-4015)
+- What went wrong: stage 3 generated and started running a 63-row spec (every activity duplicated for a "real link" trigger, plus chained prospects) before checking whether it could realistically be run end to end. Rows 16-63 were never completed; QA later dropped the whole spec and a 27-row lite spec had to be built from scratch to replace it as the regression suite.
+- Why: `ui-test-from-workflow` stage 3 generates straight from the planner's scenario count with no step that checks total scenario count against realistic run time, or flags duplicate "real link" variants, before QA is asked to sign off on scope.
+- Change: `.claude/skills/ui-test-from-workflow/SKILL.md`, new stage "3-pre. Scope check": multiply the approved scenario count by 6 minutes (measured average row runtime, Unsubscribed lite: 144 min / 27 rows); if the estimate exceeds 3 hours (roughly 30 scenarios), or the list has a variant that only re-proves a trigger already proven once at baseline, stop and show QA the count, estimate and the rows to cut before generating.
+- Status: Applied (QA OK 2026-10-18: `.claude/skills/ui-test-from-workflow/SKILL.md` stage 3-pre)
+
+## 2026-10-18: New account's sequence schedule blocked rows outside business hours (Unsubscribed, AL-4015)
+- What went wrong: the test sequence's Default Schedule (Mon-Fri 09:00-18:00 Asia/Kolkata) meant step 1 emails queued as "Scheduled Tomorrow" instead of sending, failing Create a Deal rows 1 and 2 and stalling the rest of the run after 18:00 IST.
+- Why: account setup (stage 1 / `account-setup.ts`) creates the sequence with HubSpot's default sending schedule and does not set an always-on schedule, so any run outside the window fails on timing, not product behavior.
+- Change: `knowledge-base/testing/how-to-test.md` "Before a workflow test" item 7, and a comment on `account-setup.ts`'s `sequences` map: a new account's test sequence must have an always-on sending schedule before any timed run; the HubSpot default window (Mon-Fri 09:00-18:00) fails rows that run outside it.
+- Status: Applied (QA OK 2026-10-18: `testing/how-to-test.md` item 7, `src/config/account-setup.ts` comment)
+
+## 2026-10-17: Unbounded networkidle wait looked like a browser crash (shared `wait.ts`, found via Unsubscribed lite)
+- What went wrong: `waitForPageLoad` called `page.waitForLoadState('networkidle')` with no timeout of its own. On a page that never goes fully idle (HubSpot Integration page), it hung until the whole test's timeout fired, Playwright force-closed the browser, and the pending call surfaced as "Target page, context or browser has been closed" - read as a crash, not a hang. Affects every workflow spec that calls this helper, not just Unsubscribed.
+- Why: the helper had no bound of its own, so a page-specific idle problem could fail silently as a generic-looking crash with no useful error.
+- Change: code fix already in `automation/src/utils/wait.ts` (networkidle now bounded to 30 s, falls through to the existing `pageLoadProblem` check). Symptom documented in `knowledge-base/testing/ui-gotchas.md`, new "Shared waits" table: check for a hung unbounded `networkidle` wait before assuming infra flakiness on a "Target page, context or browser has been closed" error.
+- Status: Applied (QA OK 2026-10-18: `testing/ui-gotchas.md` Shared waits; code fix already live since 2026-10-17)
+
+## 2026-10-15: Whole-chain reruns and a shaky first script (Company Created, full run)
+- What went wrong: I started the 20-test chain five times (about 45 minutes each, three of them stopped after 2 failures) and a partial rerun that would have failed for lack of earlier rows' state. QA stopped it ("Do not start over"). The script itself had four avoidable faults: company domain reused every run (HubSpot then disables the Contact field), the contact dropdown left open over Create, a lost click while the form re-renders, and a module-level "created" Set wiped by every worker restart. I also said "17 tests" when there were 19 cases plus Setup.
+- Why: I treated each run as a full verification instead of a learning run, did not use `KEEP_TEST_DATA=1` with `-g` for the failed rows, and wrote the form steps without checking the duplicate-domain state or the restart behavior. The count came from memory, not from the spec.
+- Change: (1) `.claude/skills/ui-test-from-workflow/SKILL.md` stage 3c, run step: "The first run is a learning run: read every failure, fix it, then rerun only the failed and not-yet-run rows with `KEEP_TEST_DATA=1` and `-g` (add `CREATED_LABELS` when contacts already exist). Do not restart the whole chain; the full run is QA's, after the fixes." (2) `knowledge-base/testing/ui-gotchas.md` HubSpot Create Company: duplicate exact domain disables the Contact field (stamp the domain per run), dropdown stays open, click lost during re-render, keep the "created" list in a file. (3) `knowledge-base/testing/how-to-test.md`: count tests with `npx playwright test --list`, not from memory. (4) `knowledge-base/testing/ui-gotchas.md` MCP: `npm run mcp:open` does not help `--isolated` MCP servers; merge cookies into the server's `--storage-state` file instead.
+- Status: Applied 1 to 4 (QA OK 2026-10-15: `ui-test-from-workflow/SKILL.md` stage 3c, `testing/ui-gotchas.md` HubSpot table and Playwright MCP servers, `testing/how-to-test.md` After a run; memory `run-failed-rows-not-whole-suite`)
+
+## 2026-10-14: A QA decision was fixed in one spec, not where the expectation lives (Email Opened production smoke, Record 10)
+- What went wrong: QA decided at 17:05 that the logged-email card reads "Logged email by <name> via Saleshandy", not "Logged email with <prospect>". I changed it only in the hard-coded strings of `email-opened-phase2.spec.ts`. The production smoke spec, written later by copying staging rows, carried the old `loggedEmailContains` line, so test 10 failed after 180 s on a card that was correct (9 of 10 passed, 45 min lost).
+- Why: the expectation lives in a shared flow config line, which I did not change, and I did not search the repo for other copies of the old text. When I copied rows into a new spec I did not check them against the QA decisions in the progress file. Also, the "<name>" is the account's integration name ("rehan integration" on production), not the trigger, so even the staging text would not match production.
+- Change: (1) `knowledge-base/testing/how-to-test.md` "Waiting and verifying": "When QA changes an expected result, grep the whole automation project for the old text and fix the config line it comes from, not only the spec in front of you. A new spec made by copying rows re-reads every QA decision in the progress file first." (2) `automation/context/hubspot/00-overview.md` Intended behavior (the Record paired with Update a deal line): the card header is "Logged email by <integration name> via Saleshandy", where the name is the account's integration (staging: Email Opened, Link Clicked; production smoke: rehan integration); match with a pattern. (3) `.claude/skills/ui-test-from-workflow/SKILL.md`, the step that writes a spec: add "Before copying rows from another spec, list the QA decisions in that workflow's progress file that change those rows."
+- Status: Applied 1 and 2 (QA OK 2026-10-14: `testing/how-to-test.md` Waiting and verifying, `context/hubspot/00-overview.md` Intended behavior). Change 3 and a proposed 4 (`automation/jira/CLAUDE.md` rule 12: a ticket key or caveat must belong to the workflow before it goes in a draft; AL-4123 and AL-4113 were copied from a checklist into the AL-4013 smoke draft, they are Link Clicked and Prospect Outcome bugs) are NOT applied: the permission classifier blocked edits to instruction files, waiting for QA.
+
 ## 2026-10-14: A seed check reset every workflow's test data (Unsubscribed agents setup)
 - What went wrong: to prove the new `tests/seed.spec.ts` logs in, I ran `npx playwright test tests/seed.spec.ts` with no `TEST_DATA_ONLY` or `KEEP_TEST_DATA` while four workflows were running. `global-setup.ts` found no CSV named for that spec, fell back to "every workflow", and replaced all rows (and emptied `*.used.txt`) of 7 CSVs at 16:44:37. Runs of email-opened-phase2, link-clicked, reply-received and email-bounced-phase2 read changed people mid-run, so their later failures can be false.
 - Why: I did not read `testing/how-to-test.md` "Test data" before running anything. It already says `KEEP_TEST_DATA=1` and `TEST_DATA_ONLY` exist, and I had flagged the same risk in my own plan, then ran the command anyway. The 2026-10-13 lesson above this one is still only Proposed (a doc line), and `global-setup.ts` still treats a spec with no CSV as "run all". The test agents would hit the same fallback on every `planner_setup_page`.
@@ -42,8 +126,8 @@ Entry shape:
 ## 2026-10-13: Test-data refresh touched another workflow's CSVs (Reply Received full run)
 - What went wrong: a full Reply Received run replaced used rows in `email-opened.csv` and `email-bounced.csv` while the Email Opened session was running its spec, risking its in-flight people.
 - Why: `src/data/global-setup.ts` step 2 replaced used rows of every other CSV, assuming one run at a time; I did not scope the run with `TEST_DATA_ONLY` although other sessions run in parallel.
-- Change: `global-setup.ts` now refreshes only the CSVs of the specs being run; `REFRESH_OTHER_USED=1` restores the old behavior. Proposed: one line in `testing/how-to-test.md` (test data): "A run changes only its own workflow's CSV; other workflows' used rows are replaced by their own next run."
-- Status: Proposed (code change already made at QA's request; how-to-test.md line waits for QA's OK)
+- Change: `global-setup.ts` now refreshes only the CSVs of the specs being run; `REFRESH_OTHER_USED=1` restores the old behavior. Line added to `testing/how-to-test.md` (test data): "A run changes only its own workflow's CSV; other workflows' used rows are replaced by their own next run."
+- Status: Applied (QA OK 2026-10-15: code change and the `testing/how-to-test.md` Test data line)
 
 ## 2026-10-13: A check that could only pass (Email Opened data check)
 - What went wrong: wrote a spec that looks each CSV email up in HubSpot and reported it passed after 10 minutes. It had looked for the email as a link, HubSpot shows a truncated email, so it could never find anything; the "pass" meant nothing.

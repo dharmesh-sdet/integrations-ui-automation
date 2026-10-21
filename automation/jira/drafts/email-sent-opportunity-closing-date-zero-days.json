@@ -1,0 +1,30 @@
+{
+  "type": "bug",
+  "project": "AL",
+  "summary": "Email Sent from Saleshandy: Create a Opportunity in Salesforce activity allows Closing date to be saved as 0 Days in Extra Configuration",
+  "description": "**Prerequisites:**\n- Staging account (pyxis.lifeisgoodforlearner.com) connected to Salesforce.\n- Email Sent from Saleshandy trigger enabled with the \"Create a Opportunity in Salesforce\" activity only.\n- An active sequence and a prospect with a Company that is not in Salesforce.\n\n**Steps to Reproduce:**\n1. Go to API & Integrations > Integrations > Salesforce > Triggers & Activity.\n2. Enable Email Sent from Saleshandy and select the Create a Opportunity in Salesforce activity.\n3. In Extra Configuration, set Closing date to 0 Days and Opportunity Stage to Prospecting.\n4. Click Save on the Extra Configuration modal, then click Save on the Triggers & Activity page.\n5. Add the prospect to the active sequence, open the sequence > Emails, open the menu on the prospect's Step 1 email and click Send now.\n6. Open API & Integrations > Integrations > Salesforce > Logs and check the new \"Email Sent from Saleshandy\" entry.\n7. Open Opportunities in Salesforce and search for the prospect's email.\n\n**Actual Result:**\n- The Extra Configuration is saved with Closing date as 0 Days.\n- The workflow shows an Error status and no Opportunity is created in Salesforce.\n- With Closing date set to 1 Day and everything else the same, the workflow shows Success and the Opportunity is created.\n\n**Expected Result:**\n- The user should be prevented from saving Closing date as 0 Days in Extra Configuration.\n- When the user interacts with the Closing date field and enters 0, the field should be highlighted in red and the Save button of the Extra Configuration modal should be disabled.\n\n**Note:**\n- Affected Environment - Staging.\n- The same issue was reported for HubSpot in AL-4101 (Create a Task, Due in as 0) and AL-4099 (Pause Delay in Days as 0).\n- Fields should not turn red until the user interacts with them (AL-4111).\n- The error text in the Logs entry is not included.\n\n",
+  "priority": "Medium",
+  "environment": "Production",
+  "epic": "AL-3982",
+  "assignee": {
+    "name": "Darshan",
+    "accountId": "5af5d8dd244bc90a10605d4f"
+  },
+  "qa": {
+    "name": "Dharmesh Patel",
+    "accountId": "712020:c7dedb58-9cb3-4450-a98f-5b5b56f6556b"
+  },
+  "links": [
+    "AL-4132",
+    "AL-4101",
+    "AL-4099"
+  ],
+  "attachments": [],
+  "waitingFor": "Update a Opportunity with Closing date 0 Days has not been checked yet; QA chose to cover Create and Update. A screenshot of the modal and of the Logs entry has to be attached by hand.",
+  "sent": {
+    "key": "AL-4168",
+    "url": "https://saleshandy.atlassian.net/browse/AL-4168",
+    "problems": [],
+    "at": "2026-10-21T08:15:18.094Z"
+  }
+}

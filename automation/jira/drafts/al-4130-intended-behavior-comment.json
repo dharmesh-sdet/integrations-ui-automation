@@ -1,6 +1,0 @@
-{
-  "type": "comment",
-  "ticket": "AL-4130",
-  "body": "Clarifying the intended behavior for Record (log) an Email Activity in HubSpot activity (Link is Clicked in Saleshandy trigger), paired with Update a Deal in HubSpot, based on the developer's confirmation:\n\n* The logged email shows on every deal of the contact, not only on the latest created deal. This is expected, not a bug.\n* Update a Deal still updates the latest created deal.",
-  "waitingFor": "QA to confirm the wording with the developer: I only know he said the behavior is expected, not his reason or whether the contact also gets the email. Facts in the comment are what the runs show. Evidence: automation/test-results-linkclicked-prod-smoke2/ (production run 2026-10-15, sequence 974015) and the staging re-run of Record (log) 6 (older deals 354817380044 and 354530116324 show the email)."
-}

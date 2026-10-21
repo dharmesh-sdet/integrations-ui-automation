@@ -291,6 +291,15 @@ export class SaleshandySequencePage extends SaleshandyPage {
     await this.page.keyboard.press('Enter');
   }
 
+  // True when the sequence already lists a prospect with this email (Prospects tab, searched).
+  // The first list row is the match once the search has applied; an empty result shows no row
+  // with the email, so a short wait for the match is the answer either way.
+  async hasProspect(sequenceId: string, email: string): Promise<boolean> {
+    await this.openProspects(sequenceId);
+    await this.searchProspect(email);
+    return this.prospectRow(email).first().waitFor({ timeout: 10_000 }).then(() => true, () => false);
+  }
+
   // Prospects tab > the prospect's Outcome select (".prospect-custom-outcome-select" in
   // the row, shows "Add Outcome" until one is set; its options are <li> items:
   // Uncategorized, Interested, Not Interested, Meeting Booked, ...; seen 2026-10-20).
@@ -299,9 +308,18 @@ export class SaleshandySequencePage extends SaleshandyPage {
     await this.searchProspect(email);
     const row = this.prospectRow(email);
     await expect(row).toBeVisible({ timeout: 30_000 });
+    // The row shows in the unfiltered list before the search applies, so wait for one row first.
+    await expect(this.page.locator('.prospect-custom-outcome-select')).toHaveCount(1, { timeout: 30_000 });
     await row.locator('.prospect-custom-outcome-select').click();
     await this.page.locator('li').filter({ hasText: new RegExp(`^\\s*${outcome}\\s*$`) }).click();
-    await expect(row).toContainText(outcome, { timeout: 15_000 });
+    // After the pick the list reloads unfiltered and the row can keep showing "Add Outcome" although
+    // the outcome saved (2026-10-21 run: the header counter read 1 Interested). Reopen and read the row.
+    await expect(async () => {
+      await this.openProspects(sequenceId);
+      await this.searchProspect(email);
+      await expect(this.page.locator('.prospect-custom-outcome-select')).toHaveCount(1, { timeout: 10_000 });
+      await expect(this.prospectRow(email)).toContainText(outcome, { timeout: 5_000 });
+    }).toPass({ timeout: 60_000, intervals: [3_000] });
   }
 
   // Ticks the prospect, then clicks a toolbar icon. The toolbar buttons are

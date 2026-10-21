@@ -25,7 +25,18 @@ export class SalesforceIntegrationPage extends SaleshandyPage {
 
   async openTriggers(): Promise<void> {
     await this.goto(`${this.path}?tab=triggers-activity`);
-    await this.triggerRows().first().waitFor();
+    // The page can stay on its grey loading bars (seen 2026-10-21: 234 s, the test
+    // timed out). It renders on a reload, so reload up to 3 times, 30 s apart.
+    for (let attempt = 1; ; attempt++) {
+      if (await this.triggerRows().first().waitFor({ timeout: 30_000 }).then(() => true, () => false)) return;
+      // The page falls back to the integrations list and the Salesforce card says "Re-connect"
+      // when Saleshandy lost its Salesforce connection (seen 2026-10-21, sfoutcomeupdated).
+      if (await this.page.getByRole('link', { name: 'Re-connect' }).or(this.page.getByText('Re-connect', { exact: true })).first().isVisible()) {
+        throw new Error('Saleshandy lost its Salesforce connection: the Salesforce card shows "Re-connect". Click Re-connect on this account and run again.');
+      }
+      if (attempt === 3) throw new Error('The Triggers & Activity page showed no triggers after 3 loads.');
+      await this.page.reload();
+    }
   }
 
   // Each trigger row is a div holding the toggle and the trigger name. The

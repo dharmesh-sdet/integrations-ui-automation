@@ -6,7 +6,7 @@ AL-4132 (parent AL-4131). No sub-bugs, so Ticket is None for every row.
 
 Scope: every activity the trigger offers (10): Create and Update for Account,
 Contact, Lead and Opportunity, Attach Note, Record(log) an Email Activity. Each
-activity has 2 to 5 rows a person can prepare and check by hand: 35 rows in all.
+activity has 2 to 6 rows a person can prepare and check by hand: 40 rows in all.
 Rows marked **(proposed, unconfirmed)** have an Expected result that is neither
 documented nor seen. Run them and record what happens; a different result is not
 automatically a failure.
@@ -111,15 +111,19 @@ Extra Configuration: None.
 
 ## Create a Opportunity in Salesforce
 
-Extra Configuration: Stage = Prospecting, Closing date = 0 Days, unless the row says otherwise.
+Extra Configuration: Stage = Prospecting, Closing date = 1 Day, unless the row says otherwise.
+The integration names the Opportunity with the prospect's email `[observed]`, and it shows in the
+Contact's Related tab under Opportunities. QA, 2026-10-21: an Opportunity that cannot be created
+with Closing date 0 Days is a bug, most likely a UI bug (0 Days should not be accepted at Save).
 
 | # | Scenario | Do | Expected | Ticket |
 |---|---|---|---|---|
-| 1 | Contact exists, no Opportunity | Send now on step 1 | Success. One Opportunity, Stage Prospecting, Close Date today, tied to the Contact **(proposed, unconfirmed)** | None |
+| 1 | Contact exists, no Opportunity | Send now on step 1 | Success. One Opportunity named with the prospect's email, Stage Prospecting, Close Date today + 1, tied to the Contact **(proposed, unconfirmed)** | None |
 | 2 | Contact not in Salesforce | Send now on step 1 | Logs status recorded. Record whether an Opportunity, Contact or Lead appears **(proposed, unconfirmed)** | None |
-| 3 | Contact already has 1 Opportunity | Send now on step 1 | A new Opportunity is created. The Contact now has 2 **(proposed, unconfirmed)** | None |
-| 4 | Closing date = 1 Day, prospect has Deal Value 5000 | Send now on step 1 | Opportunity Close Date is today + 1 and Amount is 5000 **(proposed, unconfirmed)** | None |
-| 5 | Extra Configuration saved with Stage left empty | Send now on step 1 | Logs status recorded. Record whether an Opportunity appears and its Stage **(proposed, unconfirmed)** | None |
+| 3 | Contact already has 1 Opportunity | Send now on step 2 (step 1 made the first one) | A new Opportunity is created. The Contact now shows Opportunities (2) **(proposed, unconfirmed)** | None |
+| 4 | Closing date = 1 Day, prospect has Deal Value 5000 | Send now on step 1 | Opportunity Close Date is today + 1 and Amount is 5000 `[observed]` | None |
+| 5 | Extra Configuration saved with Stage left empty | Send now on step 1 | Logs status recorded. Opportunity Stage recorded (Prospecting was seen) `[observed]` | None |
+| 6 | Closing date = 0 Days | Save the Extra Configuration, then Send now on step 1 | 0 Days is rejected at Save. If it is accepted, the Opportunity is created and Logs shows Success (QA, 2026-10-21). Seen: accepted at Save, Logs Error, no Opportunity | None |
 
 ## Update a Opportunity in Salesforce
 
@@ -128,18 +132,23 @@ Extra Configuration: Stage = Qualification, Closing date = 2 Days.
 | # | Scenario | Do | Expected | Ticket |
 |---|---|---|---|---|
 | 1 | Contact has 1 Opportunity | Send now on step 1 | That Opportunity shows Stage Qualification and Close Date today + 2. Still 1 Opportunity **(proposed, unconfirmed)** | None |
-| 2 | Contact has 3 Opportunities, made by hand one after another | Send now on step 1 | Record which Opportunity changed and which stayed the same **(proposed, unconfirmed)** | None |
+| 2 | Contact has 3 Opportunities, each made from the Contact's Opportunities list (the Contact is its Contact Role) | Send now on step 1 | Record which Opportunity changed and which stayed the same **(proposed, unconfirmed)** | None |
 | 3 | Contact has 0 Opportunities | Send now on step 1 | Nothing is created. Record the Logs status **(proposed, unconfirmed)** | None |
+| 4 | Contact has 1 Opportunity, Closing date = 0 Days | Save the Extra Configuration, then Send now on step 2 | 0 Days is rejected at Save (QA, 2026-10-21). If it is accepted, the Opportunity is updated and Logs shows Success | None |
 
 ## Attach Note in Salesforce
 
-Extra Configuration: None. Pairing, Create or Update a Contact, is needed `[public docs]`.
+Extra Configuration: None. QA, 2026-10-21: a Note can go on a Contact, Lead, Account or Opportunity.
+It is created only when Attach Note is selected together with the action for that entity.
 
 | # | Scenario | Do | Expected | Ticket |
 |---|---|---|---|---|
 | 1 | Attach Note selected alone, Contact exists | Send now on step 1 | No Note on the Contact. Record the Logs status **(proposed, unconfirmed)** | None |
 | 2 | Create a Contact + Attach Note, new prospect | Send now on step 1 | One Contact and one Note on it `[observed]`. Record the Note text: Step, Variant, Prospect Outcome | None |
 | 3 | Same prospect as row 2, step 1 already sent | Send now on step 2 | A second Note on the Contact, text shows Step 2. The first Note is unchanged **(proposed, unconfirmed)** | None |
+| 4 | Create a Lead + Attach Note, new prospect | Send now on step 1 | One Lead and one Note on it. Record the Note text **(proposed, unconfirmed)** | None |
+| 5 | Create an Account + Attach Note, new prospect with Company | Send now on step 1 | One Account and one Note on it. Record the Note text **(proposed, unconfirmed)** | None |
+| 6 | Create a Opportunity + Attach Note, new prospect | Send now on step 1 | One Opportunity and one Note on it. Record the Note text **(proposed, unconfirmed)** | None |
 
 ## Record(log) an Email Activity in Salesforce
 
@@ -150,4 +159,4 @@ Extra Configuration: Select Object, set per row.
 | 1 | Record(log) alone, no object ticked, Contact exists | Send now on step 1 | Logs status recorded. Nothing on the Contact timeline **(proposed, unconfirmed)** | None |
 | 2 | Contact ticked, Update a Contact selected, Contact exists | Send now on step 1 | One email on the Contact timeline. Record From, To, Subject and body | None |
 | 3 | Lead ticked, Update a Lead selected, Lead exists | Send now on step 1 | One email on the Lead timeline. Lead values updated | None |
-| 4 | Opportunity and Contact ticked, Create a Opportunity selected, Contact exists | Send now on step 1 | Opportunity created. The email shows on the Opportunity and the Contact **(proposed, unconfirmed)** | None |
+| 4 | Opportunity and Contact ticked, Create a Opportunity (Closing date 1 Day) selected, Contact exists | Send now on step 1 | Opportunity created. The email shows on the Opportunity and the Contact **(proposed, unconfirmed)** | None |

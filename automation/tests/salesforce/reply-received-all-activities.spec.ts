@@ -53,7 +53,10 @@ const opportunityCount = (w: World) => () => w.salesforce.opportunities.countByN
 // Account rows look the Account up by the prospect's Company, so that name must be new in
 // Salesforce on every run and shared with no other row.
 const RUN = Date.now().toString(36);
-const ownCompany = (tag: string) => ({ Company: `QA Acme ${RUN} ${tag}` });
+// Salesforce's duplicate rule matches similar names, so each row gets an unrelated
+// company word, not the same name with a different tag.
+const COMPANY_WORD: Record<string, string> = { CA1: 'Zephyr Robotics', CA2: 'Quartz Logistics', UA1: 'Marlowe Textiles', UA2: 'Sundial Analytics', CB2: 'Harbor Brewing' };
+const ownCompany = (tag: string) => ({ Company: `${COMPANY_WORD[tag]} ${RUN}` });
 
 const digits = (text: string) => text.replace(/\D/g, '');
 
@@ -544,7 +547,8 @@ const IDS = SCENARIOS.map((s) => s.id);
 const state = newReplyState();
 
 test.describe('Reply is Received in Saleshandy: all Salesforce activities', () => {
-  test.describe.configure({ mode: 'serial' });
+  // Not serial: one failed test must not skip the rest (QA, 2026-10-21). Tests still run
+  // in file order on one worker, and every row prepares itself if Setup did not run.
 
   // Page objects are rebuilt for every test; the harness is the same code each time.
   const harnessOf = (f: {

@@ -21,6 +21,22 @@ ID_FILE=test-data/salesforce/prospect-outcome-updated.sequence-id
 mkdir -p "$OUT"
 ln -sfn "$STAMP" "$BASE/latest"
 
+# Tells QA when the script ends, pass, fail or Ctrl-C (QA, 2026-10-21): a desktop
+# notification plus the terminal bell. Counts come from results.json when it exists.
+notify_end() {
+  local code=$?
+  local summary="Stopped before the tests ran (exit $code). See $OUT"
+  if [ -s "$OUT/results.json" ]; then
+    summary=$(node scripts/outcome-failures.ts "$OUT" 2>/dev/null | sed -n '2p')
+    [ -z "$summary" ] && summary="Finished (exit $code). Results in $OUT"
+  fi
+  local title="Prospect Outcome run finished"
+  [ "$code" -ne 0 ] && title="Prospect Outcome run finished with failures"
+  command -v notify-send >/dev/null 2>&1 && notify-send -u normal "$title" "$summary" 2>/dev/null
+  printf '\a'
+}
+trap notify_end EXIT
+
 if [ -z "${OUTCOME_SEQUENCE_ID:-}" ]; then
   if [ -s "$ID_FILE" ]; then
     OUTCOME_SEQUENCE_ID=$(tr -d '[:space:]' < "$ID_FILE")

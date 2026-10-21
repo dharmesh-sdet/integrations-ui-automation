@@ -4,7 +4,7 @@ import path from 'node:path';
 // Real emails go out through QA's own mailbox, which has a daily limit. Every
 // "Send now" counts here, per calendar day, in test-data/send-count.json. Past
 // the cap the test fails before sending. Raise it with SEND_CAP=<n>.
-const DEFAULT_CAP = 40;
+const DEFAULT_CAP = 80;
 
 function countFile(): string {
   return path.resolve(import.meta.dirname, '../../test-data/send-count.json');

@@ -1,4 +1,4 @@
-// Scenarios: test-cases/salesforce/email-sent.md (Regression, 35 rows, approved by QA
+// Scenarios: test-cases/salesforce/email-sent.md (Regression, 39 rows, approved by QA
 //   2026-10-21; AL-4132). One test per row; "Update a Opportunity > 2" is skipped.
 // Data: test-data/salesforce/email-sent.csv, one prospect per row, found by the
 //   Scenario column. Saleshandy accepts an email once per account, so a record that
@@ -68,8 +68,11 @@ const A = {
   record: 'Record(log) an Email Activity in Salesforce',
 } as const;
 
-// Extra Configuration used by the plan: Stage = Prospecting, Closing date = 0 Days.
-const PROSPECTING = { stage: 'Prospecting', days: 0 };
+// Extra Configuration used by the plan: Stage = Prospecting, Closing date = 1 Day.
+// Closing date 0 Days logged Error and created no Opportunity (QA, 2026-10-21: a bug,
+// 0 Days should not be accepted), so only Create a Opportunity > 6 uses it.
+const PROSPECTING = { stage: 'Prospecting', days: 1 };
+const ZERO_DAYS = { stage: 'Prospecting', days: 0 };
 const QUALIFICATION = { stage: 'Qualification', days: 2 };
 
 // One send = the sequence's 40 to 50 s gap, Send now and a Logs entry (about 2.5 min
@@ -129,6 +132,12 @@ async function accountFirst(fx: Fx, p: Prospect): Promise<void> {
   });
 }
 
+// DD/MM/YYYY, the way this org shows and reads dates (22/10/2026).
+function dayMonthYear(daysFromToday: number): string {
+  const d = new Date(Date.now() + daysFromToday * 86_400_000);
+  return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
+}
+
 const record = (type: string, description: string): void => {
   test.info().annotations.push({ type, description });
 };
@@ -179,16 +188,30 @@ async function describeAccount(fx: Fx, p: Prospect, label: string): Promise<numb
   return count;
 }
 
-// The Opportunity name is not documented, so the Opportunities list is searched
-// for the prospect's last name; the rows found are recorded either way.
+// The integration names the Opportunity with the prospect's email (seen 2026-10-21),
+// so the Opportunities list is searched for the email. A last name misses hyphenated
+// names (the email drops the hyphen); the rows found are recorded either way.
 async function describeOpportunity(fx: Fx, p: Prospect, label: string): Promise<void> {
-  const last = p.row['Last Name'];
+  const last = p.row['Email'];
   const rows = await fx.salesforceOpportunities.rowTexts(last);
   record(`${label}: Opportunity rows matching "${last}"`, rows.length ? rows.join(' || ') : '(none)');
   if (rows.length) {
     const f = await fx.salesforceOpportunities.opportunityFields(last);
     record(`${label}: Opportunity`, `Name "${f.name}", Stage "${f.stage}", Close Date "${f.closeDate}", Amount "${f.amount}", Description "${f.description}"`);
   }
+}
+
+// Where the Note shows: the record's Activity and Related tabs, and how many Notes the
+// Related list counts. The Note body is not opened (its title is not documented); the
+// tabs are recorded for QA, with Step / Variant / Prospect Outcome looked for.
+async function describeNote(page: Page, label: string): Promise<void> {
+  const activity = await tab(page, 'Activity');
+  const related = await tab(page, 'Related');
+  const all = `${activity} ${related}`;
+  record(`${label}: Notes list`, all.match(/Notes(?: & Attachments)? \(\d+\)/)?.[0] ?? '(no Notes list found)');
+  for (const text of ['Step 1', 'Step 2', 'Variant A', 'Prospect Outcome']) record(`${label}: Note shows "${text}"`, String(all.includes(text)));
+  record(`${label}: Activity tab`, clip(activity, 1200));
+  record(`${label}: Related tab`, clip(related, 1200));
 }
 
 // The Logs entry reached a final status. Error is recorded for QA, not failed.
@@ -529,7 +552,7 @@ test.describe('Email Sent from Saleshandy', () => {
     const second = await send(fx, p, 2);
     await test.step('Record the Opportunities and the Contact after step 2', async () => {
       record('Result', `Logs ${second.status}`);
-      const last = p.row['Last Name'];
+      const last = p.row['Email'];
       record(`Opportunity rows matching "${last}"`, (await fx.salesforceOpportunities.rowTexts(last)).join(' || ') || '(none)');
       await describeContact(fx, p, 'Contact with 1 Opportunity beforehand');
     });
@@ -561,6 +584,25 @@ test.describe('Email Sent from Saleshandy', () => {
     reachedFinalStatus(result);
   });
 
+  test('Create a Opportunity in Salesforce > 6: Closing date 0 Days', async ({ fx }) => {
+    test.setTimeout(minutes(1));
+    const p = prospect(`${P} > 6`);
+    // QA, 2026-10-21: 0 Days should be rejected at Save; if it is accepted, the
+    // Opportunity must still be created. Seen: accepted, Logs Error, no Opportunity.
+    const saved = await fx.salesforceEmailSent
+      .configureTrigger(TRIGGER, [{ name: A.createOpp, opportunity: ZERO_DAYS }])
+      .then(() => true, () => false);
+    record('0 Days accepted at Save', String(saved));
+    if (!saved) return;
+    const result = await send(fx, p);
+    await test.step('The Opportunity exists and Logs shows Success', async () => {
+      const rows = await fx.salesforceOpportunities.rowTexts(p.row['Email']);
+      record('Opportunity rows', rows.join(' || ') || '(none)');
+      expect(result.status, 'Logs status with Closing date 0 Days').toBe('Success');
+      expect(rows.length, `Opportunities for ${p.row['Email']}`).toBe(1);
+    });
+  });
+
   // ================= Update a Opportunity in Salesforce =================
 
   test('Update a Opportunity in Salesforce > 1: Contact has 1 Opportunity', async ({ fx }) => {
@@ -581,11 +623,51 @@ test.describe('Email Sent from Saleshandy', () => {
     reachedFinalStatus(result);
   });
 
-  // The 3 Opportunities cannot come from one prospect: the sequence has 2 steps, and an
-  // Opportunity made by hand needs its link to the Contact, which the product does not
-  // document.
-  // TODO(needs-input): QA to decide how to build "Contact has 3 Opportunities".
-  test.skip('Update a Opportunity in Salesforce > 2: Contact has 3 Opportunities', async () => {});
+  test('Update a Opportunity in Salesforce > 4: Closing date 0 Days', async ({ fx }) => {
+    test.setTimeout(minutes(2));
+    const p = prospect(`${U} > 4`);
+    await contactFirst(fx, p);
+    await fx.salesforceEmailSent.configureTrigger(TRIGGER, [{ name: A.createOpp, opportunity: PROSPECTING }]);
+    const created = await send(fx, p);
+    expect(created.status, 'Logs status of step 1, which creates the Opportunity').toBe('Success');
+    // QA, 2026-10-21: 0 Days should be rejected at Save; if it is accepted, the
+    // Opportunity must still be updated.
+    const saved = await fx.salesforceEmailSent
+      .configureTrigger(TRIGGER, [{ name: A.updateOpp, opportunity: { stage: 'Qualification', days: 0 } }])
+      .then(() => true, () => false);
+    record('0 Days accepted at Save', String(saved));
+    if (!saved) return;
+    const result = await send(fx, p, 2);
+    await test.step('The Opportunity is updated and Logs shows Success', async () => {
+      await describeOpportunity(fx, p, 'After Update with 0 Days');
+      expect(result.status, 'Logs status with Closing date 0 Days').toBe('Success');
+    });
+  });
+
+  test('Update a Opportunity in Salesforce > 2: Contact has 3 Opportunities', async ({ fx }) => {
+    test.setTimeout(minutes(2));
+    const p = prospect(`${U} > 2`);
+    await contactFirst(fx, p);
+    // The product ties an Opportunity to a Contact through a Contact Role (seen 2026-10-21),
+    // which creating it from the Contact's Opportunities list sets. Named like the product
+    // names them (the prospect's email), each with its own Close Date to tell them apart.
+    await test.step('Create 3 Opportunities on the Contact', async () => {
+      for (const days of [10, 20, 30]) {
+        await fx.salesforceContacts.newOpportunity(p.row['Email'], { name: p.row['Email'], stage: 'Prospecting', closeDate: dayMonthYear(days) });
+      }
+      const before = await fx.salesforceOpportunities.rowTexts(p.row['Email']);
+      record('Opportunities before the send', before.join(' || '));
+      expect(before.length, `Opportunities for ${p.row['Email']} before the send`).toBe(3);
+    });
+    await fx.salesforceEmailSent.configureTrigger(TRIGGER, [{ name: A.updateOpp, opportunity: QUALIFICATION }]);
+    const result = await send(fx, p);
+    await test.step('Record which Opportunity changed', async () => {
+      record('Result', `Logs ${result.status}`);
+      record('Opportunities after the send', (await fx.salesforceOpportunities.rowTexts(p.row['Email'])).join(' || ') || '(none)');
+      await describeContact(fx, p, 'Contact with 3 Opportunities');
+    });
+    reachedFinalStatus(result);
+  });
 
   test('Update a Opportunity in Salesforce > 3: Contact has 0 Opportunities', async ({ fx }) => {
     test.setTimeout(minutes(1));
@@ -624,6 +706,7 @@ test.describe('Email Sent from Saleshandy', () => {
     await test.step('Record the Contact and the Note (Step, Variant, Prospect Outcome)', async () => {
       record('Result', `Logs ${result.status}`);
       await describeContact(fx, p, 'Create a Contact + Attach Note');
+      await describeNote(fx.salesforceContacts.page, 'Contact');
     });
     reachedFinalStatus(result);
   });
@@ -638,8 +721,51 @@ test.describe('Email Sent from Saleshandy', () => {
       record('Step 1 Logs status', first.status);
       record('Step 2 Logs status', second.status);
       await describeContact(fx, p, 'After step 2');
+      await describeNote(fx.salesforceContacts.page, 'Contact after step 2');
     });
     reachedFinalStatus(second);
+  });
+
+  test('Attach Note in Salesforce > 4: with Create a Lead, new prospect', async ({ fx }) => {
+    test.setTimeout(minutes(1));
+    await fx.salesforceEmailSent.configureTrigger(TRIGGER, [{ name: A.createLead }, { name: A.note }]);
+    const p = prospect('Attach Note in Salesforce > 4');
+    const result = await send(fx, p);
+    await test.step('Record the Lead and the Note on it', async () => {
+      record('Result', `Logs ${result.status}`);
+      await describeLead(fx, p, 'Create a Lead + Attach Note');
+      await fx.salesforceLeads.openLead(p.row['Email']);
+      await describeNote(fx.salesforceLeads.page, 'Lead');
+    });
+    reachedFinalStatus(result);
+  });
+
+  test('Attach Note in Salesforce > 5: with Create an Account, new prospect', async ({ fx }) => {
+    test.setTimeout(minutes(1));
+    await fx.salesforceEmailSent.configureTrigger(TRIGGER, [{ name: A.createAccount }, { name: A.note }]);
+    const p = prospect('Attach Note in Salesforce > 5');
+    const result = await send(fx, p);
+    await test.step('Record the Account and the Note on it', async () => {
+      record('Result', `Logs ${result.status}`);
+      await describeAccount(fx, p, 'Create an Account + Attach Note');
+      await fx.salesforceAccounts.openRecord(p.row['Company']);
+      await describeNote(fx.salesforceAccounts.page, 'Account');
+    });
+    reachedFinalStatus(result);
+  });
+
+  test('Attach Note in Salesforce > 6: with Create a Opportunity, new prospect', async ({ fx }) => {
+    test.setTimeout(minutes(1));
+    await fx.salesforceEmailSent.configureTrigger(TRIGGER, [{ name: A.createOpp, opportunity: PROSPECTING }, { name: A.note }]);
+    const p = prospect('Attach Note in Salesforce > 6');
+    const result = await send(fx, p);
+    await test.step('Record the Opportunity and the Note on it', async () => {
+      record('Result', `Logs ${result.status}`);
+      await describeOpportunity(fx, p, 'Create a Opportunity + Attach Note');
+      await fx.salesforceOpportunities.openRecord(p.row['Email']);
+      await describeNote(fx.salesforceOpportunities.page, 'Opportunity');
+    });
+    reachedFinalStatus(result);
   });
 
   // ================= Record(log) an Email Activity in Salesforce =================

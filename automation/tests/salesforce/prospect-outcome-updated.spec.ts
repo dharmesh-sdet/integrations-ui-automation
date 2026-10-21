@@ -17,6 +17,7 @@
 // Sequence id: OUTCOME_SEQUENCE_ID (scripts/run-prospect-outcome-updated.sh sets it).
 import { expect, test as base } from '../../src/fixtures/index.ts';
 import { readCsv, type Row } from '../../src/data/csv.ts';
+import { markStage, stageDone, type SetupStage } from '../../src/data/setup-state.ts';
 import { markUsed } from '../../src/data/used.ts';
 import { TRIGGER, finishedEntry, pollFor, watchLogs } from '../../src/flows/salesforce-outcome.ts';
 import { SaleshandySequencePage } from '../../src/pages/saleshandy/sequence.page.ts';
@@ -96,7 +97,13 @@ const IDS = [
   [CA, 2], [UA, 2], [CC, 2], [UC, 3], [CL, 3], [UL, 2], [CO, 2], [UO, 2], [AN, 3], [RE, 1],
 ].flatMap(([activity, n]) => Array.from({ length: n as number }, (_, i) => `${activity} > ${i + 1}`));
 
-const done = { record: new Set<string>(), added: new Set<string>(), sent: new Set<string>() };
+// What is already done per row, kept in a file (src/data/setup-state.ts) so a rerun in a new
+// process (-g, or the worker restart after a failed test) does not create anything twice.
+const stage = (kind: SetupStage) => ({
+  has: (id: string) => stageDone(CSV, rowOf(id)['Email'], kind),
+  add: (id: string) => markStage(CSV, rowOf(id)['Email'], kind),
+});
+const done = { record: stage('record'), added: stage('added'), sent: stage('sent') };
 let configured = '';
 
 const rowOf = (id: string): Row => {
@@ -119,12 +126,16 @@ const inDays = (days: number): string => {
 async function addRecords(ctx: Ctx, id: string, row: Row): Promise<void> {
   const needs = NEEDS[id];
   if (!needs || done.record.has(id)) return;
+  // Contact, Lead and Opportunity are unique per row, so one that already exists is not made again.
+  // An Account is not: its name is the Company, shared by several rows, so only the file above guards it.
   if (needs.account) await ctx.accounts.createAccount({ name: row['Company'], billingCity: LEGACY.city });
-  if (needs.contact) await ctx.contacts.createContact({ firstName: row['First Name'], lastName: row['Last Name'], email: row['Email'] });
-  if (needs.lead) {
+  if (needs.contact && !(await ctx.contacts.countByEmail(row['Email']))) {
+    await ctx.contacts.createContact({ firstName: row['First Name'], lastName: row['Last Name'], email: row['Email'] });
+  }
+  if (needs.lead && !(await ctx.leads.countByEmail(row['Email']))) {
     await ctx.leads.createLead({ firstName: row['First Name'], lastName: row['Last Name'], email: row['Email'], company: LEGACY.company, title: LEGACY.title, phone: LEGACY.phone });
   }
-  if (needs.opp) {
+  if (needs.opp && !(await ctx.opps.countByName(row['Email']))) {
     await ctx.opps.createOpportunity({ name: row['Email'], stage: 'Prospecting', closeDate: inDays(30), amount: LEGACY.amount });
   }
   done.record.add(id);
@@ -134,7 +145,8 @@ async function addRecords(ctx: Ctx, id: string, row: Row): Promise<void> {
 async function addProspect(seq: SaleshandySequencePage, id: string, row: Row): Promise<void> {
   if (done.added.has(id)) return;
   markUsed(CSV, row['Email']);
-  await seq.createAndAddProspect(SEQUENCE_ID, row);
+  // A failed add can still leave the prospect in the sequence; adding it again is rejected as a duplicate.
+  if (!(await seq.hasProspect(SEQUENCE_ID, row['Email']))) await seq.createAndAddProspect(SEQUENCE_ID, row);
   done.added.add(id);
 }
 
@@ -220,28 +232,55 @@ test.describe('Prospect Outcome is updated in Saleshandy: Salesforce activities'
     test.setTimeout(45 * 60_000);
     const saleshandySequence = ctx.seq;
     const sender = new SaleshandySequencePage(await saleshandyPage.context().newPage());
-    const added = IDS.map(() => {
+    // A send waits for its row's prospect AND its Salesforce record, and stops when any part has
+    // failed, so a failed record never wastes the day's sends (2026-10-21: 24 sends lost).
+    const gate = () => {
       let resolve!: () => void;
       const promise = new Promise<void>((r) => (resolve = r));
       return { promise, resolve };
-    });
+    };
+    const added = IDS.map(gate);
+    const recorded = IDS.map(gate);
+    let failure: unknown;
+    const stop = (error: unknown) => {
+      failure ??= error;
+      for (const g of [...added, ...recorded]) g.resolve();
+    };
     await test.step('Create records, add prospects and send step 1, side by side', async () => {
       const records = async () => {
-        for (const id of IDS) await addRecords(ctx, id, rowOf(id));
+        try {
+          for (const [i, id] of IDS.entries()) {
+            await addRecords(ctx, id, rowOf(id));
+            recorded[i].resolve();
+          }
+        } catch (error) {
+          stop(error);
+        }
       };
       const prospects = async () => {
-        for (const [i, id] of IDS.entries()) {
-          await addProspect(saleshandySequence, id, rowOf(id));
-          added[i].resolve();
+        try {
+          for (const [i, id] of IDS.entries()) {
+            if (failure) return;
+            await addProspect(saleshandySequence, id, rowOf(id));
+            added[i].resolve();
+          }
+        } catch (error) {
+          stop(error);
         }
       };
       const sends = async () => {
-        for (const [i, id] of IDS.entries()) {
-          await added[i].promise;
-          await sendOut(sender, id, rowOf(id));
+        try {
+          for (const [i, id] of IDS.entries()) {
+            await Promise.all([added[i].promise, recorded[i].promise]);
+            if (failure) return;
+            await sendOut(sender, id, rowOf(id));
+          }
+        } catch (error) {
+          stop(error);
         }
       };
       await Promise.all([records(), prospects(), sends()]);
+      if (failure) throw failure;
     });
   });
 
@@ -284,10 +323,10 @@ test.describe('Prospect Outcome is updated in Saleshandy: Salesforce activities'
       const at = await changeOutcome(ctx, id, row, 'Interested');
       // (proposed, unconfirmed): recorded, not asserted.
       const rows = await matching(ctx, at, async () => {
-        const texts = await ctx.accounts.rowTexts(row['Company']);
-        return texts.some((t) => t.includes(row['City'])) ? texts : undefined;
+        const addresses = await ctx.accounts.billingAddresses(row['Company']);
+        return addresses.some((a) => a.includes(row['City'])) ? addresses : undefined;
       });
-      note('Observed (awaiting QA confirmation)', rows ? `Updated. Account rows: ${rows.join(' | ')}` : `Not updated. Account rows: ${(await ctx.accounts.rowTexts(row['Company'])).join(' | ')}`);
+      note('Observed (awaiting QA confirmation)', rows ? `Updated. Billing Addresses: ${rows.join(' | ')}` : `Not updated. Billing Addresses: ${(await ctx.accounts.billingAddresses(row['Company'])).join(' | ')}`);
     });
 
     test(`${UA} > 2: same setup, outcome not matching`, async ({ ctx }) => {
@@ -297,10 +336,10 @@ test.describe('Prospect Outcome is updated in Saleshandy: Salesforce activities'
       await useActivities(ctx, UA);
       const at = await changeOutcome(ctx, id, row, 'Not Interested');
       await nonMatching(ctx, at);
-      const texts = await ctx.accounts.rowTexts(row['Company']);
-      note('Account rows after the wait', texts.join(' | '));
-      // Other Accounts with the same Company name from earlier runs may show the City, so only the old City is asserted.
-      product(texts.some((t) => t.includes(LEGACY.city)), `the Account still shows its old Billing City "${LEGACY.city}"`).toBe(true);
+      const addresses = await ctx.accounts.billingAddresses(row['Company']);
+      note('Billing Addresses after the wait', addresses.join(' | '));
+      product(addresses.some((a) => a.includes(LEGACY.city)), `the Account still shows its old Billing City "${LEGACY.city}"`).toBe(true);
+      product(addresses.some((a) => a.includes(row['City'])), `no Account named "${row['Company']}" shows the prospect City "${row['City']}"`).toBe(false);
     });
   });
 

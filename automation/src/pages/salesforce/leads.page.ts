@@ -12,9 +12,10 @@ import { readRecordTab, waitForCreated } from './object.page.ts';
 export class SalesforceLeadsPage extends BasePage {
   readonly platform = 'salesforce' as const;
 
-  // TODO(needs-input): list view to search. "__Recent" (Recently Viewed) may not
-  // list a Lead nobody opened; use the list view that holds every Lead.
-  private readonly listPath = '/lightning/o/Lead/list?filterName=__Recent';
+  // "All Open Leads" lists every Lead that is not converted. "Recently Viewed"
+  // (__Recent) did not list Leads the integration created, so a search showed "0 items"
+  // for a Lead that existed (seen 2026-10-21).
+  private readonly listPath = '/lightning/o/Lead/list?filterName=AllOpenLeads';
 
   // 'networkidle' is unreliable on this page: Lightning keeps background
   // polling going, so it can hang well past 60s (seen 2026-10-19). Wait for
@@ -93,21 +94,23 @@ export class SalesforceLeadsPage extends BasePage {
     // unbounded wait ran for 14 minutes). Reload and search again, a bounded
     // number of times.
     const attempts = 6;
-    let row = this.page.getByRole('row').filter({ hasText: email }).first();
-    for (let attempt = 1; attempt <= attempts; attempt++) {
+    for (let attempt = 1; ; attempt++) {
       await this.openLeads();
       const search = this.page.getByPlaceholder('Search this list...');
       await search.fill(email);
       await search.press('Enter');
-      row = this.page.getByRole('row').filter({ hasText: email }).first();
-      if (await row.waitFor({ timeout: 10_000 }).then(() => true, () => false)) break;
+      const row = this.page.getByRole('row').filter({ hasText: email }).first();
+      if (await row.waitFor({ timeout: 10_000 }).then(() => true, () => false)) {
+        // The list shows a spinner while it re-renders after the search; a click then
+        // lands on the spinner or on a row that is replaced (seen 2026-10-20). The list
+        // can also flip to "0 items" before the click (seen 2026-10-21), so a failed
+        // click starts the search again.
+        await this.page.locator('lightning-spinner').first().waitFor({ state: 'hidden', timeout: 20_000 }).catch(() => {});
+        if (await row.getByRole('link').first().click({ timeout: 10_000 }).then(() => true, () => false)) break;
+      }
       if (attempt === attempts) throw new Error(`No Lead for ${email} in the Leads list after ${attempts} searches.`);
       await this.page.waitForTimeout(5_000);
     }
-    // The list shows a spinner while it re-renders after the search; a click then
-    // lands on the spinner or on a row that is replaced (seen 2026-10-20).
-    await this.page.locator('lightning-spinner').first().waitFor({ state: 'hidden', timeout: 20_000 }).catch(() => {});
-    await row.getByRole('link').first().click({ timeout: 30_000 });
     await this.page.getByRole('tab', { name: 'Details' }).waitFor();
     await this.page.getByRole('tab', { name: 'Details' }).click();
     await this.leadField('Email').waitFor();

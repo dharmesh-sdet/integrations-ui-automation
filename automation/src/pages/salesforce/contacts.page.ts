@@ -1,10 +1,12 @@
 import { SalesforceObjectPage, waitForCreated } from './object.page.ts';
+import { fillOpportunityForm, type OpportunityInput } from './opportunities.page.ts';
 
 // Salesforce Contacts. Details API names follow the Contact Properties mapping on
 // sfemailsent: First/Last Name -> Name, Email, Phone Number -> Phone (Business
 // Phone), Department, City -> Other City (compound OtherAddress).
 export class SalesforceContactsPage extends SalesforceObjectPage {
   protected readonly objectName = 'Contact';
+  protected readonly listView = 'AllContacts';
 
   async countByEmail(email: string): Promise<number> {
     return this.countByText(email);
@@ -41,6 +43,18 @@ export class SalesforceContactsPage extends SalesforceObjectPage {
     await this.page.getByText('Created Date').first().waitFor({ timeout: 20_000 });
     const text = (await this.page.locator('body').innerText()).replace(/\s+/g, ' ');
     return text.match(/Body (.*?) (?:Created Date|Created By)/)?.[1]?.trim() ?? '';
+  }
+
+  // Creates an Opportunity from the Contact's own Opportunities related list. In Lightning
+  // this also adds the Contact as the Opportunity's Contact Role, the link the integration
+  // sets and uses (seen 2026-10-21: product-made Opportunities show "Contact Roles (1)").
+  // Setup for rows that need several Opportunities on one Contact.
+  async newOpportunity(email: string, opportunity: OpportunityInput): Promise<void> {
+    await this.openRecord(email);
+    await this.page.getByRole('tab', { name: 'Related' }).click();
+    const card = this.page.locator('article').filter({ has: this.page.getByRole('heading', { name: /^Opportunities/ }) }).first();
+    await card.getByRole('button', { name: 'New', exact: true }).click({ timeout: 30_000 });
+    await fillOpportunityForm(this.page, opportunity);
   }
 
   async contactFields(email: string): Promise<{

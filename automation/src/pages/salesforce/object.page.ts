@@ -40,9 +40,13 @@ export abstract class SalesforceObjectPage extends BasePage {
 
   protected abstract readonly objectName: string;
 
-  // "Recently Viewed" may not list a record nobody opened; same caveat as Leads.
+  // The "All ..." list view holds every record. "Recently Viewed" (__Recent) did not
+  // list records the integration created, so a search showed "0 items" for a record
+  // that existed (seen 2026-10-21 on Contacts and Leads).
+  protected abstract readonly listView: string;
+
   private get listPath(): string {
-    return `/lightning/o/${this.objectName}/list?filterName=__Recent`;
+    return `/lightning/o/${this.objectName}/list?filterName=${this.listView}`;
   }
 
   // 'networkidle' never settles on Lightning (background polling), so wait for
@@ -76,22 +80,24 @@ export abstract class SalesforceObjectPage extends BasePage {
   }
 
   // Opens the first record found for `text` and its Details tab.
-  async openRecord(text: string): Promise<void> {
+  async openRecord(text: string, index = 0): Promise<void> {
     // Same bounded search as the Leads list: a record created a moment ago may not
     // be listed yet (seen 2026-10-20), so reload and search again, up to 6 times.
     const attempts = 6;
-    let row = this.page.getByRole('row').filter({ hasText: text }).first();
-    for (let attempt = 1; attempt <= attempts; attempt++) {
+    for (let attempt = 1; ; attempt++) {
       await this.openList();
       await this.search(text);
-      row = this.page.getByRole('row').filter({ hasText: text }).first();
-      if (await row.waitFor({ timeout: 10_000 }).then(() => true, () => false)) break;
+      const row = this.page.getByRole('row').filter({ hasText: text }).nth(index);
+      if (await row.waitFor({ timeout: 10_000 }).then(() => true, () => false)) {
+        // Same spinner wait as the Leads list (seen 2026-10-20).
+        await this.page.locator('lightning-spinner').first().waitFor({ state: 'hidden', timeout: 20_000 }).catch(() => {});
+        // The list can flip to "0 items" between the row showing and the click
+        // (seen 2026-10-21), so a failed click starts the search again.
+        if (await row.getByRole('link').first().click({ timeout: 10_000 }).then(() => true, () => false)) break;
+      }
       if (attempt === attempts) throw new Error(`No ${this.objectName} for ${text} in the list after ${attempts} searches.`);
       await this.page.waitForTimeout(5_000);
     }
-    // Same spinner wait as the Leads list (seen 2026-10-20).
-    await this.page.locator('lightning-spinner').first().waitFor({ state: 'hidden', timeout: 20_000 }).catch(() => {});
-    await row.getByRole('link').first().click({ timeout: 30_000 });
     await this.page.getByRole('tab', { name: 'Details' }).waitFor();
     await this.page.getByRole('tab', { name: 'Details' }).click();
   }

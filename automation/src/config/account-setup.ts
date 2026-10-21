@@ -76,10 +76,26 @@ export type StepVariant = { step: number; variant: string; template: number };
 export type SequenceSetup = { name: string; steps: StepVariant[] };
 
 // Sequences each account needs. They stay Draft (QA, 2026-10-09).
+// Before activating one for a timed run, give it an always-on sending
+// schedule (Settings > Sending Schedule > Add Schedule, all days/hours).
+// HubSpot's default window (Mon-Fri 09:00-18:00) queues step emails as
+// "Scheduled Tomorrow" and fails rows that run outside it (lesson
+// 2026-10-18, Unsubscribed AL-4015). Not set here; done by hand or by the
+// generator agent during stage 3.
 export const sequences: Partial<Record<Account, SequenceSetup[]>> = {
   companycreated: [
     { name: 'Sequence A', steps: [{ step: 1, variant: 'A', template: 1 }] },
     { name: 'Sequence B', steps: [{ step: 1, variant: 'A', template: 1 }] },
+  ],
+  // Prospect is Unsubscribed (AL-4015): one step; sender and activation are
+  // done in the exploration and in the spec, not here.
+  unsubscribed: [
+    { name: 'HubSpot Prospect Unsubscribed QA', steps: [{ step: 1, variant: 'A', template: 1 }] },
+  ],
+  // Production smoke test (notes/production-testing/01-email-opened.md): one
+  // step; activated and given its sender by hand-off steps, not here.
+  emailopenedprod: [
+    { name: 'HubSpot Email Opened Smoke', steps: [{ step: 1, variant: 'A', template: 1 }] },
   ],
 };
 

@@ -450,17 +450,10 @@ export function activityTests(flow: Flow, title: string, options: { skip?: strin
       });
     });
 
-    // ---- Rows added 2026-10-12 by a background fork: written and typechecked,
-    // NOT run. Rows that need a HubSpot or Mailinator screen nobody has walked
-    // are listed in context/hubspot/link-clicked-progress.md ("Rows written
-    // 2026-10-12"). "From row N" rows reuse the prospect of row N through
-    // `carried`, so they only work after that row ran in the same run.
-    const carried = new Map<string, Row>();
-    const fromRow = (key: string): Row => {
-      const row = carried.get(key);
-      if (!row) throw new Error(`"${key}" has to pass first in this run: this row continues with its prospect`);
-      return row;
-    };
+    // ---- Rows added 2026-10-12 by a background fork. QA, 2026-10-15: no row
+    // depends on another row any more; the "second event" rows (Create a
+    // Contact 6, Create a Note 5, Record 7) run their own first event on their
+    // own prospect, then the second one, so each can run alone.
 
     test('Create a Contact in HubSpot > 3: Contact already in HubSpot, prospect details changed', async ({ saleshandyIntegration, saleshandySequence, saleshandyCrm, mailinator, hubspotContacts }) => {
       const row = flow.rowFor('Create a Contact in HubSpot > 3');
@@ -481,7 +474,6 @@ export function activityTests(flow: Flow, title: string, options: { skip?: strin
       await test.step('Check the contact in HubSpot shows the new values', async () => {
         await expectContact(hubspotContacts, row, { 'Job title': row['Updated Job Title'], City: row['Updated City'] });
       });
-      carried.set('Create a Contact in HubSpot > 3', row);
     });
 
     test('Create a Contact in HubSpot > 4: Contact already at a later Lifecycle Stage than the configured one', async ({ saleshandyIntegration, saleshandySequence, saleshandyCrm, mailinator, hubspotContacts }) => {
@@ -503,16 +495,30 @@ export function activityTests(flow: Flow, title: string, options: { skip?: strin
     });
 
     if (!skip.has('Create a Contact in HubSpot > 6')) {
-      test('Create a Contact in HubSpot > 6: Second link clicked after row 3', async ({ saleshandyIntegration, saleshandySequence, saleshandyCrm, mailinator, hubspotContacts }) => {
-        const row = fromRow('Create a Contact in HubSpot > 3');
-        await test.step('Select only Create a Contact again', async () => {
+      test('Create a Contact in HubSpot > 6: Contact in HubSpot, own first link clicked, then the second link', async ({ saleshandyIntegration, saleshandySequence, saleshandyCrm, mailinator, hubspotContacts }) => {
+        const row = flow.rowFor('Create a Contact in HubSpot > 6');
+        test.setTimeout(35 * 60_000);
+        await test.step('Select only Create a Contact: Lead Status Open, Lead Lifecycle Marketing Qualified Lead', async () => {
           await flow.useOnly(saleshandyIntegration, CREATE_CONTACT, CREATE_CONTACT_VALUES, []);
+        });
+        await test.step('Create the contact in HubSpot', async () => {
+          await newContact(hubspotContacts, row);
+        });
+        const first = await flow.runTrigger({ sequence: saleshandySequence, mailinator, crm: saleshandyCrm, integration: saleshandyIntegration }, row, async () => {
+          await test.step('Change Job Title and City in Saleshandy', async () => {
+            await changeProspect(saleshandyCrm, row, { 'Job Title': row['Updated Job Title'], City: row['Updated City'] });
+          });
+        });
+        await test.step('Check Logs: first click entries are Success', async () => {
+          await flow.expectNewLogsSuccess(saleshandyIntegration, first);
+        });
+        await test.step('Check the contact in HubSpot shows the new values', async () => {
+          await expectContact(hubspotContacts, row, { 'Job title': row['Updated Job Title'], City: row['Updated City'] });
         });
         const known = await flow.knownLogIds(saleshandyIntegration);
         await test.step('Change Job Title again in Saleshandy', async () => {
           await changeProspect(saleshandyCrm, row, { 'Job Title': row['Second Updated Job Title'] });
         });
-        test.setTimeout(15 * 60_000);
         await test.step('Click the second link in the step 1 email (Clicked goes from 1 to 2)', async () => {
           await flow.fireEvent({ sequence: saleshandySequence, mailinator, crm: saleshandyCrm, integration: saleshandyIntegration }, row, 1, 1);
         });
@@ -769,7 +775,6 @@ export function activityTests(flow: Flow, title: string, options: { skip?: strin
       await test.step('Check HubSpot: note on the contact', async () => {
         await expectOnRecord(hubspotContacts, '0-1', contactId, ['Note created via Saleshandy', ...flow.noteContains(row, 1)], 'Note');
       });
-      carried.set('Create a Note in HubSpot > 2', row);
     });
 
     test('Create a Note in HubSpot > 3: Paired with Create a deal, prospect has Deal Value', async ({ saleshandyIntegration, saleshandySequence, saleshandyCrm, mailinator, hubspotContacts }) => {
@@ -816,13 +821,24 @@ export function activityTests(flow: Flow, title: string, options: { skip?: strin
 
     // Step 2 rows need a workflow whose event can be fired on the step 2 email (Link Clicked: yes; Reply Received: no, its mark-as-replied has no step 2 row).
     if (flow.step2Events) {
-      test('Create a Note in HubSpot > 5: Pairing from row 2, step 2 sent', async ({ saleshandyIntegration, saleshandySequence, saleshandyCrm, mailinator, hubspotContacts }) => {
-        const row = fromRow('Create a Note in HubSpot > 2');
-        await test.step('Select Update a Contact (Connected, Sales Qualified Lead) and Create a Note again', async () => {
+      test('Create a Note in HubSpot > 5: Update a Contact + Create a Note, own step 1 click, then step 2 sent', async ({ saleshandyIntegration, saleshandySequence, saleshandyCrm, mailinator, hubspotContacts }) => {
+        const row = flow.rowFor('Create a Note in HubSpot > 5');
+        test.setTimeout(35 * 60_000);
+        await test.step('Select Update a Contact (Connected, Sales Qualified Lead) and Create a Note', async () => {
           await usePaired(flow, saleshandyIntegration, UPDATE_CONTACT, UPDATE_CONTACT_VALUES, CREATE_NOTE);
         });
+        let contactId = '';
+        await test.step('Create the contact in HubSpot', async () => {
+          contactId = await newContact(hubspotContacts, row);
+        });
+        const first = await flow.runTrigger({ sequence: saleshandySequence, mailinator, crm: saleshandyCrm, integration: saleshandyIntegration }, row);
+        await test.step('Check Logs: step 1 entries are Success', async () => {
+          await flow.expectNewLogsSuccess(saleshandyIntegration, first);
+        });
+        await test.step('Check HubSpot: note on the contact shows Step 1', async () => {
+          await expectOnRecord(hubspotContacts, '0-1', contactId, ['Note created via Saleshandy', ...flow.noteContains(row, 1)], 'Note');
+        });
         const known = await flow.knownLogIds(saleshandyIntegration);
-        test.setTimeout(20 * 60_000);
         await test.step('Send now on step 2 and click its first link', async () => {
           await flow.fireEvent({ sequence: saleshandySequence, mailinator, crm: saleshandyCrm, integration: saleshandyIntegration }, row, 2);
         });
@@ -887,7 +903,6 @@ export function activityTests(flow: Flow, title: string, options: { skip?: strin
       await test.step('Check HubSpot: email logged on the contact', async () => {
         await expectOnRecord(hubspotContacts, '0-1', contactId, flow.loggedEmailContains(row, 1), 'Logged email');
       });
-      carried.set('Record (log) an email activity in HubSpot > 4', row);
     });
 
     test('Record (log) an email activity in HubSpot > 5: Paired with Create a deal', async ({ saleshandyIntegration, saleshandySequence, saleshandyCrm, mailinator, hubspotContacts }) => {
@@ -927,29 +942,49 @@ export function activityTests(flow: Flow, title: string, options: { skip?: strin
           expect(await hubspotDeals.summary(dealIds[2]), 'latest created deal').toMatchObject({ pipeline: 'Sales Pipeline', stage: 'Initial Contact', dealType: 'New Business', priority: 'High' });
         }).toPass({ timeout: 60_000 });
       });
-      // QA, 2026-10-13: Update a deal + Record email logs the email on the
-      // latest deal only; the contact gets nothing (expected). The card on the
-      // deal must name the prospect; it shows "Unknown Contact" (bug, draft in
-      // jira/drafts/link-clicked-update-deal-record-email-unknown-contact.json).
-      await test.step('Check HubSpot: email logged on the latest deal naming the prospect, not on the contact', async () => {
+      // QA, 2026-10-15: Update a deal + Record email logs the email on both the
+      // latest deal and the contact (was "deal only" on 2026-10-13), in every
+      // workflow. The card on the deal must name the prospect, not "Unknown
+      // Contact" (AL-4123, AL-4129).
+      await test.step('Check HubSpot: email logged on the latest deal naming the prospect, and on the contact', async () => {
         const contactId = await findContact(hubspotContacts, row);
         await expectOnRecord(hubspotContacts, '0-3', dealIds[2], flow.loggedEmailContains(row, 1), 'Logged email on the deal');
         // The header no longer names the prospect, so the bug (AL-4123) is
         // checked on its own text.
         expect(await hubspotContacts.activitiesText('0-3', dealIds[2]), 'deal Activities').not.toContain('Unknown Contact');
-        expect(await hubspotContacts.activitiesText('0-1', contactId), 'contact Activities').not.toContain(flow.loggedEmailContains(row, 1)[0]);
+        // Observation only (2026-10-15, production smoke test 10 found the email on
+        // an older deal): record which of the older deals show the logged email.
+        // Not an assertion; QA decides what the rule is.
+        for (const [i, id] of dealIds.slice(0, 2).entries()) {
+          const text = await hubspotContacts.activitiesText('0-3', id);
+          const note = `older deal ${i + 1} (${id}) shows the logged email: ${text.includes(flow.loggedEmailContains(row, 1)[0])}`;
+          test.info().annotations.push({ type: 'observation', description: note });
+          console.log(`OBSERVATION ${note}`);
+        }
+        await expectOnRecord(hubspotContacts, '0-1', contactId, flow.loggedEmailContains(row, 1), 'Logged email on the contact');
       });
     });
 
     // Same as Create a Note > 5.
     if (flow.step2Events) {
-      test('Record (log) an email activity in HubSpot > 7: Pairing from row 4, step 2 sent', async ({ saleshandyIntegration, saleshandySequence, saleshandyCrm, mailinator, hubspotContacts }) => {
-        const row = fromRow('Record (log) an email activity in HubSpot > 4');
-        await test.step('Select Update a Contact (Connected, Sales Qualified Lead) and Record (log) an Email Activity again', async () => {
+      test('Record (log) an email activity in HubSpot > 7: Update a Contact + Record, own step 1 click, then step 2 sent', async ({ saleshandyIntegration, saleshandySequence, saleshandyCrm, mailinator, hubspotContacts }) => {
+        const row = flow.rowFor('Record (log) an email activity in HubSpot > 7');
+        test.setTimeout(35 * 60_000);
+        await test.step('Select Update a Contact (Connected, Sales Qualified Lead) and Record (log) an Email Activity', async () => {
           await usePaired(flow, saleshandyIntegration, UPDATE_CONTACT, UPDATE_CONTACT_VALUES, RECORD_EMAIL);
         });
+        let firstContactId = '';
+        await test.step('Create the contact in HubSpot', async () => {
+          firstContactId = await newContact(hubspotContacts, row);
+        });
+        const first = await flow.runTrigger({ sequence: saleshandySequence, mailinator, crm: saleshandyCrm, integration: saleshandyIntegration }, row);
+        await test.step('Check Logs: step 1 entries are Success', async () => {
+          await flow.expectNewLogsSuccess(saleshandyIntegration, first);
+        });
+        await test.step('Check HubSpot: email logged on the contact', async () => {
+          await expectOnRecord(hubspotContacts, '0-1', firstContactId, flow.loggedEmailContains(row, 1), 'Logged email');
+        });
         const known = await flow.knownLogIds(saleshandyIntegration);
-        test.setTimeout(20 * 60_000);
         await test.step('Send now on step 2 and click its first link', async () => {
           await flow.fireEvent({ sequence: saleshandySequence, mailinator, crm: saleshandyCrm, integration: saleshandyIntegration }, row, 2);
         });

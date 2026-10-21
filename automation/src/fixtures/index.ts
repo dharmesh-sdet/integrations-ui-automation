@@ -1,16 +1,25 @@
 import { test as base, devices, type Browser as PlaywrightBrowser, type BrowserContext, type Page, type TestInfo } from '@playwright/test';
 import { accounts, type Account } from '../config/accounts.ts';
-import { browsers, isBrowser, platforms, type Browser, type Platform } from '../config/environments.ts';
+import { baseUrlFor, browsers, isBrowser, type Browser, type Platform } from '../config/environments.ts';
 import { HubSpotCompaniesPage } from '../pages/hubspot/companies.page.ts';
 import { HubSpotContactsPage } from '../pages/hubspot/contacts.page.ts';
 import { HubSpotDealsPage } from '../pages/hubspot/deals.page.ts';
 import { HubSpotPage } from '../pages/hubspot/hubspot.page.ts';
 import { MailinatorPage } from '../pages/mailinator.page.ts';
 import { SaleshandyCrmPage } from '../pages/saleshandy/crm.page.ts';
+import { DoNotContactPage } from '../pages/saleshandy/do-not-contact.page.ts';
 import { FieldMappingPage } from '../pages/saleshandy/field-mapping.page.ts';
 import { SequenceBuilderPage } from '../pages/saleshandy/sequence-builder.page.ts';
 import { SaleshandySequencePage } from '../pages/saleshandy/sequence.page.ts';
 import { HubSpotIntegrationPage } from '../pages/saleshandy/hubspot-integration.page.ts';
+import { SalesforceIntegrationPage } from '../pages/saleshandy/salesforce-integration.page.ts';
+import { SalesforceEmailSentPage } from '../pages/saleshandy/salesforce-email-sent.page.ts';
+import { SalesforceOutcomePage } from '../pages/saleshandy/salesforce-outcome.page.ts';
+import { SalesforceAccountsPage } from '../pages/salesforce/accounts.page.ts';
+import { SalesforceContactsPage } from '../pages/salesforce/contacts.page.ts';
+import { SalesforceLeadsPage } from '../pages/salesforce/leads.page.ts';
+import { SalesforceOpportunitiesPage } from '../pages/salesforce/opportunities.page.ts';
+import { Salesforce } from '../pages/salesforce/salesforce.ts';
 import { assertSessionFresh } from '../utils/session.ts';
 
 type Options = {
@@ -27,11 +36,21 @@ type WorkerFixtures = {
 type Fixtures = {
   hubspotPage: Page;
   saleshandyPage: Page;
+  salesforcePage: Page;
+  salesforceIntegration: SalesforceIntegrationPage;
+  salesforceLeads: SalesforceLeadsPage;
+  salesforceEmailSent: SalesforceEmailSentPage;
+  salesforceOutcome: SalesforceOutcomePage;
+  salesforceAccounts: SalesforceAccountsPage;
+  salesforceContacts: SalesforceContactsPage;
+  salesforceOpportunities: SalesforceOpportunitiesPage;
+  salesforce: Salesforce;
   hubspotContacts: HubSpotContactsPage;
   hubspotDeals: HubSpotDealsPage;
   hubspotCompanies: HubSpotCompaniesPage;
   saleshandyIntegration: HubSpotIntegrationPage;
   saleshandyCrm: SaleshandyCrmPage;
+  saleshandyDnc: DoNotContactPage;
   saleshandySequence: SaleshandySequencePage;
   saleshandyFieldMapping: FieldMappingPage;
   saleshandySequenceBuilder: SequenceBuilderPage;
@@ -58,7 +77,7 @@ class SessionContexts {
     if (!context) {
       context = await this.browser.newContext({
         ...devices[browsers[browserName].device],
-        baseURL: platforms[platform].baseURL,
+        baseURL: baseUrlFor(platform, account),
         storageState: assertSessionFresh(platform, account, browserName),
       });
       this.contexts.set(key, context);
@@ -115,11 +134,23 @@ export const test = base.extend<Options & Fixtures, WorkerFixtures>({
     }),
   saleshandyPage: async ({ sessionContexts, account }, use, testInfo) =>
     loggedInPage(sessionContexts, 'saleshandy', account, testInfo, use),
+  salesforcePage: async ({ sessionContexts, account }, use, testInfo) =>
+    loggedInPage(sessionContexts, 'salesforce', account, testInfo, use),
+  salesforceIntegration: async ({ saleshandyPage }, use) => use(new SalesforceIntegrationPage(saleshandyPage)),
+  salesforceLeads: async ({ salesforcePage }, use) => use(new SalesforceLeadsPage(salesforcePage)),
+  salesforceEmailSent: async ({ saleshandyPage }, use) => use(new SalesforceEmailSentPage(saleshandyPage)),
+  salesforceOutcome: async ({ saleshandyPage }, use) => use(new SalesforceOutcomePage(saleshandyPage)),
+  salesforceAccounts: async ({ salesforcePage }, use) => use(new SalesforceAccountsPage(salesforcePage)),
+  salesforceContacts: async ({ salesforcePage }, use) => use(new SalesforceContactsPage(salesforcePage)),
+  salesforceOpportunities: async ({ salesforcePage }, use) => use(new SalesforceOpportunitiesPage(salesforcePage)),
+  salesforce: async ({ salesforceLeads, salesforceContacts, salesforceAccounts, salesforceOpportunities }, use) =>
+    use(new Salesforce(salesforceLeads, salesforceContacts, salesforceAccounts, salesforceOpportunities)),
   hubspotContacts: async ({ hubspotPage }, use) => use(new HubSpotContactsPage(hubspotPage)),
   hubspotDeals: async ({ hubspotPage }, use) => use(new HubSpotDealsPage(hubspotPage)),
   hubspotCompanies: async ({ hubspotPage }, use) => use(new HubSpotCompaniesPage(hubspotPage)),
   saleshandyIntegration: async ({ saleshandyPage }, use) => use(new HubSpotIntegrationPage(saleshandyPage)),
   saleshandyCrm: async ({ saleshandyPage }, use) => use(new SaleshandyCrmPage(saleshandyPage)),
+  saleshandyDnc: async ({ saleshandyPage }, use) => use(new DoNotContactPage(saleshandyPage)),
   saleshandySequence: async ({ saleshandyPage }, use) => use(new SaleshandySequencePage(saleshandyPage)),
   saleshandyFieldMapping: async ({ saleshandyPage }, use) => use(new FieldMappingPage(saleshandyPage)),
   saleshandySequenceBuilder: async ({ saleshandyPage }, use) => use(new SequenceBuilderPage(saleshandyPage)),

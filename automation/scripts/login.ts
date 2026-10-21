@@ -11,13 +11,13 @@ import fs from 'node:fs';
 import path from 'node:path';
 import readline from 'node:readline/promises';
 import { accounts, isAccount, type Account } from '../src/config/accounts.ts';
-import { browsers, isBrowser, isPlatform, platforms } from '../src/config/environments.ts';
+import { baseUrlFor, browsers, isBrowser, isPlatform, isSharedPlatform, platforms } from '../src/config/environments.ts';
 import { authFile } from '../src/utils/session.ts';
 
 // Platform first; account, browser and --force in any order after it.
 const [platform, ...rest] = process.argv.slice(2);
 const force = rest.includes('--force');
-const sharedPlatform = platform === 'hubspot'; // one common portal, one session per browser
+const sharedPlatform = isPlatform(platform) && isSharedPlatform(platform); // one common portal or org, one session per browser
 // HubSpot needs no account; any account is ignored (session file is the same).
 const account = rest.find(isAccount) ?? (sharedPlatform ? Object.keys(accounts)[0] as Account : undefined);
 const browserName = rest.find(isBrowser) ?? 'chromium';
@@ -34,11 +34,12 @@ if (!account || unknown.length > 0) {
   process.exit(1);
 }
 
-const { baseURL, loginPath } = platforms[platform];
+const { loginPath } = platforms[platform];
+const baseURL = baseUrlFor(platform, account);
 const { device, channel } = browsers[browserName];
 const file = authFile(platform, account, browserName);
 const reuse = !force && fs.existsSync(file);
-const who = sharedPlatform ? 'to the shared HubSpot portal' : `as ${accounts[account].saleshandy}`;
+const who = sharedPlatform ? `to the shared ${platform} portal or org` : `as ${accounts[account].saleshandy}`;
 const label = sharedPlatform ? platform : `${platform} ${account}`;
 
 const browser = await chromium.launch({ headless: false, channel });
@@ -48,7 +49,9 @@ const context = await browser.newContext({
   storageState: reuse ? file : undefined,
 });
 const page = await context.newPage();
-await page.goto(new URL(loginPath, baseURL).toString());
+// 'domcontentloaded', not the default 'load': Salesforce Lightning keeps background
+// polling/XHR running, so 'load' can time out even once the page is actually usable.
+await page.goto(new URL(loginPath, baseURL).toString(), { waitUntil: 'domcontentloaded', timeout: 60000 });
 
 const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
 await rl.question(

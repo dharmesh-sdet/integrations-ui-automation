@@ -26,5 +26,6 @@ export function unusedRows(csvFile: string, rows: Row[], count: number): Row[] {
 }
 
 export function markUsed(csvFile: string, email: string): void {
+  if (usedEmails(csvFile).has(email)) return;
   fs.appendFileSync(usedFile(csvFile), `${email}\n`);
 }

@@ -17,6 +17,16 @@ export class SequenceBuilderPage extends SaleshandyPage {
     return (await this.page.getByRole('row').filter({ has: this.page.getByText(name, { exact: true }) }).count()) > 0;
   }
 
+  // Id of an existing sequence, from the link in its row.
+  // TODO(needs-input): assumes the row links to /sequence/<id>/...; the first run confirms it.
+  async idOf(name: string): Promise<string> {
+    const row = this.page.getByRole('row').filter({ has: this.page.getByText(name, { exact: true }) }).first();
+    const href = (await row.locator('a[href*="/sequence/"]').first().getAttribute('href')) ?? '';
+    const id = href.match(/\/sequence\/(\d+)/)?.[1];
+    if (!id) throw new Error(`No sequence id found in the row of "${name}" (link: "${href}")`);
+    return id;
+  }
+
   // "Create Sequence" makes a draft named "New Sequence - <date>" at once and
   // opens its Steps tab. A new account shows the button twice (onboarding card
   // and list toolbar); the toolbar one is last. Returns the sequence id.
@@ -25,16 +35,23 @@ export class SequenceBuilderPage extends SaleshandyPage {
     await this.page.getByRole('button', { name: 'Create Sequence', exact: true }).last().click();
     await this.page.waitForURL(/\/sequence\/\d+\/steps/);
     const id = this.page.url().match(/\/sequence\/(\d+)\//)![1];
-    // A "LinkedIn Automation" intro pops up the first time.
-    const skip = this.page.getByRole('button', { name: 'Skip', exact: true });
-    await skip.click({ timeout: 3_000 }).catch(() => {});
+    await this.skipIntro();
     await this.rename(name);
     return id;
   }
 
+  // A "LinkedIn Automation" intro pops up the first time. On production it came
+  // up later than 3 s and its backdrop blocked the rename for the whole test
+  // (seen 2026-10-14), so wait longer for it.
+  async skipIntro(): Promise<void> {
+    const skip = this.page.getByRole('button', { name: 'Skip', exact: true });
+    await skip.click({ timeout: 10_000 }).catch(() => {});
+    await this.page.locator('.li-tour-backdrop').waitFor({ state: 'hidden', timeout: 5_000 }).catch(() => {});
+  }
+
   // The name is an input in the header. It loads after the page; typing before
   // its value is there fails with "Oops!" (seen 2026-10-09).
-  private async rename(name: string): Promise<void> {
+  async rename(name: string): Promise<void> {
     const input = this.page.locator('.sequence-name--input');
     await expect(input).not.toHaveValue('');
     await input.click();
@@ -93,5 +110,112 @@ export class SequenceBuilderPage extends SaleshandyPage {
 
     await this.editor().getByRole('button', { name: 'Save', exact: true }).click();
     await this.page.getByRole('alert').filter({ hasText: 'Sequence step created successfully.' }).waitFor();
+  }
+
+  // Link tracking setup (seen on staging 2026-10-15, specs/link-clicked-smoke-sequence.md).
+  private subjectEditor(): Locator {
+    return this.editor().locator('.editor-editable-content.single-line-content');
+  }
+
+  // Reads the body editor's HTML through window.tinymce (the body is the editor
+  // whose element lacks class single-line-content).
+  private async bodyHtml(): Promise<string> {
+    return this.page.evaluate(() => {
+      const eds = (window as any).tinymce?.editors ?? [];
+      for (const ed of eds) {
+        const el: HTMLElement | undefined = ed.getElement?.() ?? ed.bodyElement;
+        if (el && !el.classList.contains('single-line-content')) return ed.getContent() as string;
+      }
+      return '';
+    });
+  }
+
+  private async setBodyHtml(html: string): Promise<void> {
+    await this.page.evaluate((h) => {
+      const eds = (window as any).tinymce?.editors ?? [];
+      for (const ed of eds) {
+        const el: HTMLElement | undefined = ed.getElement?.() ?? ed.bodyElement;
+        if (el && !el.classList.contains('single-line-content')) ed.setContent(h);
+      }
+    }, html);
+  }
+
+  // Adds an Email step on an empty sequence with a typed subject and a body that
+  // holds the given links. setContent can leave the body empty on the first try,
+  // so it is set again until every href reads back (seen 2026-10-15). Save needed
+  // two clicks once: click again if no toast in 3 s and the dialog is still open.
+  async addEmailStepWithLinks(subject: string, bodyHtml: string, hrefs: string[]): Promise<void> {
+    await this.page.getByRole('button', { name: 'Email', exact: true }).click();
+    await this.editor().waitFor();
+    await expect
+      .poll(() => this.page.evaluate(() => (window as any).tinymce?.editors?.length ?? 0), {
+        message: 'Editors did not load',
+        intervals: [500],
+      })
+      .toBe(2);
+    await this.subjectEditor().click();
+    await this.page.keyboard.type(subject);
+    await expect(this.subjectEditor()).toContainText(subject);
+
+    // TinyMCE can add a trailing slash to a bare host, so match the URL without it.
+    const withoutSlash = (u: string) => u.replace(/\/$/, '');
+    await expect
+      .poll(
+        async () => {
+          const current = await this.bodyHtml();
+          if (hrefs.every((h) => current.includes(`href="${withoutSlash(h)}`))) return true;
+          await this.setBodyHtml(bodyHtml);
+          return false;
+        },
+        { message: 'Body links did not read back', intervals: [1_500], timeout: 30_000 },
+      )
+      .toBe(true);
+
+    const toast = this.page.getByRole('alert').filter({ hasText: 'Sequence step created successfully' });
+    const save = this.editor().getByRole('button', { name: 'Save', exact: true });
+    await save.click();
+    const created = await toast.waitFor({ timeout: 3_000 }).then(() => true, () => false);
+    if (!created && (await this.editor().count()) > 0) {
+      await save.click();
+      await toast.waitFor();
+    }
+    await expect(this.editor()).toHaveCount(0);
+  }
+
+  // Settings tab > Safety Settings > Track link clicks > Enable Anyway.
+  // Nothing in the Email Accounts row is touched (a click there removes the sender).
+  async enableLinkTracking(): Promise<void> {
+    await this.page.getByRole('tab', { name: 'Settings' }).click();
+    await this.page.waitForURL(/\/settings/);
+    await this.page.getByRole('button', { name: 'Safety Settings' }).click();
+    await this.page.getByRole('button', { name: 'Track link clicks' }).click();
+    await this.page.getByRole('dialog').filter({ hasText: 'Enable Link Tracking in Emails?' }).waitFor();
+    await this.page.getByRole('button', { name: 'Enable Anyway' }).click();
+    await this.page.getByRole('alert').filter({ hasText: 'Sequence settings updated successfully' }).waitFor();
+  }
+
+  // Opens an existing sequence from the list by its name (list already open).
+  async openExisting(name: string): Promise<void> {
+    await this.page.getByRole('row').filter({ has: this.page.getByText(name, { exact: true }) }).getByText(name, { exact: true }).click();
+    await this.page.waitForURL(/\/sequence\/\d+\//);
+    await this.skipIntro();
+  }
+
+  currentSequenceId(): string {
+    return this.page.url().match(/\/sequence\/(\d+)\//)![1];
+  }
+
+  // Same as enableLinkTracking, but leaves the switch alone when it is already on.
+  async enableLinkTrackingIfOff(): Promise<void> {
+    await this.page.getByRole('tab', { name: 'Settings' }).click();
+    await this.page.waitForURL(/\/settings/);
+    await this.page.getByRole('button', { name: 'Safety Settings' }).click();
+    if (await this.safetySettingChecked('Track link clicks')) return;
+    await this.enableLinkTracking();
+  }
+
+  // State of one Safety Settings switch, by its label text.
+  async safetySettingChecked(label: string): Promise<boolean> {
+    return this.page.locator('label', { hasText: label }).first().locator('xpath=..').locator('input').first().isChecked();
   }
 }

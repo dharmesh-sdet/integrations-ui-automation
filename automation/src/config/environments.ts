@@ -1,5 +1,7 @@
 // Staging URLs, confirmed in context/project.md (section 4 answers).
-export type Platform = 'saleshandy' | 'hubspot';
+import { accounts, type Account } from './accounts.ts';
+
+export type Platform = 'saleshandy' | 'hubspot' | 'salesforce';
 export type Browser = 'chromium' | 'edge';
 
 export const platforms: Record<Platform, { baseURL: string; loginPath: string }> = {
@@ -12,7 +14,39 @@ export const platforms: Record<Platform, { baseURL: string; loginPath: string }>
     baseURL: 'https://app-na2.hubspot.com',
     loginPath: '/',
   },
+  // Developer Edition org (QA, 2026-10-15). Login is username, password, then an
+  // SMS code, so the session is saved by hand once (npm run login:salesforce).
+  salesforce: {
+    baseURL: 'https://saleshandy-dev-ed.develop.lightning.force.com',
+    loginPath: '/lightning/page/home',
+  },
 };
+
+// HubSpot is one common portal for every account, so it has one session per
+// browser and needs no account in the login command. Salesforce is the same
+// org for every workflow (`saleshandy-dev-ed`), but each workflow still gets
+// its own saved session so parallel runs/sessions don't block each other or
+// overwrite one another's login (QA, 2026-10-19), same as Saleshandy.
+export function isSharedPlatform(platform: Platform): boolean {
+  return platform === 'hubspot';
+}
+
+// Saleshandy production (QA, 2026-10-14: my.saleshandy.com). PROD_URL in
+// automation/.env overrides it. Used only by accounts marked
+// `environment: 'production'` in src/config/accounts.ts; HubSpot is the same
+// portal for both.
+const PRODUCTION_SALESHANDY_URL = (process.env.PROD_URL ?? 'https://my.saleshandy.com').replace(/\/+$/, '');
+
+export function isProduction(account: Account | undefined): boolean {
+  return account !== undefined && 'environment' in accounts[account] && accounts[account].environment === 'production';
+}
+
+// Base URL of a platform for an account: staging unless the account is a
+// production one. Specs, fixtures and the login script use this, never
+// `platforms[...].baseURL` directly.
+export function baseUrlFor(platform: Platform, account: Account | undefined): string {
+  return platform === 'saleshandy' && isProduction(account) ? PRODUCTION_SALESHANDY_URL : platforms[platform].baseURL;
+}
 
 // chromium = Playwright's bundled Chromium; edge = the installed Microsoft Edge.
 // device is a Playwright device preset name, so each browser sends its own user agent.

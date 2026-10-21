@@ -84,6 +84,29 @@ sync.
 | AL-4016 | Email is bounced in Saleshandy |
 | AL-4017 | Import Prospect when contact created on Hubspot |
 
+## Salesforce workflow tracking tickets
+
+The parent is AL-4131 ("[SalesForce] Triggers and Activities"), with one
+sub-task per workflow, titled with the workflow name. Table and release
+dates: `context/salesforce/00-overview.md` (path from `automation/`); keep
+the two in sync.
+
+| Sub-task | Trigger |
+|---|---|
+| AL-4132 | Email Sent from Saleshandy |
+| AL-4133 | Reply is Received in Saleshandy |
+| AL-4134 | Prospect Outcome is Updated in Saleshandy |
+| AL-4135 | Sequence Email is Opened in Saleshandy |
+| AL-4136 | Link is Clicked in Saleshandy |
+| AL-4137 | Prospect is Unsubscribed in Saleshandy |
+| AL-4138 | Email is Bounced in Saleshandy |
+| AL-4139 | Call Logged in Saleshandy |
+| AL-4140 | Call Outcome Updated in Saleshandy |
+| AL-4141 | Contact is Created in Salesforce |
+| AL-4142 | Opportunity is Created in Salesforce |
+| AL-4143 | Account is Created in Salesforce |
+| AL-4144 | Lead is Created in Salesforce |
+
 ## `createJiraIssue` payload
 
 ```json

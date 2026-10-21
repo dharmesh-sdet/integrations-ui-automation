@@ -55,6 +55,26 @@ export class MailinatorPage {
     await this.openMessage(page, email, subject);
   }
 
+  // Opens the email, reads its "Unsubscribe here" link and opens that link in a
+  // tab that stays open; returns that tab (the unsubscribe page). Clicking the
+  // link inside the email opens a tab the click helper closes at once, and the
+  // unsubscribe did not register that way (2026-10-15). The link's host differs
+  // per prospect (unsub.shengage02.com, unsub1...), so the href is used as it is.
+  // `waitMs`: pause after the email is open, before the link is used (production
+  // registers the unsubscribe only after the email has been open for a while).
+  async openUnsubscribeLink(email: string, subject: string | RegExp, waitMs = 0): Promise<Page> {
+    const open = this.opened.get(email);
+    const inbox = open && !open.page.isClosed() ? open.page : await this.context.newPage();
+    this.opened.set(email, { page: inbox, subject });
+    await this.openMessage(inbox, email, subject);
+    if (waitMs) await inbox.waitForTimeout(waitMs);
+    const href = await inbox.locator('#html_msg_body').contentFrame().getByRole('link', { name: 'Unsubscribe here' }).getAttribute('href');
+    expect(href, `"Unsubscribe here" link in the email to ${email}`).toBeTruthy();
+    const page = await this.context.newPage();
+    await gotoWithRetry(page, href!);
+    return page;
+  }
+
   private async clickIn(page: Page, email: string, subject: string | RegExp, link: number): Promise<void> {
     await this.openMessage(page, email, subject);
     await this.clickLink(page, link);

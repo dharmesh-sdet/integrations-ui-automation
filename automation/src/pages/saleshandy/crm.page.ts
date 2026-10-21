@@ -18,6 +18,32 @@ export class SaleshandyCrmPage extends SaleshandyPage {
     return Number((await total.innerText()).replace('out of ', ''));
   }
 
+  // The "Sequence Associated" cell of a prospect's row in the list ("-" when
+  // none). The list is a grid of plain divs: the row is the nearest ancestor of
+  // the email text with 5 or more children, and the column is the 5th (Name,
+  // Email, Job Title, Latest Status, Sequence Associated; walked 2026-10-15).
+  // Call search(email) first.
+  async sequenceAssociated(email: string): Promise<string> {
+    return this.listCell(email, 5);
+  }
+
+  // Latest Status (4th cell: Active, Paused, Replied, Finished, Unsubscribed,
+  // Blacklisted, ... per the KB; the exact texts are confirmed on first run).
+  async latestStatus(email: string): Promise<string> {
+    return this.listCell(email, 4);
+  }
+
+  // Prospect Tags (7th cell: Name, Email, Job Title, Latest Status, Sequence
+  // Associated, Prospect Outcomes, Prospect Tags; walked 2026-10-15).
+  async prospectTags(email: string): Promise<string> {
+    return this.listCell(email, 7);
+  }
+
+  private async listCell(email: string, n: number): Promise<string> {
+    const row = this.page.getByText(email, { exact: true }).locator('xpath=ancestor::*[count(*)>=5][1]');
+    return (await row.locator(`xpath=*[${n}]`).innerText()).replace(/\n/g, ' ').trim();
+  }
+
   async openProspect(fullName: string): Promise<void> {
     await this.page.getByRole('button', { name: fullName, exact: true }).click();
     await this.page.getByRole('dialog').waitFor();

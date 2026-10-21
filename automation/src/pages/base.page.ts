@@ -1,6 +1,6 @@
 import type { Page } from '@playwright/test';
 import type { Platform } from '../config/environments.ts';
-import { gotoWithRetry } from '../utils/wait.ts';
+import { gotoWithRetry, waitForPageLoad } from '../utils/wait.ts';
 
 export abstract class BasePage {
   readonly page: Page;
@@ -15,6 +15,13 @@ export abstract class BasePage {
   async goto(path: string): Promise<void> {
     // Tries again on net::ERR_CONNECTION_CLOSED and similar (see gotoWithRetry).
     await gotoWithRetry(this.page, path);
+    await this.assertNotOnLogin();
+  }
+
+  // For pages reached by a click or a redirect instead of goto: waits for the
+  // load and reloads when the page is an error or blank page (see wait.ts).
+  async waitForPageLoad(): Promise<void> {
+    await waitForPageLoad(this.page);
     await this.assertNotOnLogin();
   }
 

@@ -45,6 +45,12 @@ export class HubSpotIntegrationPage extends SaleshandyPage {
     }
   }
 
+  // Turns this trigger on and leaves every other trigger as it is (QA, 2026-10-15,
+  // for the shared production account).
+  async enable(name: string): Promise<void> {
+    await this.setTrigger(this.triggerRow(name), true);
+  }
+
   async disable(name: string): Promise<void> {
     await this.setTrigger(this.triggerRow(name), false);
   }
@@ -138,7 +144,17 @@ export class HubSpotIntegrationPage extends SaleshandyPage {
     // pipeline is picked, from Refold); wait until the box stops saying "Loading...".
     await expect(this.configDropdown(label)).not.toHaveText('Loading...', { timeout: 30_000 });
     await this.configDropdown(label).click();
-    await this.page.getByRole('button', { name: option, exact: true }).click();
+    const choice = this.page.getByRole('button', { name: option, exact: true });
+    // Fail within 30 seconds and name what the list offered, instead of waiting
+    // for the whole test timeout (production smoke, 2026-10-15: 25 minutes on a
+    // sequence name that was not in the list).
+    try {
+      await choice.waitFor({ timeout: 30_000 });
+    } catch {
+      const offered = await this.page.locator('.transfer-body').getByRole('list').getByRole('button').allInnerTexts();
+      throw new Error(`"${option}" is not in the ${label} list. The list offers: ${offered.map((t) => t.trim()).join(' | ') || '(nothing)'}`);
+    }
+    await choice.click();
   }
 
   // Text inputs in Extra Configuration have no accessible name: each sits in a
@@ -148,6 +164,21 @@ export class HubSpotIntegrationPage extends SaleshandyPage {
       .locator('.mb-3')
       .filter({ has: this.page.getByText(label, { exact: true }) })
       .locator('input');
+  }
+
+  // Assign a tag > Extra Configuration (walked 2026-10-15): a new tag is typed
+  // in the dialog's one input and added with Enter; it then shows in the list
+  // (long names are cut with "..."), where clicking it selects it. Tags cannot
+  // have spaces. An existing tag is only clicked.
+  async createAndSelectTag(name: string): Promise<void> {
+    const dialog = this.extraConfiguration();
+    const listed = dialog.getByText(name, { exact: true });
+    if ((await listed.count()) === 0) {
+      const input = dialog.locator('input.bs-input');
+      await input.fill(name);
+      await input.press('Enter');
+    }
+    await listed.first().click();
   }
 
   dueIn(): Locator {

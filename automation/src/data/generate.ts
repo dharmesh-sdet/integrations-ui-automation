@@ -22,7 +22,7 @@ const TEMPLATE_FIELDS = [
 ];
 const COMPANY_FIELDS = ['Company', 'Company Website', 'Company Industry', 'Company Founded Year', 'Company LinkedIn'];
 
-const NATIONALITIES: Nationality[] = [
+export const NATIONALITIES: Nationality[] = [
   { country: 'United States', first: ['Caleb', 'Harper', 'Wyatt', 'Avery', 'Graham', 'Quinn', 'Reid', 'Sloane', 'Tucker', 'Brooke'], last: ['Holloway', 'Prescott', 'Whitfield', 'Bramley', 'Kensington', 'Lockhart', 'Ashby', 'Pembroke', 'Thornbury', 'Garrison'], places: [['Denver', 'Colorado'], ['Raleigh', 'North Carolina'], ['Portland', 'Oregon'], ['Madison', 'Wisconsin']] },
   { country: 'Spain', first: ['Íñigo', 'Lucía', 'Álvaro', 'Nerea', 'Gonzalo', 'Ainhoa', 'Rodrigo', 'Itziar', 'Borja', 'Maite'], last: ['Echeverría', 'Larrañaga', 'Villalobos', 'Cifuentes', 'Arrizabalaga', 'Benavides', 'Quintero', 'Olabarri', 'Valdivieso', 'Zubiaurre'], places: [['Valencia', 'Valencia'], ['Seville', 'Andalusia'], ['Zaragoza', 'Aragon'], ['Malaga', 'Andalusia']] },
   { country: 'Greece', first: ['Dimitris', 'Katerina', 'Yannis', 'Sofia', 'Kostas', 'Ioanna', 'Panagiotis', 'Despina', 'Thanos', 'Vasiliki'], last: ['Karagiannis', 'Mavridis', 'Theodorou', 'Kalogeropoulos', 'Spanos', 'Zervas', 'Galanis', 'Lamprou', 'Kontos', 'Rallis'], places: [['Athens', 'Attica'], ['Larissa', 'Thessaly'], ['Volos', 'Thessaly'], ['Ioannina', 'Epirus']] },
@@ -45,6 +45,17 @@ const NATIONALITIES: Nationality[] = [
   { country: 'Vietnam', first: ['Minh', 'Linh', 'Quang', 'Thao', 'Hieu', 'Trang', 'Khoa', 'Huong', 'Phuc', 'Ngoc'], last: ['Nguyen', 'Tran', 'Pham', 'Hoang', 'Vu', 'Dang', 'Bui', 'Do', 'Ngo', 'Truong'], places: [['Hanoi', 'Hanoi'], ['Da Nang', 'Da Nang'], ['Ho Chi Minh City', 'Ho Chi Minh'], ['Hue', 'Thua Thien Hue']] },
   { country: 'Kenya', first: ['Wanjiru', 'Kipchoge', 'Achieng', 'Otieno', 'Njeri', 'Kamau', 'Atieno', 'Mwangi', 'Chebet', 'Omondi'], last: ['Kariuki', 'Mutiso', 'Odhiambo', 'Wekesa', 'Cheruiyot', 'Nyaga', 'Kimani', 'Onyango', 'Rotich', 'Waweru'], places: [['Nairobi', 'Nairobi'], ['Mombasa', 'Mombasa'], ['Kisumu', 'Kisumu'], ['Nakuru', 'Nakuru']] },
   { country: 'Thailand', first: ['Somchai', 'Nattaya', 'Kritsada', 'Pimchanok', 'Thanakorn', 'Warunee', 'Chaiwat', 'Suda', 'Arthit', 'Malee'], last: ['Wongsakul', 'Chaiyasit', 'Srisuk', 'Boonmee', 'Jaidee', 'Rattanakul', 'Prasert', 'Kaewmanee', 'Sukhum', 'Thongchai'], places: [['Bangkok', 'Bangkok'], ['Chiang Mai', 'Chiang Mai'], ['Phuket', 'Phuket'], ['Khon Kaen', 'Khon Kaen']] },
+  // Added 2026-10-19: the pool above was exhausted (the generator's ledger of
+  // every email it has ever issued, test-data/_generated-emails.txt, never
+  // prunes, so a heavily-used pool runs dry over time). Purely additive.
+  { country: 'Georgia', first: ['Giorgi', 'Nino', 'Luka', 'Tamar', 'Nika', 'Mariam', 'Davit', 'Ana', 'Irakli', 'Salome'], last: ['Beridze', 'Kapanadze', 'Gelashvili', 'Tsiklauri', 'Managadze', 'Kiknadze', 'Natadze', 'Jorbenadze', 'Lomidze', 'Abashidze'], places: [['Tbilisi', 'Tbilisi'], ['Batumi', 'Adjara'], ['Kutaisi', 'Imereti'], ['Rustavi', 'Kvemo Kartli']] },
+  { country: 'Armenia', first: ['Narek', 'Anahit', 'Armen', 'Lilit', 'Vahan', 'Siranush', 'Davit', 'Mariam', 'Gor', 'Araksya'], last: ['Grigoryan', 'Sargsyan', 'Hakobyan', 'Petrosyan', 'Avetisyan', 'Mkrtchyan', 'Harutyunyan', 'Minasyan', 'Karapetyan', 'Ghazaryan'], places: [['Yerevan', 'Yerevan'], ['Gyumri', 'Shirak'], ['Vanadzor', 'Lori'], ['Dilijan', 'Tavush']] },
+  { country: 'Azerbaijan', first: ['Elvin', 'Gunel', 'Rashad', 'Aysel', 'Tural', 'Lamiya', 'Orkhan', 'Nigar', 'Farid', 'Sevinj'], last: ['Mammadov', 'Aliyev', 'Huseynov', 'Ismayilov', 'Quliyev', 'Rzayev', 'Abbasov', 'Hasanov', 'Nabiyev', 'Jafarov'], places: [['Baku', 'Baku'], ['Ganja', 'Ganja'], ['Sumqayit', 'Absheron'], ['Shaki', 'Shaki-Zaqatala']] },
+  { country: 'Albania', first: ['Arben', 'Mirela', 'Besnik', 'Elona', 'Gentian', 'Flutura', 'Ardit', 'Vjosa', 'Dritan', 'Blerina'], last: ['Hoxha', 'Krasniqi', 'Berisha', 'Gashi', 'Shala', 'Dervishi', 'Meta', 'Lleshi', 'Shehu', 'Bardhi'], places: [['Tirana', 'Tirana'], ['Durres', 'Durres'], ['Vlore', 'Vlore'], ['Shkoder', 'Shkoder']] },
+  { country: 'North Macedonia', first: ['Aleksandar', 'Biljana', 'Filip', 'Elena', 'Stefan', 'Jovana', 'Martin', 'Dragana', 'Goran', 'Snezana'], last: ['Trajkovski', 'Petrovski', 'Nikolovski', 'Stojanovski', 'Ristovski', 'Kostovski', 'Angelovski', 'Jovanovski', 'Dimitrovski', 'Ivanovski'], places: [['Skopje', 'Skopje'], ['Bitola', 'Pelagonia'], ['Ohrid', 'Southwest'], ['Tetovo', 'Polog']] },
+  { country: 'Bosnia and Herzegovina', first: ['Amar', 'Amina', 'Haris', 'Lejla', 'Emir', 'Dzenana', 'Tarik', 'Emina', 'Adnan', 'Selma'], last: ['Hodzic', 'Begic', 'Mehmedovic', 'Alic', 'Kovacevic', 'Ibrahimovic', 'Suljic', 'Halilovic', 'Delic', 'Causevic'], places: [['Sarajevo', 'Sarajevo'], ['Mostar', 'Herzegovina-Neretva'], ['Tuzla', 'Tuzla'], ['Banja Luka', 'Republika Srpska']] },
+  { country: 'Zimbabwe', first: ['Tendai', 'Rutendo', 'Tapiwa', 'Chiedza', 'Farai', 'Nyasha', 'Tatenda', 'Rumbidzai', 'Kudzai', 'Vimbai'], last: ['Moyo', 'Ncube', 'Dube', 'Sibanda', 'Mutasa', 'Chikwava', 'Gumbo', 'Mapfumo', 'Chirwa', 'Mangwiro'], places: [['Harare', 'Harare'], ['Bulawayo', 'Bulawayo'], ['Mutare', 'Manicaland'], ['Gweru', 'Midlands']] },
+  { country: 'Uganda', first: ['Moses', 'Grace', 'Joseph', 'Harriet', 'Simon', 'Betty', 'Daniel', 'Patience', 'Isaac', 'Immaculate'], last: ['Mugisha', 'Ssemwogerere', 'Kato', 'Nansubuga', 'Okello', 'Nakimuli', 'Byaruhanga', 'Namuli', 'Tumusiime', 'Kyomugisha'], places: [['Kampala', 'Central'], ['Gulu', 'Northern'], ['Mbarara', 'Western'], ['Jinja', 'Eastern']] },
 ];
 
 // 2026-10-13 (QA): many more countries, so new people do not match anyone
@@ -56,8 +67,8 @@ NATIONALITIES.push(...EXTRA_NATIONALITIES);
 const RETIRED_COUNTRIES = new Set(['United States', 'Spain', 'Greece', 'Japan', 'Italy', 'South Korea', 'Brazil', 'France', 'India', 'Sweden', 'United Arab Emirates']);
 const FRESH_NATIONALITIES = NATIONALITIES.filter((n) => !RETIRED_COUNTRIES.has(n.country));
 
-type Role = { title: string; senior: string; department: string };
-const ROLES: Role[] = [
+export type Role = { title: string; senior: string; department: string };
+export const ROLES: Role[] = [
   { title: 'Account Executive', senior: 'Senior Account Executive', department: 'Sales' },
   { title: 'Sales Development Manager', senior: 'Director of Sales Development', department: 'Sales' },
   { title: 'Revenue Operations Manager', senior: 'Head of Revenue Operations', department: 'Operations' },
@@ -70,6 +81,17 @@ const ROLES: Role[] = [
   { title: 'Finance Operations Manager', senior: 'Finance Operations Director', department: 'Finance' },
   { title: 'Talent Acquisition Partner', senior: 'Head of Talent Acquisition', department: 'Human Resources' },
   { title: 'Partnerships Manager', senior: 'Head of Partnerships', department: 'Partnerships' },
+  // Added 2026-10-20 (QA): a wider spread, so rows in one CSV rarely share a title.
+  { title: 'Security Engineer', senior: 'Principal Security Engineer', department: 'Security' },
+  { title: 'Content Marketing Manager', senior: 'Director of Content Marketing', department: 'Marketing' },
+  { title: 'Solutions Architect', senior: 'Principal Solutions Architect', department: 'Pre-Sales' },
+  { title: 'Legal Counsel', senior: 'Associate General Counsel', department: 'Legal' },
+  { title: 'Business Analyst', senior: 'Lead Business Analyst', department: 'Strategy' },
+  { title: 'Support Engineer', senior: 'Senior Support Engineer', department: 'Support' },
+  { title: 'QA Engineer', senior: 'Staff QA Engineer', department: 'Engineering' },
+  { title: 'Procurement Specialist', senior: 'Head of Procurement', department: 'Procurement' },
+  { title: 'Demand Generation Manager', senior: 'Director of Demand Generation', department: 'Marketing' },
+  { title: 'IT Administrator', senior: 'IT Operations Manager', department: 'IT' },
 ];
 
 // Company pool from the template, with industry and founding year.
@@ -110,6 +132,8 @@ class PersonFactory {
   private takenEmails = new Set<string>();
   private usedFirst = new Set<string>();
   private usedLast = new Set<string>();
+  private usedCountries = new Set<string>();
+  private usedRoles = new Set<string>();
   private usedPhones = new Set<string>();
   private companies = shuffled(COMPANIES);
 
@@ -129,26 +153,32 @@ class PersonFactory {
   }
 
   next(): Row {
-    for (let attempt = 0; attempt < 500; attempt++) {
+    for (let attempt = 0; attempt < 600; attempt++) {
       const nat = pick(FRESH_NATIONALITIES);
       const first = pick(nat.first);
       const last = pick(nat.last);
       const email = `${plain(first)}.${plain(last)}@mailinator.com`;
-      // Unique first and last names within a run while possible; full names and emails always.
-      if (attempt < 300 && (this.usedFirst.has(first) || this.usedLast.has(last))) continue;
+      const role = pick(ROLES);
+      // Unique first and last names, country and job title within a run while
+      // possible (a wide spread of data per CSV, QA 2026-10-20); full names and emails always.
+      // Strictest first: when countries run out of unused names, the country
+      // rule drops before the job title rule.
+      if (attempt < 150 && (this.usedFirst.has(first) || this.usedLast.has(last) || this.usedCountries.has(nat.country) || this.usedRoles.has(role.title))) continue;
+      if (attempt < 300 && (this.usedFirst.has(first) || this.usedLast.has(last) || this.usedRoles.has(role.title))) continue;
       if (this.takenNames.has(`${first} ${last}`.toLowerCase()) || this.takenEmails.has(email)) continue;
       this.takenNames.add(`${first} ${last}`.toLowerCase());
       this.takenEmails.add(email);
       fs.appendFileSync(ledgerFile, `${email}\n`);
       this.usedFirst.add(first);
       this.usedLast.add(last);
+      this.usedCountries.add(nat.country);
+      this.usedRoles.add(role.title);
 
       let phone: string;
       do phone = `+1 555-0${100 + Math.floor(Math.random() * 900)}-${1000 + Math.floor(Math.random() * 9000)}`;
       while (this.usedPhones.has(phone));
       this.usedPhones.add(phone);
 
-      const role = pick(ROLES);
       const [city, state] = pick(nat.places);
       if (this.companies.length === 0) this.companies = shuffled(COMPANIES);
       const [company, companyIndustry, founded] = this.companies.shift()!;
@@ -165,7 +195,7 @@ class PersonFactory {
         'Company Founded Year': String(founded), 'Company LinkedIn': `https://www.linkedin.com/company/${plain(company)}/`,
       };
     }
-    throw new Error('Could not find a fresh name after 500 tries; add names to NATIONALITIES in src/data/generate.ts');
+    throw new Error('Could not find a fresh name after 600 tries; add names to NATIONALITIES in src/data/generate.ts');
   }
 }
 

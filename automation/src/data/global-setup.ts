@@ -41,6 +41,14 @@ export default function globalSetup(): void {
 
   for (const csv of all) {
     if (only && csv !== `${only}.csv`) continue;
+    // REFRESH_USED_ONLY=1: replace only rows a run already used. A row never sent
+    // is still new to Saleshandy, and replacing all of them burns names for
+    // nothing (36 per run; the name pool had 1,170 combinations left on 2026-10-21).
+    if (process.env.REFRESH_USED_ONLY === '1') {
+      const replaced = refreshUsed(csv);
+      console.log(`Test data: replaced ${replaced.length} used row(s) in test-data/${csv}; unused rows kept.`);
+      continue;
+    }
     const replaced = refreshAll(csv);
     if (replaced.length > 0) console.log(`Test data: new people for all ${replaced.length} row(s) in test-data/${csv}.`);
   }

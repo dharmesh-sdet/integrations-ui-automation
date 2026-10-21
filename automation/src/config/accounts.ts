@@ -18,6 +18,14 @@ export const accounts = {
   linkclick: { saleshandy: 'dharmesh+linkclick@saleshandy.com' }, // Link Clicked in Saleshandy
   emailbounced: { saleshandy: 'dharmesh+emailbounced@saleshandy.com' }, // Email is Bounced in Saleshandy (TODO(needs-input): confirm the address QA signs up with)
   emailopened: { saleshandy: 'dharmesh+emailopened@saleshandy.com' }, // Sequence Email is Opened in Saleshandy (TODO(needs-input): confirm the address QA signs up with)
+  unsubscribed: { saleshandy: 'dharmesh+unsubscribed@saleshandy.com' }, // Prospect is Unsubscribed in Saleshandy
+  sfreplyreceived: { saleshandy: 'dharmesh+salesforce+1@saleshandy.com' }, // Reply is received in Saleshandy, Salesforce (QA, 2026-10-16)
+  sfemailsent: { saleshandy: 'dharmesh+salesforce+emailsent@saleshandy.com' }, // Email Sent from Saleshandy, Salesforce (QA, 2026-10-19). Own Saleshandy-side session (playwright-sfemailsent, auth/saleshandy-sfemailsent-chromium.json) and own Salesforce-org session (playwright-salesforce-emailsent, auth/salesforce-sfemailsent-chromium.json), separate from sfreplyreceived's
+  sfoutcomeupdated: { saleshandy: 'dharmesh+salesforce+prospectoutcome@saleshandy.com' }, // Prospect Outcome is updated in Saleshandy, Salesforce (QA, 2026-10-20). Own Saleshandy-side session (playwright-sfoutcomeupdated, auth/saleshandy-sfoutcomeupdated-chromium.json) and own Salesforce-org session (playwright-salesforce-outcomeupdated, auth/salesforce-sfoutcomeupdated-chromium.json)
+  // Production smoke tests (notes/production-testing/). `environment: 'production'`
+  // points the Saleshandy side at my.saleshandy.com (src/config/environments.ts).
+  // The HubSpot portal is the same shared one.
+  emailopenedprod: { saleshandy: 'PROD_USERNAME in automation/.env', environment: 'production' }, // Production smoke: Sequence Email is Opened in Saleshandy
 } as const;
 
 export type Account = keyof typeof accounts;

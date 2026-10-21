@@ -2,13 +2,33 @@
   "enabledPlugins": {
     "superpowers@claude-plugins-official": true
   },
+  "skillOverrides": {
+    "update-config": "user-invocable-only"
+  },
   "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|resume|clear|compact",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "printf '%s' '{\"hookSpecificOutput\": {\"hookEventName\": \"SessionStart\", \"additionalContext\": \"no-ai-slop (STRICT, every reply, every session): apply General Response Mode from .claude/skills/no-ai-slop/SKILL.md. Lead with the answer, short and direct, no forced headings/bold/tables, no recap, no closing question list unless a decision is needed. Code, commands, paths and logs stay verbatim.\"}}'",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
     "UserPromptSubmit": [
       {
         "hooks": [
           {
             "type": "command",
             "command": "printf '%s' '{\"hookSpecificOutput\": {\"hookEventName\": \"UserPromptSubmit\", \"additionalContext\": \"superpowers: before responding to this prompt, check the skill list and invoke superpowers:using-superpowers and any skill that applies (process skills first: brainstorming for new features or design, systematic-debugging for failures, verification-before-completion before claiming done), even if the user did not name superpowers. Say in one line which skill you are using. Scale to the task: a routine run, status or lookup needs only the skill check, not a design round. Project rules in CLAUDE.md still win.\"}}'",
+            "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "printf '%s' '{\"hookSpecificOutput\": {\"hookEventName\": \"UserPromptSubmit\", \"additionalContext\": \"no-ai-slop: apply General Response Mode (.claude/skills/no-ai-slop/SKILL.md) to this reply. Lead with the answer, short and direct, no forced headings/bold/tables, no recap, no closing question list unless a decision is needed.\"}}'",
             "timeout": 5
           }
         ]

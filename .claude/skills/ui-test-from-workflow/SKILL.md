@@ -248,6 +248,18 @@ by editing (reuse `src/flows/` and the page objects; no selectors in the spec).
   question with the evidence (what happened, what the case expected, your
   suggested expected result). Never ask about locators, waits or data.
 
+### 3d. Account gate (before the first run on an account)
+
+Lesson 2026-10-21 (Salesforce, `sfoutcomeupdated`): a run on an account with no
+Field Mapping creates no records while Logs says Success.
+
+- Read every Field Mapping tab of the account (Salesforce: Lead, Contact,
+  Opportunity, Account; HubSpot: its tabs) and compare with the fields the
+  activities write.
+- Read the workflow's `*-progress.md` "Not checked" list.
+- Do not run until each item is checked, set with QA's OK, or QA says skip.
+- An empty mapping is reported to QA, never worked around in the script.
+
 ## Stage 4: Results
 
 After the run (yours or QA's):

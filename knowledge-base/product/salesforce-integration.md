@@ -158,7 +158,7 @@ Note; Record Email Activity; Record Call Activity.
 | An interested prospect becomes a deal | Prospect Outcome Updated > Create an Opportunity (or Lead) | Outcome to match; Opportunity closing date and stage |
 | A link click opens a deal | Link Clicked > Create an Opportunity | Closing date and stage |
 | Engagement is visible on the record | Email Sent / Opened / Clicked > Record Email Activity | Multi-select: Lead, Opportunity, Contact. Standalone, not paired [staging, 2026-10-17] |
-| Reply text kept on the record | Reply Received > Attach Note | Must pair with Create/Update Contact (no Deal in SF). Confirmed working [staging, 2026-10-17] |
+| Reply text kept on the record | Reply Received > Attach Note | Pairs with Create/Update Contact [staging, 2026-10-17]. QA 2026-10-21: Notes go on Contact, Lead, Account or Opportunity, only with that entity's action selected (conflicts with the older "Contact only"; Lead, Account, Opportunity not yet seen on staging) |
 | Calls on the timeline | Call Logged > Record a Call Activity | Choose Contact, Lead or Opportunity |
 | Call outcome kept in sync | Call Outcome Updated > Update a Contact | Both the trigger and Update a Contact must be on |
 

@@ -82,6 +82,30 @@ Properties, Account Properties.
 - Salesforce has no Deal object, so only Contact works (pair with Create a
   Contact or Update a Contact).
 - Tested: Contact was created and Note was attached. Confirmed working.
+- Conflict, QA 2026-10-21: a Note can go on 4 entities: Contact, Lead, Account
+  and Opportunity. It is created only when Attach Note is selected together with
+  the action for that entity (Create or Update Contact, Lead, Account or
+  Opportunity). The 2026-10-17 line "only Contact works" is the older source;
+  QA's 2026-10-21 statement is the current one. Not yet seen on staging for
+  Lead, Account and Opportunity (rows Attach Note > 4 to 6 in
+  `test-cases/salesforce/email-sent.md` record it).
+
+### Create / Update a Opportunity (Email Sent, seen 2026-10-21)
+- The Opportunity is named with the prospect's email, not the person's name or
+  the Company [staging, 2026-10-21].
+- Stage comes from Extra Configuration. With Stage left empty, Prospecting was
+  set [staging, 2026-10-21].
+- Close Date is today + the Closing date days, shown as DD/MM/YYYY (22/10/2026
+  on 2026-10-21 with 1 Day). With the days left empty it was also today + 1
+  [staging, 2026-10-21].
+- Amount comes from the prospect's Deal Value (5000 showed as 5,000.00 in the
+  org currency) [staging, 2026-10-21].
+- Owner is the connected Salesforce user [staging, 2026-10-21].
+- It shows in the Contact's Related tab under Opportunities (n) [staging,
+  2026-10-21].
+- Closing date 0 Days: Save accepted it, Logs showed Error and no Opportunity
+  was created. QA 2026-10-21: that is a bug, most likely a UI bug (0 Days
+  should not be accepted). No Jira ticket yet.
 
 ### Record Email Activity
 - Standalone activity, NOT paired with another activity (unlike HubSpot's

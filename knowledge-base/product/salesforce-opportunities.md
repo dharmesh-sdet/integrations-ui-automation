@@ -38,6 +38,18 @@ cross (X) to dismiss it.
 **Open question:** Does the success message auto-close after a timeout? Not
 confirmed yet. Needs a timed check.
 
+## What the integration creates (Email Sent, [staging, 2026-10-21])
+
+Example: prospect Walid Cherif, Deal Value 5000, "Create a Opportunity" with
+Stage Prospecting and Closing date 1 Day:
+- Name `walid.cherif@mailinator.com` (the prospect's email).
+- Stage Prospecting, Close Date 22/10/2026 (today + 1), Amount 5,000.00.
+- Owner is the connected user. It shows under Opportunities (n) in the
+  Contact's Related tab.
+- Stage left empty gave Prospecting; the Closing date left empty gave today + 1.
+- Closing date 0 Days created no Opportunity and Logs showed Error. QA
+  2026-10-21: a bug, most likely 0 Days should not be accepted at Save.
+
 ## What matters for the Saleshandy integration
 
 - "Create an Opportunity" activities need Stage and Close Date in the extra

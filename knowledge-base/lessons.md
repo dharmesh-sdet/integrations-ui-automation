@@ -15,6 +15,12 @@ Entry shape:
 - Status: Proposed | Applied | Rejected
 ```
 
+## 2026-10-21: Ran Prospect Outcome on an account with no Field Mapping (Salesforce, sfoutcomeupdated)
+- What went wrong: QA had asked for the Field Mapping; I never did it. `prospect-outcome-updated-progress.md` listed "Field Mapping state on this account" under "Not checked" and I still ran the spec. Create a Account made no Account (nothing mapped, Company had no Account Name) while Logs said Success. I then spent four runs on script symptoms.
+- Why: the 2026-10-14 lesson (check Field Mapping) was written for "after a fix" on HubSpot, so it was not read at the moment of a first run on a new account. A "Not checked" list in a progress file does not stop a run.
+- Change: `.claude/skills/ui-test-from-workflow/SKILL.md`, new "3d. Account gate" before Stage 4: "Account gate. On the first run for an account, read every Field Mapping tab (Salesforce: Lead, Contact, Opportunity, Account; HubSpot: its tabs) and compare with the fields the activities write. Read the progress file's 'Not checked' list. Do not run until each item is checked, or set with QA's OK, or QA says skip. An empty mapping is reported to QA, never worked around in the script."
+- Status: Applied (QA OK 2026-10-21), now in `.claude/skills/ui-test-from-workflow/SKILL.md` 3d
+
 ## 2026-10-20: Replied without reading the no-ai-slop skill (Salesforce status replies)
 - What went wrong: replies in the session used bold labels, a numbered list for three items and "I'd" hedges. The rule (CLAUDE.md "Replies" bullet, memory note, both hooks) was in place; I followed only the one-line hook summary and never opened `.claude/skills/no-ai-slop/SKILL.md` until QA asked.
 - Why: the hooks carry a summary, not the rules, and the first fix I proposed (invoke the skill through the Skill tool) does not work: `.claude/settings.local.json` has `"no-ai-slop": "off"`, so the Skill tool refuses it.

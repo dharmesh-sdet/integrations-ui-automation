@@ -145,3 +145,11 @@ Open
 - Trigger behavior > 2 budget raised to 2 sends (no longer needed after the wait fix; can go back to 1).
 - Draft plan `test-cases/salesforce/email-sent-all-activities.md` (35 rows, all 10 activities), waiting for QA's "looks good". Replaces `email-sent.md` once approved.
 - `send-count.json` read 3 after 2 sends today; the counter may count attempts. Not checked.
+
+## 2026-10-21 session, later
+- Plan now 40 rows (`test-cases/salesforce/email-sent.md`): Attach Note 4 to 6 (Lead, Account, Opportunity), Create a Opportunity 6 and Update a Opportunity 4 (Closing date 0 Days), default Closing date 1 Day. 39 of 40 scripted tests pass, each in its own run; Create a Opportunity 6 fails on purpose until AL-4168 is fixed (QA verified the fix on Staging, comment 79318).
+- AL-4168 filed from `jira/drafts/email-sent-opportunity-closing-date-zero-days.json`; Update a Opportunity observation posted as comment 79315.
+- List pages use the "All" views (AllContacts, AllOpenLeads, AllAccounts, AllOpportunities): "Recently Viewed" showed "0 items" for records the integration created.
+- An Opportunity is tied to a Contact by a primary Contact Role. Creating it from the Contact's Opportunities list sets the role (`contacts.page.ts` `newOpportunity`). Opportunity name = prospect email.
+- Update a Opportunity 2 (Contact has 3 Opportunities, 3 made by hand): Logs Success, only the last-created Opportunity changed (Stage Qualification, Close Date today + 2), the other two unchanged, still 3 Opportunities (sf20).
+- Update a Opportunity 1 (Opportunity made by the product): after the update there are 2 Opportunities (original unchanged, a new Qualification one). Differs from the 3-by-hand case; cause not known. QA decides if it is a bug.

@@ -50,7 +50,7 @@ apply them silently.
 | Environment | `Production` always (QA, 2026-10-13: tickets then move to QA Approved, not Done). The environment where the bug was seen goes in the description Note as "Affected Environment - Staging" (or Production) | `additional_fields` |
 | Epic Link | `AL-3982` for HubSpot integration bugs; for other integrations, search Jira and ask | `additional_fields` |
 | QA | Dharmesh Patel | `additional_fields` (accountId) |
-| Linked Work Items | sibling bugs + the workflow tracking ticket + parent ticket | separate `createJiraIssueLink` call after creation |
+| Linked Work Items | sibling bugs + the workflow tracking ticket + parent ticket. Salesforce bugs always link AL-4131 first, then the trigger's tracking ticket (QA, 2026-10-21) | separate `createJiraIssueLink` call after creation |
 
 Pass Environment, Epic Link, and QA by their label in `additional_fields`.
 The MCP server resolves the `customfield_*` id itself (QA is
@@ -90,6 +90,11 @@ The parent is AL-4131 ("[SalesForce] Triggers and Activities"), with one
 sub-task per workflow, titled with the workflow name. Table and release
 dates: `context/salesforce/00-overview.md` (path from `automation/`); keep
 the two in sync.
+
+Every Salesforce bug links AL-4131 (the parent, "[SalesForce] Triggers and
+Activities") first, then the sub-task of the trigger it was found on, for
+example AL-4132 for Email Sent from Saleshandy (QA, 2026-10-21). In a draft
+file the order is `"links": ["AL-4131", "AL-4132"]`; add siblings after them.
 
 | Sub-task | Trigger |
 |---|---|

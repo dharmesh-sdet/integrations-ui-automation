@@ -20,7 +20,10 @@ wants to send from the review page.
    attachments; comment: type, ticket, body; optional waitingFor). Copy an
    existing draft for the shape.
 4. QA runs `npm run jira` and opens http://localhost:4317. The draft shows at
-   the top under "Jira drafts" with every field; QA can edit the text, then
+   the top under "Jira drafts" with every field (the review page lists only
+   drafts still waiting; sent tickets and comments are on the Dashboard, under
+   Salesforce or HubSpot > Drafts, newest first, older than 7 days under
+   "Past"); QA can edit the text, then
    one click creates the bug (plus links and attachments) or posts the
    comment. That click is the confirmation gate.
 5. The file then records the Jira key and cannot be sent again. A failed

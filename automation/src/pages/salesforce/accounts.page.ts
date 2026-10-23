@@ -17,7 +17,7 @@ export class SalesforceAccountsPage extends SalesforceObjectPage {
   async createAccount(account: { name: string; billingCity?: string; phone?: string }): Promise<void> {
     await this.openList();
     await this.page.getByRole('button', { name: 'New', exact: true }).click();
-    const form = this.page.getByRole('dialog');
+    const form = this.page.getByRole('dialog').last();
     await form.getByRole('textbox', { name: 'Account Name' }).waitFor({ timeout: 30_000 });
     await form.getByRole('textbox', { name: 'Account Name' }).fill(account.name);
     if (account.billingCity) await form.getByRole('textbox', { name: 'Billing City' }).fill(account.billingCity);
@@ -37,7 +37,7 @@ export class SalesforceAccountsPage extends SalesforceObjectPage {
     // record page URL is the proof of creation, not the toast.
     if (await duplicate.isVisible()) {
       await this.page.locator('button:text-is("Save")').click();
-      await this.page.waitForURL(/\/lightning\/r\/001\w+\/view/, { timeout: 30_000 });
+      await this.page.waitForURL(/\/lightning\/r\/(?:Account\/)?001\w+\/view/, { timeout: 30_000 });
       return;
     }
     await waitForCreated(this.page, 'Account');

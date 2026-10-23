@@ -153,3 +153,23 @@ Open
 - An Opportunity is tied to a Contact by a primary Contact Role. Creating it from the Contact's Opportunities list sets the role (`contacts.page.ts` `newOpportunity`). Opportunity name = prospect email.
 - Update a Opportunity 2 (Contact has 3 Opportunities, 3 made by hand): Logs Success, only the last-created Opportunity changed (Stage Qualification, Close Date today + 2), the other two unchanged, still 3 Opportunities (sf20).
 - Update a Opportunity 1 (Opportunity made by the product): after the update there are 2 Opportunities (original unchanged, a new Qualification one). Differs from the 3-by-hand case; cause not known. QA decides if it is a bug.
+
+## 2026-10-22: QA sign-off
+- QA: all Email Sent test cases passed, checked by hand. Workflow done. Open items from 2026-10-21 (Create a Opportunity 6 result, Update a Opportunity 1 extra Opportunity) are closed by QA.
+
+## Production smoke (2026-10-22)
+- Checklist `notes/production-testing/07-salesforce-email-sent.md` approved by QA: 10 checks, 8 sends, account `emailopenedprod`, dev org `saleshandy-dev-ed`.
+- Read-only look at production (QA asked for it): Salesforce card says "Connected", all four Field Mapping cards have 44 rows and nothing is mapped (every row "Select"). The gate maps them.
+- Written, typechecked and listed, not run: gate `tests/setup/salesforce-email-sent-prod-gate.spec.ts`, spec `tests/salesforce/email-sent-smoke.spec.ts`, sequence setup `tests/setup/email-sent-salesforce-smoke-sequence.spec.ts`, data script `scripts/make-email-sent-smoke-data.ts`, runner `scripts/run-salesforce-email-sent-smoke.sh` (`npm run smoke:salesforce-email-sent`).
+- Needs before the first run: `npm run login:salesforce -- emailopenedprod` (no Salesforce session for that account yet).
+- Staging sfemailsent and sfreplyreceived both showed "Re-connect" on 2026-10-22; the connection drops, so the gate checks it three times, 20 s apart.
+
+## Production smoke run 2026-10-22 (sequence 979437, account emailopenedprod)
+- Gate, sequence setup (2 email accounts added, activated) and 8 of 10 checks passed in the script run; the Create a Opportunity row failed only because the script read the Contact Activity tab before it loaded (fixed: it now waits and rereads, and also checks the Opportunity timeline). Rerun of that row alone: passed, email shows on the Opportunity and the Contact timelines.
+- **Open product finding, QA to decide bug or not (not filed):** Update a Account (check 2) fails. Logs show Success but nothing changes. Cause from the Logs step details: the workflow looks the Account up by the prospect's full name, `SELECT FIELDS(STANDARD) FROM Account WHERE Name='Nadine Hoffmann'`, found 0 records and updated nothing. The Account in Salesforce is named like the Company ("HashiCorp"), so it is never found. Create a Account does the same lookup (`WHERE Name='Miriam Borg'`, 0 records), then creates the Account named after the Company ("Notion"). Test data was not changed to make it pass. The approved scenario says "Account named like the prospect's Company exists".
+- Side note: both Website and Company Website map to the Account's Website, and the created Account's Website showed the prospect's personal site (miriamborg.com), not the company site.
+- Left over in the dev org from the run: two "HashiCorp" Accounts (one from 21/10, one from this run).
+- QA confirmed by hand on production, 2026-10-22: Update a Account updates an Account whose Account Name equals the prospect's full name (Billing City changed to the prospect's City). Cause confirmed: the lookup key is the prospect's full name, not the Company. Bug or intended: waiting for QA.
+
+## 2026-10-22: QA correction
+- Update a Opportunity (product-made Opportunity) gave a second Opportunity in the script, but QA could not reproduce it by hand. Likely a script problem. AL-4169 was filed from it on 2026-10-21; its status is QA's call. Script to be fixed when the same row is built for another workflow.

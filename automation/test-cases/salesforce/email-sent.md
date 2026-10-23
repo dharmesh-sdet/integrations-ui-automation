@@ -132,7 +132,7 @@ Extra Configuration: Stage = Qualification, Closing date = 2 Days.
 | # | Scenario | Do | Expected | Ticket |
 |---|---|---|---|---|
 | 1 | Contact has 1 Opportunity | Send now on step 1 | That Opportunity shows Stage Qualification and Close Date today + 2. Still 1 Opportunity **(proposed, unconfirmed)** | None |
-| 2 | Contact has 3 Opportunities, each made from the Contact's Opportunities list (the Contact is its Contact Role) | Send now on step 1 | Record which Opportunity changed and which stayed the same **(proposed, unconfirmed)** | None |
+| 2 | Contact has 3 Opportunities, each made from the Contact's Opportunities list (the Contact is its Contact Role) | Send now on step 1 | The latest Opportunity is updated to Stage Qualification, Close Date today + 2. The other two are unchanged. The Contact still has 3 (QA, 2026-10-21) | None |
 | 3 | Contact has 0 Opportunities | Send now on step 1 | Nothing is created. Record the Logs status **(proposed, unconfirmed)** | None |
 | 4 | Contact has 1 Opportunity, Closing date = 0 Days | Save the Extra Configuration, then Send now on step 2 | 0 Days is rejected at Save (QA, 2026-10-21). If it is accepted, the Opportunity is updated and Logs shows Success | None |
 

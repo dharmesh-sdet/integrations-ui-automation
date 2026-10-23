@@ -1,0 +1,12 @@
+{
+  "type": "comment",
+  "ticket": "AL-4134",
+  "body": "**Verification:** Production testing is done. Smoke tested the Prospect Outcome is updated in Saleshandy trigger on Production, all 10 activities:\n\n| # | Activity | What was checked | Status |\n| --- | --- | --- | --- |\n| 1 | Create a Account in Salesforce | One more Account created, Account Name = the prospect's First Name + Last Name, Billing City = the prospect's City. | Pass |\n| 2 | Update a Account in Salesforce | With an Account named like the prospect's First Name + Last Name, Billing City shows the prospect's City, no new Account. | Pass |\n| 3 | Create a Contact in Salesforce | One Contact with the mapped values, no Lead created. With a non-matching outcome, no Contact is created. | Pass |\n| 4 | Attach Note in Salesforce | Paired with Create a Contact, one Note on the Contact. | Pass |\n| 5 | Update a Contact in Salesforce | Department, Business Phone and Other City show the prospect's values, still one Contact. | Pass |\n| 6 | Create a Lead in Salesforce | Exactly one Lead with the prospect's Name, Email, Company, Title, Phone and City. | Pass |\n| 7 | Update a Lead in Salesforce | Title and Phone show the prospect's values, still one Lead. | Pass |\n| 8 | Create a Opportunity in Salesforce | One Opportunity with Stage Prospecting, Close Date the next day and Amount = Deal Value. | Pass |\n| 9 | Update a Opportunity in Salesforce | The same Opportunity shows Stage Qualification, Amount = Deal Value and Close Date the next day, still one Opportunity. | Pass |\n| 10 | Record (log) an Email Activity in Salesforce | One email activity on the Contact, description recorded. | Pass |\n\n**Note:** Create a Account and Update a Account use the prospect's First Name + Last Name as the Account Name, not the Company. This was confirmed with the developer.",
+  "waitingFor": "QA to check the wording and send via npm run jira. Source: Prospect Outcome is updated in Saleshandy (Salesforce) smoke results reported by QA, manual testing, 2026-10-22. Environment Production is assumed, QA to confirm. Attach Note listed as its own row from QA's row 3 result.",
+  "sent": {
+    "key": "AL-4134",
+    "url": "https://saleshandy.atlassian.net/browse/AL-4134",
+    "problems": [],
+    "at": "2026-10-22T18:01:17.993Z"
+  }
+}

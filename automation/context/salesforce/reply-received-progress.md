@@ -62,3 +62,10 @@ Next: look at the row 4 trace, fix if script, then run only rows 4 onward with K
 - Pilot run of Update a Lead 1: passed, 5.5 min. Steps: set trigger 56 s, prepare (records, add prospect, Send now) 126 s, wait Sent 32 s, Mark as replied 83 s, 15 s look in Salesforce 27 s.
 - Not asserted (no reader on the page yet): Lead Owner Alias (Create a Lead 3), Contact Account Name (Create a Contact 1).
 - New page-object code not yet run on the org: Contact form Phone and Department fields, Opportunity and Account setup forms, Lead and Opportunity Activity tabs, Extra Configuration dialog fill.
+
+## 2026-10-22: status check
+- Latest run of reply-received-all-activities.spec.ts: reports/reply-all/20261021-165721 (2026-10-21 16:57 to 17:43): 13 passed, 27 failed.
+- 17 did not run: "Send cap reached: 93 of 80 emails sent today". Rerun after the cap resets.
+- Script/setup: Create a Lead 1 and 3 (Done button not found), Create a Lead 4 and Update a Lead 1 and 2 ("Similar Records Exist").
+- Probably script: Record(log) an Email Activity 1 to 4 (Save click blocked by transfer-overlay).
+- Unclear: Create a Opportunity 2 (Save disabled), Update a Opportunity 1 (no "was created" toast).

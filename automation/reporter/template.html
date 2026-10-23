@@ -84,9 +84,23 @@
   dialog textarea { min-height: 300px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; }
   .dialog-actions { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; margin-top: 14px; }
   .hint { font-size: 13px; color: var(--muted); margin-top: 8px; }
+  nav.top { max-width: 1040px; margin: 0 auto; padding: 14px 16px 0; display: flex; flex-wrap: wrap; gap: 6px; border-bottom: 1px solid var(--line); }
+  nav.top a, .tabs a { color: var(--muted); text-decoration: none; padding: 6px 12px; border-radius: 6px 6px 0 0; font-weight: 600; }
+  nav.top a:hover, .tabs a:hover { color: var(--text); background: var(--card); }
+  nav.top a.on, .tabs a.on { color: var(--accent); box-shadow: inset 0 -2px 0 var(--accent); }
+  .tabs { display: flex; gap: 6px; margin: 14px 0 6px; border-bottom: 1px solid var(--line); }
+  .dash-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; margin-top: 16px; }
+  a.dash-card { display: block; color: inherit; text-decoration: none; }
+  a.dash-card:hover { border-color: var(--accent); }
+  .dash-card h2 { margin-bottom: 8px; }
+  .dash-card dl { margin-top: 8px; }
+  details.past > summary { margin: 14px 0 10px; font-weight: 600; }
+  h2.section { font-size: 18px; margin: 22px 0 4px; }
 </style>
 </head>
 <body>
+<nav class="top" id="nav"></nav>
+<main id="page-head" style="padding-bottom:0"></main>
 <main id="jira-drafts" style="padding-bottom:0"></main>
 <main id="app"></main>
 
@@ -109,12 +123,32 @@
 <script id="report-data" type="application/json">/*__REPORT_DATA__*/null</script>
 <script>
 (() => {
-  const data = JSON.parse(document.getElementById('report-data').textContent);
+  let data = JSON.parse(document.getElementById('report-data').textContent);
   const app = document.getElementById('app');
   const storeKey = 'report-review:' + data.runId;
   const cls = (outcome) => outcome.replace(/\s+/g, '-');
   const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const plural = (n, word) => n + ' ' + word + (n === 1 ? '' : 's');
+
+  // One page, five views, chosen by the address (the server serves this file for all of them):
+  // / review page (drafts still waiting for a click, then the tests), /dashboard,
+  // /salesforce and /hubspot (tabs Test and Drafts).
+  const route = location.pathname.replace(/(.)\/+$/, '$1');
+  const PLATFORMS = { '/salesforce': 'salesforce', '/hubspot': 'hubspot' };
+  const NAMES = { salesforce: 'Salesforce', hubspot: 'HubSpot', other: 'Other' };
+  const platform = PLATFORMS[route] || null;
+  const tabName = new URLSearchParams(location.search).get('tab') === 'drafts' ? 'drafts' : 'test';
+  document.title = platform ? NAMES[platform] : route === '/dashboard' ? 'Dashboard' : document.title;
+  document.getElementById('nav').innerHTML = [['/', 'Review'], ['/dashboard', 'Dashboard'], ['/salesforce', 'Salesforce'], ['/hubspot', 'HubSpot']]
+    .map(([href, label]) => `<a href="${href}" class="${href === route ? 'on' : ''}">${label}</a>`).join('');
+  if (platform) {
+    document.getElementById('page-head').innerHTML = `
+      <h1>${NAMES[platform]}</h1>
+      <div class="tabs">
+        <a href="${route}?tab=test" class="${tabName === 'test' ? 'on' : ''}">Test</a>
+        <a href="${route}?tab=drafts" class="${tabName === 'drafts' ? 'on' : ''}">Drafts</a>
+      </div>`;
+  }
 
   // Review marks live only in this browser (per run), so a reload keeps them.
   let review = {};
@@ -177,18 +211,43 @@
 
   const unique = (list) => [...new Set(list)];
 
+  // Platform pages: one card per workflow, holding that workflow's results (newest result of each test).
+  function workflowCard(wf, tests) {
+    const failed = count(tests, 'failed');
+    const chips = ['passed', 'failed', 'flaky', 'did not run'].map((o) => [o, count(tests, o)]).filter(([, n]) => n)
+      .map(([o, n]) => `<span class="chip ${cls(o)}">${n} ${o}</span>`).join(' ');
+    const activities = unique(tests.map((t) => t.activity)).map((activity) => {
+      const cards = tests.filter((t) => t.activity === activity);
+      return `<section class="activity"><h4>${esc(activity)} · ${esc(summaryText(cards))}</h4>${cards.map(testCard).join('')}</section>`;
+    }).join('');
+    return `
+      <article class="card wf-card ${failed ? 'is-failed' : ''}">
+        <details>
+          <summary style="margin:0;display:flex;flex-wrap:wrap;gap:10px;align-items:center;color:var(--text)">
+            <h3 style="flex:1 1 280px">${esc(wf.title)}</h3>${chips}
+            <span class="muted">Last run ${esc(wf.startedAt)}</span>
+          </summary>
+          <div class="muted" style="margin:8px 0 0">${esc(summaryText(tests))}${wf.ticket ? ' · Ticket ' + esc(wf.ticket) : ''}</div>
+          ${activities}
+        </details>
+      </article>`;
+  }
+
   // Integration > Workflow > Activity > test cards (QA, 2026-10-09).
-  function render() {
-    const html = [`
+  function render(only) {
+    const inScope = data.tests.filter((t) => !only || data.workflows.some((w) => w.file === t.file && w.integration.toLowerCase() === only));
+    const html = [only ? `<div class="muted">Latest run of each ${esc(NAMES[only])} workflow, most recent first</div>
+      <p class="summary">${esc(inScope.length ? summaryText(inScope) : 'No test results for ' + NAMES[only] + ' yet.')}</p>` : `
       <h1>Test run report</h1>
       <div class="muted">Latest run of each workflow, most recent first</div>
       <p class="summary">${esc(summaryText(data.tests))}</p>`];
-    for (const integration of unique(data.workflows.map((w) => w.integration))) {
+    for (const integration of unique(data.workflows.map((w) => w.integration)).filter((i) => !only || i.toLowerCase() === only)) {
       const wfs = data.workflows.filter((w) => w.integration === integration);
       const all = data.tests.filter((t) => wfs.some((w) => w.file === t.file));
       html.push(`<section class="integration"><h2>${esc(integration)}</h2><div class="muted">${esc(summaryText(all))}</div>`);
       for (const wf of wfs) {
         const tests = data.tests.filter((t) => t.file === wf.file);
+        if (only) { html.push(workflowCard(wf, tests)); continue; }
         const unreviewed = tests.filter((t) => t.outcome === 'failed' && !(review[t.id] || {}).mark).length;
         const label = unreviewed ? `Review ${plural(unreviewed, 'failure')} first` : '';
         html.push(`
@@ -368,22 +427,76 @@
     if (snapshot === lastDrafts) return;
     if (!force && draftsBox.contains(document.activeElement) && /INPUT|TEXTAREA/.test(document.activeElement.tagName)) return;
     lastDrafts = snapshot;
-    if (!res.drafts.length) { draftsBox.innerHTML = ''; return; }
-    // Waiting drafts first; sent ones stay below, collapsed, as a record.
-    const waiting = res.drafts.filter((d) => !d.sent);
-    const done = res.drafts.filter((d) => d.sent);
+    lastRes = res;
+    paintDrafts();
+  }
+
+  let lastRes = null;
+  const DAY = 86400000;
+  const sentTime = (d) => new Date(d.sent.at).getTime();
+
+  // One list: waiting drafts first, then the tickets sent in the last 7 days (newest first),
+  // then everything older folded under "Past".
+  function draftList(list, site) {
+    const waiting = list.filter((d) => !d.sent);
+    const sent = list.filter((d) => d.sent).sort((a, b) => sentTime(b) - sentTime(a));
+    const recent = sent.filter((d) => Date.now() - sentTime(d) < 7 * DAY);
+    const past = sent.filter((d) => Date.now() - sentTime(d) >= 7 * DAY);
+    return [...waiting, ...recent].map((d) => draftCard(d, lastRes.site)).join('')
+      + (past.length ? `<details class="past"><summary>Past (${past.length})</summary>${past.map((d) => draftCard(d, lastRes.site)).join('')}</details>` : '')
+      + (list.length ? '' : '<p class="muted">Nothing here yet.</p>');
+  }
+
+  const isOpen = (d) => d.type === 'bug' && d.sent && d.live && !/^(done|released|closed)$/i.test(d.live.status);
+
+  function paintDrafts() {
+    const drafts = lastRes.drafts;
+    if (platform) {
+      // Test tab: tests only, drafts box stays empty.
+      if (tabName !== 'drafts') { draftsBox.innerHTML = ''; return; }
+      const mine = drafts.filter((d) => d.platform === platform);
+      draftsBox.innerHTML = `
+        <h2 class="section">Jira</h2>
+        <div class="muted">Bugs, newest sent first</div>
+        ${draftList(mine.filter((d) => d.type === 'bug'), lastRes.site)}
+        <h2 class="section">Comments</h2>
+        <div class="muted">Comments on tickets, newest sent first</div>
+        ${draftList(mine.filter((d) => d.type === 'comment'), lastRes.site)}`;
+      return;
+    }
+    if (route === '/dashboard') {
+      const card = (key) => {
+        const mine = drafts.filter((d) => d.platform === key);
+        const bugs = mine.filter((d) => d.type === 'bug');
+        const comments = mine.filter((d) => d.type === 'comment');
+        const tests = data.tests.filter((t) => data.workflows.some((w) => w.file === t.file && w.integration.toLowerCase() === key));
+        const waiting = mine.filter((d) => !d.sent).length;
+        return `<a class="card dash-card" href="/${key}">
+          <h2>${NAMES[key]}</h2>
+          <dl>
+            <dt>Tests</dt><dd>${tests.length ? esc(summaryText(tests)) : 'No results yet'}</dd>
+            <dt>Jira bugs</dt><dd>${bugs.length}${bugs.some((d) => d.sent) ? ' · ' + bugs.filter(isOpen).length + ' still open' : ''}</dd>
+            <dt>Comments</dt><dd>${comments.length}</dd>
+            <dt>Waiting for a click</dt><dd>${waiting}</dd>
+          </dl></a>`;
+      };
+      const other = drafts.filter((d) => d.platform === 'other');
+      draftsBox.innerHTML = `<h1>Dashboard</h1><div class="muted">Pick a platform to see its tests and its Jira drafts</div>
+        <div class="dash-grid">${card('salesforce')}${card('hubspot')}</div>
+        ${other.length ? `<p class="hint">${plural(other.length, 'draft')} could not be matched to Salesforce or HubSpot.</p>` : ''}`;
+      return;
+    }
+    // Review page: only what still needs the one click.
+    const waiting = drafts.filter((d) => !d.sent);
     draftsBox.innerHTML = `
       <div class="jira-drafts-head">
         <div>
           <h1 style="margin:0">Jira drafts</h1>
-          <div class="muted">${waiting.length ? plural(waiting.length, 'draft') + ' waiting for one click' : 'Nothing waiting'}${done.length ? ' · ' + done.length + ' sent' : ''}</div>
+          <div class="muted">${waiting.length ? plural(waiting.length, 'draft') + ' waiting for one click' : 'Nothing waiting. Sent tickets and comments are on the Dashboard.'}</div>
         </div>
-        <div class="actions">
-          <button data-expand-all>Expand all</button>
-          <button data-collapse-all>Collapse all</button>
-        </div>
+        ${waiting.length ? '<div class="actions"><button data-expand-all>Expand all</button><button data-collapse-all>Collapse all</button></div>' : ''}
       </div>`
-      + [...waiting, ...done].map((d) => draftCard(d, res.site)).join('');
+      + waiting.map((d) => draftCard(d, lastRes.site)).join('');
   }
 
   draftsBox.addEventListener('click', async (e) => {
@@ -436,7 +549,28 @@
   loadDrafts();
   setInterval(loadDrafts, 5000);
 
-  render();
+  if (route === '/') render();
+  else if (platform && tabName === 'test') render(platform);
+
+  // Platform pages and the Dashboard show the newest result of every test from all run
+  // folders (served by `npm run jira`); the embedded run is only the fallback.
+  let lastTests = '';
+  async function loadTests() {
+    if (!location.protocol.startsWith('http') || route === '/') return;
+    try {
+      const merged = await (await fetch('/api/tests')).json();
+      if (!merged.tests) return;
+      // Redraw only when a result changed, so open cards and typed notes stay as they are.
+      const snapshot = JSON.stringify(merged);
+      if (snapshot === lastTests) return;
+      lastTests = snapshot;
+      data = { ...data, workflows: merged.workflows, tests: merged.tests };
+    } catch { return; }
+    if (platform && tabName === 'test') render(platform);
+    if (lastRes) { lastDrafts = ''; paintDrafts(); }
+  }
+  loadTests();
+  setInterval(loadTests, 15000);
 })();
 </script>
 </body>

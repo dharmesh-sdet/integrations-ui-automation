@@ -87,9 +87,12 @@ export class SaleshandySequencePage extends SaleshandyPage {
     await doneButton.click();
   }
 
-  // The prospect's row for one step on the Emails tab (a real table).
-  private emailRow(fullName: string, step: number): Locator {
-    return this.page.getByRole('row').filter({ hasText: fullName }).filter({ hasText: `Step ${step}` });
+  // The prospect's row for one step on the Emails tab (a real table). Pass the
+  // email when two prospects can share a name; the row shows it cut off after
+  // the "@", so only the part before it is matched.
+  private emailRow(fullName: string, step: number, email?: string): Locator {
+    const row = this.page.getByRole('row').filter({ hasText: fullName }).filter({ hasText: `Step ${step}` });
+    return email ? row.filter({ hasText: email.split('@')[0] }) : row;
   }
 
   async openEmails(sequenceId: string): Promise<void> {
@@ -97,20 +100,20 @@ export class SaleshandySequencePage extends SaleshandyPage {
     await this.page.getByRole('columnheader', { name: 'Clicked' }).waitFor();
   }
 
-  async ensureSent(sequenceId: string, fullName: string, step = 1): Promise<void> {
-    await this.sendNow(sequenceId, fullName, step);
+  async ensureSent(sequenceId: string, fullName: string, step = 1, email?: string): Promise<void> {
+    await this.sendNow(sequenceId, fullName, step, email);
   }
 
   // Send now from the step's row. Skipped if the row already says "Sent".
-  async sendNow(sequenceId: string, fullName: string, step = 1): Promise<void> {
+  async sendNow(sequenceId: string, fullName: string, step = 1, email?: string): Promise<void> {
     // A new prospect's row appears on the Emails tab some seconds after it is
     // added (seen 2026-10-20: the row was there minutes later, but a single 20 s
     // look failed). The list does not refresh itself, so reopen it on each try.
     await expect(async () => {
       await this.openEmails(sequenceId);
-      await expect(this.emailRow(fullName, step)).toBeVisible({ timeout: 8_000 });
+      await expect(this.emailRow(fullName, step, email)).toBeVisible({ timeout: 8_000 });
     }).toPass({ timeout: 120_000, intervals: [5_000] });
-    const row = this.emailRow(fullName, step);
+    const row = this.emailRow(fullName, step, email);
     if ((await (await this.cell(row, 'Scheduled/Sent')).innerText()).trim().startsWith('Sent')) return;
     claimSend();
     // The row's three-dot menu has no accessible name.
@@ -132,7 +135,7 @@ export class SaleshandySequencePage extends SaleshandyPage {
     // each try.
     await expect(async () => {
       await this.openEmails(sequenceId);
-      const fresh = this.emailRow(fullName, step);
+      const fresh = this.emailRow(fullName, step, email);
       await expect(fresh).toBeVisible({ timeout: 10_000 });
       expect((await (await this.cell(fresh, 'Scheduled/Sent')).innerText()).trim()).toMatch(/^Sent/);
     }).toPass({ timeout: 60_000, intervals: [3_000] });
@@ -155,10 +158,10 @@ export class SaleshandySequencePage extends SaleshandyPage {
   // after 182 ms), so the cell never flips although the click was right. Each
   // retry reopens the list first, and the top of the loop returns if the row
   // already shows Replied, so a slow success is never clicked twice.
-  async markAsReplied(sequenceId: string, fullName: string, step = 1): Promise<void> {
+  async markAsReplied(sequenceId: string, fullName: string, step = 1, email?: string): Promise<void> {
     await this.openEmails(sequenceId);
     for (let attempt = 1; attempt <= 3; attempt++) {
-      const row = this.emailRow(fullName, step);
+      const row = this.emailRow(fullName, step, email);
       await expect(row).toBeVisible({ timeout: 20_000 });
       const repliedCell = await this.cell(row, 'Replied');
       if (!(await repliedCell.innerText()).includes('-')) return; // already replied

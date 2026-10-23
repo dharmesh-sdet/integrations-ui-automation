@@ -63,8 +63,17 @@ Files for it:
 Follow the template's sections 3 to 7 exactly. In short:
 
 1. Confirm the mode (Smoke or Regression) if QA did not say it.
-   For Smoke, read `automation/notes/production-testing/README.md` first
-   (scope, production setup, timing, file naming).
+   For Smoke, before drafting:
+   - Read `automation/notes/production-testing/README.md`, the last approved
+     checklist (06) and `_SCENARIO_TEMPLATE.md`, and copy their format.
+   - Ask QA the row count (default 10 to 12): one row per activity, a
+     secondary activity rides inside another row, each fixed ticket gets a
+     row, only rows QA confirmed as passed.
+   - Before sizing sends, read the production account's email accounts,
+     Salesforce connection and Field Mapping read-only and use those, not the
+     README (its sender and limits go stale).
+   - The runner plan always includes: gate, new sequence, email accounts
+     added, sequence enabled.
 2. List the activities in product UI order.
 3. Go through the template's coverage checklist. Collect every gap, missing
    Expected result, unclear setup or conflict, and ask them **all in one

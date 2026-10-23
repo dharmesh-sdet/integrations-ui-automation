@@ -1,0 +1,12 @@
+{
+  "type": "comment",
+  "ticket": "AL-4132",
+  "body": "**Verification:** Production testing is done. Smoke tested the Email Sent from Saleshandy trigger on Production, all 10 activities:\n\n| # | Activity | What was checked | Status |\n| --- | --- | --- | --- |\n| 1 | Create a Account in Salesforce | One Account created, named like the prospect's full name, with Website, Billing City, Billing State/Province and Billing Country from the prospect. | Pass |\n| 2 | Update a Account in Salesforce | With an Account named like the prospect's full name, the mapped values (Phone, Billing City) show the prospect's. | Pass, working as intended |\n| 3 | Create a Contact in Salesforce | Contact created with the mapped values and no Lead created. | Pass |\n| 4 | Update a Contact in Salesforce | Business Phone and Department show the prospect's values, still one Contact. | Pass |\n| 5 | Create a Lead in Salesforce | Exactly one Lead created with the mapped values as entered (accented and apostrophe names), Lead Status \"Open - Not Contacted\". | Pass |\n| 6 | Update a Lead in Salesforce | Title, Phone and Company show the prospect's values, still one Lead. | Pass |\n| 7 | Create a Opportunity in Salesforce | One Opportunity with Stage Prospecting, Close Date today + 1 and Amount 5000, tied to the Contact. Closing date 0 Days cannot be saved (AL-4168). | Pass |\n| 8 | Update a Opportunity in Salesforce | With 3 Opportunities on the Contact, the latest gets Stage Qualification and Close Date today + 2, the other two are unchanged. Closing date 0 Days cannot be saved (AL-4168). | Pass |\n| 9 | Attach Note in Salesforce | Paired with Create a Contact and Create a Lead, one Note on the Contact and on the Lead. | Pass |\n| 10 | Record (log) an Email Activity in Salesforce | Paired with Update a Contact and Create a Opportunity, the email shows on the Contact timeline, and on the Opportunity and the Contact. | Pass |\n\n**Note:** Update a Account looks the Account up by the prospect's full name, not the Company, so an Account named like the Company is not updated.",
+  "waitingFor": "QA to check the wording and send via npm run jira. Source: Email Sent from Saleshandy (Salesforce) Production smoke run 2026-10-22, sequence 979437, account emailopenedprod, dev org saleshandy-dev-ed. Row 2 status set by QA (Pass, working as intended).",
+  "sent": {
+    "key": "AL-4132",
+    "url": "https://saleshandy.atlassian.net/browse/AL-4132",
+    "problems": [],
+    "at": "2026-10-22T14:03:38.722Z"
+  }
+}

@@ -19,7 +19,7 @@ export class SalesforceContactsPage extends SalesforceObjectPage {
     // Opened from the list's New button; the direct /new URL loaded blank for Lead.
     await this.openList();
     await this.page.getByRole('button', { name: 'New', exact: true }).click();
-    const form = this.page.getByRole('dialog');
+    const form = this.page.getByRole('dialog').last();
     await form.getByRole('textbox', { name: 'Last Name' }).waitFor({ timeout: 30_000 });
     await form.getByRole('textbox', { name: 'Last Name' }).fill(person.lastName);
     await form.getByRole('textbox', { name: 'First Name' }).fill(person.firstName);

@@ -1,7 +1,9 @@
 import type { Locator } from '@playwright/test';
 import { SaleshandyPage } from './saleshandy.page.ts';
 
-export type SalesforceLogEntry = { id: string; status: string; text: string };
+export type MappingObject = 'Lead' | 'Contact' | 'Opportunity' | 'Account';
+
+export type SalesforceLogEntry ={ id: string; status: string; text: string };
 
 // Extra Configuration dialog of an activity (seen 2026-10-21): Create and Update a
 // Opportunity have "Closing date" (Days, spinbutton, default 0) and "Opportunity
@@ -61,10 +63,14 @@ export class SalesforceIntegrationPage extends SaleshandyPage {
   }
 
   // Turns every other enabled trigger off (QA rule), then this one on.
+  // KEEP_OTHER_TRIGGERS=1 (production smoke runs that share one account in parallel, QA,
+  // 2026-10-22): other triggers are left as they are, so a second run's trigger stays on.
   async enableOnly(name: string): Promise<void> {
+    const keepOthers = process.env.KEEP_OTHER_TRIGGERS === '1';
     const rows = await this.triggerRows().all();
     for (const row of rows) {
       const isTarget = (await row.innerText()).trim() === name;
+      if (keepOthers && !isTarget) continue;
       await this.setTrigger(row, isTarget);
     }
   }
@@ -220,6 +226,61 @@ export class SalesforceIntegrationPage extends SaleshandyPage {
   // .cs__placeholder (seen 2026-10-19); exactly one of the two exists per row.
   leadMappedValue(saleshandyField: string): Locator {
     return this.leadMappingRow(saleshandyField).locator('.cs__single-value, .cs__placeholder');
+  }
+
+  // ---- Connection and Field Mapping of any object (production gate) ----
+
+  // Connected: the Salesforce page shows "Disconnect". Not connected: Saleshandy sends the
+  // page back to the integrations list, where the Salesforce card says "Re-connect"
+  // (seen on staging 2026-10-22 and 2026-10-21; on production the card says "Connected").
+  async isConnected(): Promise<boolean> {
+    await this.goto(this.path);
+    const disconnect = this.page.getByRole('button', { name: 'Disconnect', exact: true });
+    const reconnect = this.page.getByText('Re-connect', { exact: true }).first();
+    await disconnect.or(reconnect).first().waitFor({ timeout: 60_000 });
+    return disconnect.isVisible();
+  }
+
+  // Opens one of the four mapping cards (44 rows each, seen on production 2026-10-22).
+  async openMapping(object: MappingObject): Promise<void> {
+    await this.openFieldMapping();
+    await this.page.getByRole('button', { name: `logo Prospects in Saleshandy icon ${object} Properties`, exact: true }).click();
+    await this.mappingRows().first().waitFor({ timeout: 60_000 });
+  }
+
+  private mappingRows(): Locator {
+    return this.page.locator('div.d-flex.justify-content-between').filter({ has: this.page.locator('.default-filed') });
+  }
+
+  private mappingRow(saleshandyField: string): Locator {
+    return this.mappingRows().filter({ has: this.page.locator('.default-filed').getByText(saleshandyField, { exact: true }) });
+  }
+
+  // The Salesforce property shown for a Saleshandy field, or "Select" when unmapped.
+  async mappedValue(saleshandyField: string): Promise<string> {
+    const value = this.mappingRow(saleshandyField).locator('.cs__single-value, .cs__placeholder');
+    return (await value.innerText()).trim();
+  }
+
+  async mapField(saleshandyField: string, salesforceProperty: string): Promise<void> {
+    await this.mappingRow(saleshandyField).getByRole('combobox').click();
+    await this.page.getByRole('option', { name: salesforceProperty, exact: true }).click();
+  }
+
+  // Clears a mapped row back to "Select" with the control's own clear (x) indicator
+  // (same locator as unmapLeadField, seen on staging 2026-10-19).
+  async unmapField(saleshandyField: string): Promise<void> {
+    await this.mappingRow(saleshandyField).locator('.cs__clear-indicator, [class*="clearIndicator"]').first().click();
+  }
+
+  // One click on Save: true when "Configuration Updated Successfully" shows, false when the red
+  // "Something went wrong. Please try again." toast shows or nothing shows in 30 s. Seen on
+  // production 2026-10-22: the mapping PUT to the Refold API failed with net::ERR_NETWORK_CHANGED
+  // (a network change on the machine); the selections stay in the form, so Save can be clicked again.
+  async trySaveMapping(): Promise<boolean> {
+    await this.save();
+    const failed = this.page.getByRole('alert').filter({ hasText: 'Something went wrong' }).first();
+    return this.savedToast().or(failed).first().waitFor({ timeout: 30_000 }).then(() => this.savedToast().isVisible(), () => false);
   }
 
   // ---- Logs ----

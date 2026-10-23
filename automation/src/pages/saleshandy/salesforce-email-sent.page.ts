@@ -50,7 +50,11 @@ export class SalesforceEmailSentPage extends SalesforceIntegrationPage {
       // Escape would close the whole dialog; clicking its title only closes the list.
       await dialog.getByText('Extra Configuration', { exact: true }).click();
     }
-    await dialog.getByRole('button', { name: 'Save', exact: true }).click();
+    const save = dialog.getByRole('button', { name: 'Save', exact: true });
+    // The modal disables Save for a value it rejects (Closing date 0 Days, AL-4168, fixed
+    // 2026-10-21). Clicking a disabled button waits without limit, so check first.
+    if (await save.isDisabled()) throw new Error('The Extra Configuration Save button is disabled for these values.');
+    await save.click();
     await dialog.waitFor({ state: 'hidden', timeout: 15_000 });
   }
 

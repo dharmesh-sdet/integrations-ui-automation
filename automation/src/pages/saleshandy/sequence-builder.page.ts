@@ -201,6 +201,39 @@ export class SequenceBuilderPage extends SaleshandyPage {
     await this.skipIntro();
   }
 
+  // Settings tab > Email Account (seen on staging 2026-10-22): the sequence's own sender
+  // table has an "Active Sequence" column; "+ Add more email accounts" opens "Select email
+  // accounts to add to the sequence" (rows with a checkbox, column "Active Seq."), then
+  // "Add to Sequence". Accounts already in the table are left alone. Throws if an account
+  // is not listed in the dialog or is not in the table afterwards.
+  async addEmailAccounts(sequenceId: string, emails: string[]): Promise<void> {
+    await this.goto(`/sequence/${sequenceId}/settings`);
+    const table = this.page.getByRole('table').filter({ has: this.page.getByRole('columnheader', { name: 'Active Sequence' }) });
+    const add = this.page.getByRole('button', { name: /Add (more )?email accounts?/i }).first();
+    await add.waitFor({ timeout: 30_000 });
+    const rowOf = (scope: Locator, email: string): Locator => scope.getByRole('row').filter({ hasText: new RegExp(email.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i') });
+    // The table fills after the buttons; give it a moment before judging an account missing.
+    await this.page.waitForTimeout(3_000);
+    const missing: string[] = [];
+    for (const email of emails) if ((await rowOf(table, email).count()) === 0) missing.push(email);
+    if (missing.length) {
+      await add.click();
+      const dialog = this.page.getByRole('dialog').filter({ hasText: 'Select email accounts to add to the sequence' });
+      await dialog.waitFor({ state: 'visible', timeout: 20_000 });
+      for (const email of missing) {
+        const row = rowOf(dialog, email);
+        // The list shows grey loading bars while it loads and again after a tick (seen
+        // 2026-10-22, production: the second account was judged missing mid-load).
+        await row.first().waitFor({ timeout: 20_000 }).catch(() => {});
+        if ((await row.count()) === 0) throw new Error(`The email account ${email} is not in the list of accounts that can be added to this sequence.`);
+        await row.getByRole('checkbox').check();
+      }
+      await dialog.getByRole('button', { name: 'Add to Sequence', exact: true }).click();
+      await dialog.waitFor({ state: 'hidden', timeout: 20_000 });
+    }
+    for (const email of emails) await expect(rowOf(table, email), `${email} on the sequence's Email Account table`).toBeVisible({ timeout: 20_000 });
+  }
+
   currentSequenceId(): string {
     return this.page.url().match(/\/sequence\/(\d+)\//)![1];
   }

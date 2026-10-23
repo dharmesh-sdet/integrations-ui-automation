@@ -62,7 +62,7 @@ export class SalesforceLeadsPage extends BasePage {
     // from the list's New button, the path already proven for the list itself.
     await this.openLeads();
     await this.page.getByRole('button', { name: 'New', exact: true }).click();
-    const form = this.page.getByRole('dialog');
+    const form = this.page.getByRole('dialog').last();
     await form.getByRole('textbox', { name: 'Last Name' }).waitFor({ timeout: 30_000 });
     await form.getByRole('textbox', { name: 'Last Name' }).fill(lead.lastName);
     await form.getByRole('textbox', { name: 'First Name' }).fill(lead.firstName);

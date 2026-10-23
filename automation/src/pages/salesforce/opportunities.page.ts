@@ -11,11 +11,12 @@ export type OpportunityInput = { name: string; stage: string; closeDate: string;
 // Fills the open New Opportunity dialog and saves it. Shared by the Opportunities list
 // and a Contact's Opportunities related list (which also adds the Contact as a Contact Role).
 export async function fillOpportunityForm(page: Page, opportunity: OpportunityInput): Promise<void> {
-  const form = page.getByRole('dialog');
+  const form = page.getByRole('dialog').last();
   await form.getByRole('textbox', { name: 'Opportunity Name' }).waitFor({ timeout: 30_000 });
   await form.getByRole('textbox', { name: 'Opportunity Name' }).fill(opportunity.name);
   await form.getByRole('textbox', { name: 'Close Date' }).fill(opportunity.closeDate);
-  if (opportunity.amount) await form.getByRole('textbox', { name: 'Amount' }).fill(opportunity.amount);
+  // The Amount input is exposed as a spinbutton (type text, role spinbutton), so it is found by label, not by textbox role.
+  if (opportunity.amount) await form.getByLabel('Amount', { exact: true }).fill(opportunity.amount);
   // Same picklist handling as the Lead Status combobox: click, then Enter if it stays closed.
   const stage = form.getByRole('combobox', { name: 'Stage' });
   await stage.click();

@@ -11,6 +11,8 @@
 import { createServer, type ServerResponse } from 'node:http';
 import { existsSync, readdirSync, readFileSync, statSync, unlinkSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
+import { platformOf } from './platform.ts';
+import { mergedTests } from './tests-data.ts';
 import { addComment, createBug, describeFields, issueStatus, JIRA_SITE, whoAmI, type BugDraft, type CommentDraft, type Sent } from './jira-client.ts';
 
 const root = path.resolve(import.meta.dirname, '../..');
@@ -37,7 +39,7 @@ const listDrafts = () =>
 
 // Live Jira status of sent bugs, read at most every 20 s per ticket (the page
 // asks every few seconds). A failed read only hides the status.
-const statusCache = new Map<string, { at: number; value: { status: string; assignee: string } | null }>();
+const statusCache = new Map<string, { at: number; value: { status: string; assignee: string; summary: string } | null }>();
 async function liveStatus(key: string) {
   const hit = statusCache.get(key);
   if (hit && Date.now() - hit.at < 20_000) return hit.value;
@@ -60,9 +62,19 @@ createServer(async (req, res) => {
   const url = new URL(req.url ?? '/', `http://localhost:${PORT}`);
   try {
     if (req.method === 'GET' && url.pathname === '/api/drafts') {
-      const drafts = await Promise.all(listDrafts().map(async (d) => (d.sent && d.type === 'bug' ? { ...d, live: await liveStatus(d.sent.key) } : d)));
+      // Each draft also carries its platform (Salesforce, HubSpot or other) for the
+      // Dashboard. A comment is judged by the ticket it is posted on, read from Jira.
+      const drafts = await Promise.all(
+        listDrafts().map(async (d) => {
+          const live = d.type === 'bug' ? (d.sent ? await liveStatus(d.sent.key) : undefined) : await liveStatus(d.ticket);
+          const platform = platformOf(d, d.type === 'comment' ? live?.summary : undefined);
+          return d.sent && d.type === 'bug' ? { ...d, live, platform } : { ...d, platform };
+        }),
+      );
       return json(res, 200, { site: JIRA_SITE, drafts });
     }
+
+    if (req.method === 'GET' && url.pathname === '/api/tests') return json(res, 200, mergedTests(reportsDir, root));
 
     const send = url.pathname.match(/^\/api\/drafts\/([\w-]+)\/send$/);
     if (req.method === 'POST' && send) {
@@ -105,7 +117,10 @@ createServer(async (req, res) => {
     }
 
     if (req.method === 'GET') {
-      const rel = decodeURIComponent(url.pathname === '/' ? '/report.html' : url.pathname);
+      // The review page, the Dashboard and the two platform pages are one page; it reads
+      // the address to decide what to show.
+      const pages = ['/', '/dashboard', '/salesforce', '/hubspot'];
+      const rel = decodeURIComponent(pages.includes(url.pathname.replace(/(.)\/+$/, '$1')) ? '/report.html' : url.pathname);
       const file = path.join(reportsDir, rel);
       if (file.startsWith(reportsDir + path.sep) && existsSync(file) && statSync(file).isFile()) {
         res.writeHead(200, { 'Content-Type': TYPES[path.extname(file)] ?? 'application/octet-stream' });

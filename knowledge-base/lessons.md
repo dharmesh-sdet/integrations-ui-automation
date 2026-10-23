@@ -15,6 +15,12 @@ Entry shape:
 - Status: Proposed | Applied | Rejected
 ```
 
+## 2026-10-22: Smoke checklist drafted without the template, README or a row count (Salesforce Email Sent production)
+- What went wrong: the first draft was invented bullets with 14 rows, then 13, and listed an unsettled staging row (Update a Opportunity with 1 Opportunity). QA wanted 10 to 12 rows in the template format and had to say so. The first runner plan also left out creating the sequence, adding the email accounts and enabling it (QA added them after). The README said the sender allows 15 a day; production now has two other accounts (50 and 150 a day), found only by reading the Email Accounts page.
+- Why: Stage 2 step 1 says "read the README first" but not what to take from it, so the session read nothing and drafted from the staging file. README facts (sender, limits) go stale and were used as fact.
+- Change: `.claude/skills/ui-test-from-workflow/SKILL.md` Stage 2 step 1, for Smoke: "Before drafting, read the README, the last approved checklist (06) and `_SCENARIO_TEMPLATE.md` and copy their format. Ask QA the row count (default 10 to 12): one row per activity, a secondary activity rides inside another row, each fixed ticket gets a row, only rows QA confirmed as passed. Before sizing sends, read the production account's email accounts, Salesforce connection and Field Mapping read-only and use those, not the README. The runner plan always includes: gate, new sequence, email accounts added, sequence enabled." Also fix the sender line in `automation/notes/production-testing/README.md` after the Email Sent run.
+- Status: Applied (QA OK 2026-10-22), now in `.claude/skills/ui-test-from-workflow/SKILL.md` Stage 2 step 1. The README sender line is left to the Email Sent prod session, which is editing that file.
+
 ## 2026-10-21: Ran Prospect Outcome on an account with no Field Mapping (Salesforce, sfoutcomeupdated)
 - What went wrong: QA had asked for the Field Mapping; I never did it. `prospect-outcome-updated-progress.md` listed "Field Mapping state on this account" under "Not checked" and I still ran the spec. Create a Account made no Account (nothing mapped, Company had no Account Name) while Logs said Success. I then spent four runs on script symptoms.
 - Why: the 2026-10-14 lesson (check Field Mapping) was written for "after a fix" on HubSpot, so it was not read at the moment of a first run on a new account. A "Not checked" list in a progress file does not stop a run.

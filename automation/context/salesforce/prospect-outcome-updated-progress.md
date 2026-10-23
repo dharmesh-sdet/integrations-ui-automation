@@ -160,3 +160,6 @@ Extra Configuration: Contact checked (Lead and Opportunity unchecked). It has no
 2. Claude: save to `test-cases/salesforce/prospect-outcome-updated.md` (run no-ai-slop QA Test Case Mode before QA's review), then the scope check (26 rows x 6 min about 2.6 h, under the 3 h cap).
 3. Then stage 3, hand-written like HubSpot (memory: Salesforce hand-written specs): seed for `sfoutcomeupdated`, CSV via `npm run data:generate -- <slug>`, spec `tests/salesforce/prospect-outcome-updated.spec.ts`, page objects reusing `src/pages/saleshandy/salesforce-integration.page.ts`. Before any `playwright test`, read `knowledge-base/testing/how-to-test.md` "Test data" (KEEP_TEST_DATA=1 or TEST_DATA_ONLY=<slug>).
 4. Check the sender interval on the Sending Settings page by eye before the first send.
+
+## 2026-10-22: QA sign-off
+- QA: Prospect Outcome Updated test cases passed. Reports hold 27 tests over 17 runs on 2026-10-21, latest result of each is passed. Spec: tests/salesforce/prospect-outcome-updated.spec.ts. Workflow done. The "Next" list above is out of date.

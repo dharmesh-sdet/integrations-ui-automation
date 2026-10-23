@@ -11,6 +11,8 @@ One short checklist per workflow, numbered. Scope and rules: see
 | 04 | [04-company-created.md](04-company-created.md) | Company Created/Properties Updated in HubSpot | AL-4009 (AL-4059 not covered) | Run 2026-10-15 (script, production): 00, 01, 02, 03, 04 passed; 05 Replied failed in the script (13.4 min, status not read) and QA validated it manually as passed; 06 Finished validated manually by QA as passed (2026-10-15); 07 Unsubscribed validated manually by QA as passed (2026-10-15); 08 Blacklist a domain validated manually by QA as passed (2026-10-15). Script: tests/hubspot/company-created-smoke.spec.ts, command: npm run smoke:company-created |
 | 05 | [05-reply-received.md](05-reply-received.md) | Reply is Received in Saleshandy | AL-4011, AL-4129, AL-4119, AL-4118 | **Passed, all 9 activities Pass.** Run 2026-10-15 (script: tests/hubspot/reply-received-smoke.spec.ts, sequence 974166, account emailopenedprod): 7 of 11 passed; the 4 that failed in the script (02 Update a Contact, 08 Create a Note, 09 and 10 Record (log) an Email Activity) were checked manually by QA and confirmed Pass (QA, 2026-10-16). Summary comment sent to AL-4011, 2026-10-16 |
 | 06 | [06-unsubscribed.md](06-unsubscribed.md) | Prospect is Unsubscribed in Saleshandy | AL-4015, AL-4162, AL-4163, AL-4164, AL-4165 | **Passed and production approved by QA, 2026-10-20.** All 9 activities Pass, tested with the real Unsubscribe link (script: tests/hubspot/unsubscribed-smoke.spec.ts). Jira drafts in jira/drafts, not sent |
+| 07 | [07-salesforce-email-sent.md](07-salesforce-email-sent.md) | Email Sent from Saleshandy (Salesforce) | AL-4132, AL-4168 | **Approved by QA 2026-10-22, not run yet.** 10 checks, 8 sends; gate first (Salesforce connected, Field Mapping complete). Script: tests/salesforce/email-sent-smoke.spec.ts, command: npm run smoke:salesforce-email-sent |
+| 08 | [08-salesforce-prospect-outcome-updated.md](08-salesforce-prospect-outcome-updated.md) | Prospect Outcome is updated in Saleshandy (Salesforce) | AL-4134 (no bug tickets) | **Approved by QA 2026-10-22, not run yet.** 11 checks (10 matching, 1 non-matching), 11 sends; gate first. Script: tests/salesforce/prospect-outcome-updated-smoke.spec.ts, command: npm run smoke:salesforce-outcome-updated |
 
 ## Scope and rules
 
@@ -38,9 +40,13 @@ Link Clicked production work [staging/production, 2026-10-14], QA answers
   - URL my.saleshandy.com (`PROD_URL` overrides). Account `emailopenedprod`
     (`environment: 'production'` in `src/config/accounts.ts`), shared by the
     smoke specs, so one smoke run at a time and one trigger enabled at a time.
-  - Sender dharmesh+prodint@saleshandy.com: 15 emails per day in total, and the
-    Default Schedule can be closed in the evening (step 1 stays "Scheduled"),
-    so the specs use Send now for step 1.
+  - Senders (read on the Email Accounts page, 2026-10-22): Salesforce EmailSent
+    SMTP Default (Rachelgreen47sh+3@gmail.com, 50 a day) and Rudra EmailSent
+    SMTP (rudra+emailsentprod@saleshandy.com, 150 a day).
+    dharmesh+prodint@saleshandy.com (15 a day, used for the HubSpot smoke runs
+    until 2026-10-20) is no longer on the account. Read the page again before
+    sizing sends. The Default Schedule can be closed in the evening (step 1
+    stays "Scheduled"), so the specs use Send now for step 1.
   - Custom tracking domain link.saleshandy.com on the account; field mapping
     saved on the account. Extra Configuration cannot be cleared once saved.
   - Cloudflare blocks headless login: QA logs in headed

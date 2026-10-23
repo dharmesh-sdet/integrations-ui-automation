@@ -183,7 +183,7 @@ export class ReplyHarness {
 
   private async sendOut(seq: SaleshandySequencePage, id: string, row: Row): Promise<void> {
     if (this.state.sent.has(id)) return;
-    await seq.sendNow(this.options.sequenceId, this.fullName(row));
+    await seq.sendNow(this.options.sequenceId, this.fullName(row), 1, row['Email']);
     this.state.sent.add(id);
   }
 
@@ -252,10 +252,10 @@ export class ReplyHarness {
     const row = this.rowOf(id);
     const { outcome } = this.scenario(id);
     await test.step('Make sure the Salesforce records, the prospect and the step 1 send are ready', () => this.prepare(id));
-    await test.step('Wait until the step 1 email shows Sent', () => seq.ensureSent(sequenceId, this.fullName(row)));
+    await test.step('Wait until the step 1 email shows Sent', () => seq.ensureSent(sequenceId, this.fullName(row), 1, row['Email']));
     if (outcome) await test.step(`Set the prospect outcome to ${outcome}`, () => seq.setProspectOutcome(sequenceId, row['Email'], outcome));
     const at = Date.now();
-    await test.step('Mark the step 1 email as replied', () => seq.markAsReplied(sequenceId, this.fullName(row)));
+    await test.step('Mark the step 1 email as replied', () => seq.markAsReplied(sequenceId, this.fullName(row), 1, row['Email']));
     return at;
   }
 

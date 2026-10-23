@@ -1,0 +1,28 @@
+{
+  "type": "bug",
+  "project": "AL",
+  "summary": "Email Sent from Saleshandy: Update a Opportunity in Salesforce activity creates a new Opportunity instead of updating the existing Opportunity created by Create a Opportunity in Salesforce",
+  "description": "**Prerequisites:**\n- Staging account (pyxis.lifeisgoodforlearner.com) connected to Salesforce.\n- An active sequence with 2 steps.\n- A prospect with a Company that is not in Salesforce.\n- A Contact for the prospect is created in Salesforce with the prospect's email.\n\n**Steps to Reproduce:**\n1. Go to API & Integrations > Integrations > Salesforce > Triggers & Activity.\n2. Enable Email Sent from Saleshandy with only the \"Create a Opportunity in Salesforce\" activity selected. In Extra Configuration, set Closing date to 1 Day and Opportunity Stage to Prospecting, then Save.\n3. Add the prospect to the active sequence, open the sequence > Emails, open the menu on the prospect's Step 1 email and click Send now.\n4. Open Integrations > Salesforce > Logs and wait for the Email Sent from Saleshandy entry to show Success.\n5. In Salesforce, open Opportunities and search for the prospect's email. One Opportunity named with the prospect's email exists, with Stage Prospecting.\n6. Go back to Triggers & Activity. Deselect Create a Opportunity in Salesforce and select \"Update a Opportunity in Salesforce\". In Extra Configuration, set Closing date to 2 Days and Opportunity Stage to Qualification, then Save.\n7. In the sequence > Emails, move the same prospect to Step 2 and click Send now.\n8. Open Integrations > Salesforce > Logs and check the new Email Sent from Saleshandy entry.\n9. In Salesforce, open Opportunities and search for the prospect's email again.\n\n**Actual Result:**\n- Both workflow runs show Success.\n- After step 9 the prospect has 2 Opportunities: the original Opportunity is unchanged (Stage Prospecting, Close Date 22/10/2026), and a new Opportunity is created with Stage Qualification and Close Date 23/10/2026.\n- A screenshot will be attached to the ticket manually.\n\n**Expected Result:**\n- The Update a Opportunity in Salesforce activity should update the existing Opportunity (Stage Qualification, Close Date today + 2 days). No new Opportunity should be created, and the prospect should still have 1 Opportunity.\n\n**Note:**\n- Affected Environment - Staging.\n- When the Contact has 3 Opportunities created by hand from the Contact's Opportunities list, the same Update activity updates the latest Opportunity and leaves the other two unchanged.\n\n",
+  "priority": "Medium",
+  "environment": "Production",
+  "epic": "AL-3982",
+  "assignee": {
+    "name": "Darshan",
+    "accountId": "5af5d8dd244bc90a10605d4f"
+  },
+  "qa": {
+    "name": "Dharmesh Patel",
+    "accountId": "712020:c7dedb58-9cb3-4450-a98f-5b5b56f6556b"
+  },
+  "links": [
+    "AL-4132"
+  ],
+  "attachments": [],
+  "waitingFor": "A screenshot of the two Opportunities in Salesforce has to be attached by hand.",
+  "sent": {
+    "key": "AL-4169",
+    "url": "https://saleshandy.atlassian.net/browse/AL-4169",
+    "problems": [],
+    "at": "2026-10-21T10:40:12.350Z"
+  }
+}

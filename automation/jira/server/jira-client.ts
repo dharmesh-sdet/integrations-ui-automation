@@ -124,7 +124,7 @@ export async function addComment(draft: CommentDraft): Promise<Sent> {
 }
 
 // Current status and assignee of a ticket (read-only), for the review page.
-export async function issueStatus(key: string): Promise<{ status: string; assignee: string }> {
-  const { fields } = await call('GET', `/rest/api/3/issue/${key}?fields=status,assignee`);
-  return { status: fields.status?.name ?? '', assignee: fields.assignee?.displayName ?? 'Unassigned' };
+export async function issueStatus(key: string): Promise<{ status: string; assignee: string; summary: string }> {
+  const { fields } = await call('GET', `/rest/api/3/issue/${key}?fields=status,assignee,summary`);
+  return { status: fields.status?.name ?? '', assignee: fields.assignee?.displayName ?? 'Unassigned', summary: fields.summary ?? '' };
 }

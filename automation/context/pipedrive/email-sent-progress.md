@@ -156,3 +156,7 @@ Before QA runs it: `npm run login:saleshandy -- emailopenedprod` (headed) and `n
 ## Production smoke, run 1, 2026-10-27 (log: `evidence/2026-10-27-prod-smoke-run1.log`)
 
 Stopped at the gate, no row ran, no email sent (send count stays 5). Pipedrive is connected. Contact Fields on the production account is not mapped: First Name, Last Name, Email, Phone Number and Job Title all show "Select" (screenshot in `test-results-pipedrive-email-sent-smoke-gate/`). Deal Fields and Organisation Fields were not read (the gate stops at the first failed card). The gate only reads, so it changed nothing. Waiting on QA: map the pairs by hand (`src/config/pipedrive-field-mapping.ts`), or say that I map them.
+
+## Production smoke, runs 2 and 3, 2026-10-27 (logs: `evidence/2026-10-27-prod-smoke-run2.log`, `evidence/2026-10-27-prod-smoke-row1-rerun.log`)
+
+The gate now maps missing pairs (it only read in run 1, my mistake). Gate passed, sequence 983594 created. Checks 2 to 8 passed. Check 1 (Create a Lead, Create a Deal and Create a Person together) failed twice with a new prospect each time (Albano Baptista, then Limbani Gondwe): person, lead and deal exist, `activityCount` is 0 after 90 s and still 0 minutes later (read again by a throwaway spec). Logs entry of the rerun: 6ae06833afea6d3cf46d94c4, 2:30 PM, 1m 21s, Success. The same row passed on staging (Combined actions 1, 2026-10-26). Rerun prospect Limbani Gondwe has two persons (ids 206, 207), the duplicate trigger run seen before (AL-4177). Bug-or-not: QA. Not filed, nothing sent to Jira.

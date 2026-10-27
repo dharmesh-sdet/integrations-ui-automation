@@ -65,3 +65,11 @@ Spec `tests/pipedrive/prospect-outcome-updated.spec.ts` (34 tests: Setup + 33 ro
 - QA asked to remove the three weak cases (Create a Person with the Extra Configuration skipped and outcome Meeting Booked; category Meeting Booked with outcome Meeting Booked; Update a Deal only with category Interested). Removed from `tests/pipedrive/prospect-outcome-updated.spec.ts` (and the unused `observe` helper) and from `test-cases/pipedrive/prospect-outcome-updated.md`. Row numbers 1, 3 and 6 of the first section are kept, because the CSV finds prospects by that number.
 - Now 30 test cases. Script: 28 pass, 2 fail. With QA's manual test of the 2: 30 of 30. Spec lists 31 tests per browser project (Setup plus 30). Backups in scratchpad: `spec.bak4`, `cases.bak4`.
 - The CSV still holds the three unused prospects; left as is.
+
+## Production smoke (2026-10-27)
+
+- Cases: `notes/production-testing/10-pipedrive-prospect-outcome-updated.md` (9 checks, QA "looks good", row 10 in the README table).
+- Built, typecheck passes, 9 tests listed, NOT run (QA runs it on production): `tests/pipedrive/prospect-outcome-updated-smoke.spec.ts`, `scripts/run-pipedrive-outcome-updated-smoke.sh`, `scripts/make-pipedrive-outcome-updated-smoke-data.ts`, `npm run smoke:pipedrive-outcome-updated`.
+- Reused: staging test bodies of the same activity, `sendEmail` and the other helpers of `src/flows/saleshandy-to-pipedrive.ts`, the Email Sent gate (`tests/setup/pipedrive-email-sent-prod-gate.spec.ts`) and the Email Sent sequence setup (now takes `SMOKE_SEQUENCE_NAME`).
+- Gaps: Update Organization cannot read the mapped value (no reader in `organizations.page.ts`, same on staging), so row 7 checks no second organization plus the Logs row. The reload after a trigger save reads back the activities, not the categories.
+- Before the first run QA: `npm run login:saleshandy -- emailopenedprod`, `npm run login:pipedrive -- emailopenedprod`, "Email Sent from Saleshandy" off on emailopenedprod.

@@ -37,6 +37,7 @@
     "hubspot:delete-contact": "node scripts/delete-hubspot-contact.ts",
     "data:generate": "node scripts/generate-data.ts",
     "data:check": "node scripts/check-data.ts",
+    "data:salesforce-side": "node scripts/make-salesforce-side-data.ts",
     "typecheck": "tsc --noEmit",
     "report": "node scripts/render-report.ts",
     "mcp:open": "node scripts/open-mcp-browser.ts",

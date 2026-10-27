@@ -12,6 +12,12 @@ export class DoNotContactPage extends SaleshandyPage {
     await this.page.getByText('Global Do Not Contact List').first().click();
   }
 
+  // Whether the global list shows an entry (an email or a domain).
+  async hasEntry(entry: string): Promise<boolean> {
+    await this.openGlobalList();
+    return this.page.getByRole('row').filter({ hasText: entry }).first().waitFor({ timeout: 15_000 }).then(() => true, () => false);
+  }
+
   // Removes one entry (an email or a domain) from the global list.
   async removeEntry(entry: string): Promise<void> {
     await this.openGlobalList();

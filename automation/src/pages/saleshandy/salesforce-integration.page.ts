@@ -1,4 +1,4 @@
-import type { Locator, Page } from '@playwright/test';
+import { expect, type Locator, type Page } from '@playwright/test';
 import { SaleshandyPage } from './saleshandy.page.ts';
 
 export type MappingObject = 'Lead' | 'Contact' | 'Opportunity' | 'Account';
@@ -198,6 +198,72 @@ export class SalesforceIntegrationPage extends SaleshandyPage {
 
   async removeActivity(trigger: string, activity: string): Promise<void> {
     await this.selectedActivity(trigger, activity).locator('.action-container > svg').last().click();
+  }
+
+  // ---- Saleshandy actions of the Salesforce-side triggers (Lead/Contact/Account/
+  // Opportunity is created in Salesforce) ----
+  // Their Extra Configuration uses the same webui widgets as the HubSpot-side triggers
+  // (saleshandy-webui extra-config-modal.tsx; helper.ts:528-547 maps the Salesforce
+  // fields seq_name_add_to_seq, step_id_add_to_seq, status_*_salesforce and
+  // assign_tag_salesforce to the Sequence, Sequence Steps and Tags fields), so these
+  // locators are the ones walked on HubSpot (hubspot-integration.page.ts, 2026-10-09
+  // and 2026-10-15). TODO(needs-input): not walked on the Salesforce page yet.
+
+  async disable(name: string): Promise<void> {
+    await this.setTrigger(this.triggerRow(name), false);
+  }
+
+  // The edit icon of a selected activity (first icon of its chip) reopens its dialog.
+  async reopenExtraConfiguration(trigger: string, activity: string): Promise<void> {
+    await this.selectedActivity(trigger, activity).locator('.action-container > svg').first().click();
+  }
+
+  extraConfiguration(): Locator {
+    return this.page.getByRole('dialog').filter({ hasText: 'Extra Configuration' });
+  }
+
+  private configDropdown(label: string): Locator {
+    return this.extraConfiguration()
+      .locator('div:has(> .bs-select-box)')
+      .filter({ has: this.page.getByText(label, { exact: true }) })
+      .locator(':scope > .bs-select-box');
+  }
+
+  // Picks `option` in the dropdown labelled `label` ("Sequence", "Sequence Steps").
+  // Lists load after the dialog opens, so it waits for "Loading..." to go.
+  async chooseConfigOption(label: string, option: string): Promise<void> {
+    await expect(this.configDropdown(label)).not.toHaveText('Loading...', { timeout: 30_000 });
+    await this.configDropdown(label).click();
+    const choice = this.page.getByRole('button', { name: option, exact: true });
+    try {
+      await choice.waitFor({ timeout: 30_000 });
+    } catch {
+      const offered = await this.page.locator('.transfer-body').getByRole('list').getByRole('button').allInnerTexts();
+      throw new Error(`"${option}" is not in the ${label} list. The list offers: ${offered.map((t) => t.trim()).join(' | ') || '(nothing)'}`);
+    }
+    await choice.click();
+  }
+
+  // Assign a tag: a new tag is typed in the dialog's input and added with Enter, then
+  // clicked in the list; an existing one is only clicked. Tags cannot have spaces.
+  async createAndSelectTag(name: string): Promise<void> {
+    const dialog = this.extraConfiguration();
+    const listed = dialog.getByText(name, { exact: true });
+    if ((await listed.count()) === 0) {
+      const input = dialog.locator('input.bs-input');
+      await input.fill(name);
+      await input.press('Enter');
+    }
+    await listed.first().click();
+  }
+
+  // Pause Delay In Days.
+  pauseDays(): Locator {
+    return this.extraConfiguration().getByRole('spinbutton');
+  }
+
+  configSaveButton(): Locator {
+    return this.extraConfiguration().getByRole('button', { name: 'Save', exact: true });
   }
 
   // ---- Field Mapping ----

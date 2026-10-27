@@ -1,3 +1,4 @@
+import { fillContactForm, type ContactInput } from './contacts.page.ts';
 import { SalesforceObjectPage, waitForCreated } from './object.page.ts';
 
 // Salesforce Accounts. Account Properties mapping (context/salesforce/00-overview.md):
@@ -54,6 +55,18 @@ export class SalesforceAccountsPage extends SalesforceObjectPage {
       addresses.push(await this.field('BillingAddress'));
     }
     return addresses;
+  }
+
+  // Creates a Contact from the Account's own Contacts related list, so Salesforce links it
+  // to the Account (the "Account is created in Salesforce" workflow imports an Account's
+  // Contacts). Same path as contacts.page.ts newOpportunity. TODO(needs-input): the
+  // Contacts card and its New button are not walked on this org yet.
+  async newContact(accountName: string, person: ContactInput): Promise<void> {
+    await this.openRecord(accountName);
+    await this.page.getByRole('tab', { name: 'Related' }).click();
+    const card = this.page.locator('article').filter({ has: this.page.getByRole('heading', { name: /^Contacts/ }) }).first();
+    await card.getByRole('button', { name: 'New', exact: true }).click({ timeout: 30_000 });
+    await fillContactForm(this.page, person);
   }
 
   async accountFields(name: string): Promise<{ name: string; billingAddress: string; website: string; phone: string }> {

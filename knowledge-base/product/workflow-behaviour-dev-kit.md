@@ -110,7 +110,9 @@ with a different trigger and note text. Shared rules:
 Lead, Contact, Account and Opportunity "is created in Salesforce".
 
 - Cron every 3 hours; `npm run sf:run-now -- <account> "<name>"` runs one
-  now and prints each step. (contact-created-in-salesforce.md:4, :77)
+  now and prints each step.
+  Full scripted scenarios: `tests/salesforce/*-created.spec.ts` (scenario files
+  `automation/test-cases/salesforce/*-created.md`). (contact-created-in-salesforce.md:4, :77)
 - Contact, Account and Opportunity do not apply their 3-hour window: each run
   reads up to 200 records of the whole org (kept on purpose). Lead keeps a
   cursor and reads only Leads newer than its last run. (contact-created-in-salesforce.md:84, :109; lead-created-in-salesforce.md:4, :106)
@@ -194,3 +196,52 @@ Pipedrive (7 workflows, latest `v2-fixes` for all; only Email Sent run live):
   (salesforce/call-outcome-updated-in-saleshandy.md:28, :73-79)
 - `npm run parallel` prints these clashes for the workflows chosen and asks
   before it starts.
+
+## 6. Workflow ids (checked 2026-10-28)
+
+Each Saleshandy account's Triggers & Activity page works with the ids in its Refold
+config (`configData.workflows[].id`). saleshandy-webui hard-codes the staging ones in
+`src/components/settings/components/integrations/components/configuration-content/components/configuration-content/components/triggers-and-activity/utils/helper.ts`
+(branch `staging`, line numbers below) and notes at lines 56-58: a workflow export's
+`_id` "is a different id space that looks identical and matches nothing". The table
+compares those ids with the workflow ids the developer API tests ran (the
+`export_id` of each workflow JSON and the "Execution for workflow <id>" of each saved
+run, `../../integration-skills/test-logs/`). `npm run sf:run-now` and the
+Salesforce-side specs read the id from the account's config, so they run what the UI runs.
+
+| Workflow | Staging id in webui (helper.ts line) | Id the API tests ran | Same? |
+|---|---|---|---|
+| HubSpot: Email Sent from Saleshandy | `681368981acc0cbcd162959c` (16) | not tested (reference graph only) | n/a |
+| HubSpot: Reply is Received | `681368981acc0cbcd16295a9` (17) | `681368981acc0cbcd16295a9` | yes |
+| HubSpot: Link is Clicked | `681368981acc0cbcd16295ab` (18) | `681368981acc0cbcd16295ab` | yes |
+| HubSpot: Prospect is Unsubscribed | `681368981acc0cbcd16295ac` (19) | `681368981acc0cbcd16295ac` | yes |
+| HubSpot: Email is Bounced | `681368981acc0cbcd16295ad` (20) | `681368981acc0cbcd16295ad` | yes |
+| HubSpot: Sequence Email is Opened | `681368981acc0cbcd16295af` (21) | `681368981acc0cbcd16295af` | yes |
+| HubSpot: Prospect Outcome is updated | `681368981acc0cbcd16295b0` (22) | `681368981acc0cbcd16295b0` | yes |
+| HubSpot: Contact / Deal / Company Created, Contact Copy V2 | `...95b8`, `...95b9`, `...95ba`, `6953ad5778b14b0a0a0834bc` (30-33) | not tested | n/a |
+| HubSpot: Import Prospects | `681368981acc0cbcd16295c5` (39) | not tested | n/a |
+| Salesforce: Email Sent from Saleshandy | `681368981acc0cbcd16295bb` (51) | `681368981acc0cbcd16295bb` | yes |
+| Salesforce: Reply is Received | `681368981acc0cbcd16295bc` (52) | `681368981acc0cbcd16295bc` | yes |
+| Salesforce: Prospect Outcome is updated | `681368981acc0cbcd16295bd` (53) | `681368981acc0cbcd16295bd` | yes |
+| Salesforce: Sequence Email is Opened | `681368981acc0cbcd16295be` (54) | `681368981acc0cbcd16295be` | yes |
+| Salesforce: Link is Clicked | `681368981acc0cbcd16295bf` (55) | `681368981acc0cbcd16295bf` | yes |
+| Salesforce: Prospect is Unsubscribed | `681368981acc0cbcd16295c0` (56) | `681368981acc0cbcd16295c0` | yes |
+| Salesforce: Email is Bounced | `681368981acc0cbcd16295c1` (57) | `681368981acc0cbcd16295c1` | yes |
+| Salesforce: Call Logged | `6a8d4e13872e42e62fa36d81` (63) | `6a8d4e13872e42e62fa36d81` | yes |
+| Salesforce: Call Outcome Updated | `6a8d4f4c1279721fc19d86f3` (64) | `6a8d4f4c1279721fc19d86f3` | yes |
+| Salesforce: Lead is created in Salesforce (V1) | `681368981acc0cbcd16295c7` (76) | `681368981acc0cbcd16295c7` | yes |
+| Salesforce: Contact is created in Salesforce | `681368981acc0cbcd16295c3` (75) | `682c2c26bcc93496f883fea0` | **no** |
+| Salesforce: Opportunity is created in Salesforce | `681368981acc0cbcd16295c8` (77) | `682d6bf5bcc93496f88fdb28` | **no** |
+| Salesforce: Account is created in Salesforce | `681368981acc0cbcd16295c9` (78) | `682d72d0bcc93496f8906354` | **no** |
+| Salesforce: Import Prospects | `6953cb2678b14b0a0a13256e` (84) | not tested | n/a |
+
+- The three "no" rows: the developer tested and fixed a separate copy of each
+  workflow (its test log calls it "user copy / export_id"). Nothing in the developer
+  files shows that the workflow the UI runs (`...c3`, `...c8`, `...c9`) has the same
+  version. Until a developer exports those three from Refold and compares them, a
+  result on staging that differs from section 3 may be a version difference, not a new
+  bug: say so in the bug report.
+- Production ids: webui lists the Call workflows' production ids (`6a97e897bed470bf74903a6e`,
+  `6a97ec90bed470bf7492ad9f`, lines 65-66). The other ids carry no environment label in
+  webui: lines 8-14, 26-28, 37 and 82 have a workflow name, lines 43-49 and 70-73 have
+  none. The developer test logs call the Salesforce ones (43-49, 70-73) the template ids.

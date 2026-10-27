@@ -4,12 +4,22 @@ import type { Page } from '@playwright/test';
 // in Salesforce") run on a Refold cron, "0 */3 * * *". Refold can start one now for this
 // account: POST /api/v2/public/workflow/<id>/execute, the call refold-js executeWorkflow()
 // makes (refold.ts:1151), used on staging 2026-10-06 (integration-tests
-// contact-created-in-salesforce/test-log.md:77). It works on the account's own copy of
-// the workflow, not the template.
+// contact-created-in-salesforce/test-log.md:77).
+//
+// The workflow id is the one the account's Triggers & Activity page works with: webui
+// loads the account's Refold config there (cobalt.getConfig, configuration-content.tsx:203)
+// and its `workflows` list has each workflow's id, name and enabled flag (refold.ts
+// ConfigWorkflow). webui (branch staging) hard-codes the staging ones in
+// triggers-and-activity/utils/helper.ts, e.g. lines 75-78: Contact 681368981acc0cbcd16295c3,
+// Lead ...c7, Opportunity ...c8, Account ...c9, and notes (lines 56-58) that a workflow
+// export's _id is a different id space that matches nothing. The developer API tests ran
+// separate copies of Contact (682c2c26...), Opportunity (682d6bf5...) and Account
+// (682d72d0...); those are not used here. Full table, checked 2026-10-28:
+// knowledge-base/product/workflow-behaviour-dev-kit.md section 6.
 //
 // The token is the Refold session token Saleshandy webui itself sends to Refold from
-// the Integrations page. It is read from that request and kept in memory only: never
-// written to a file, a report or an annotation.
+// that page. It is read from that request and kept in memory only: never written to a
+// file, a report or an annotation.
 const REFOLD = 'https://app.refold.ai/api/v2/public'; // refold-js default; webui does not override it
 const SLUG = 'salesforce';
 
@@ -21,18 +31,29 @@ export class RefoldRunNow {
 
   private readonly token: string;
 
-  private constructor(page: Page, token: string) {
+  // name (lower case) -> id, from the account's Refold config.
+  private readonly configured: Map<string, string>;
+
+  private constructor(page: Page, token: string, configured: Map<string, string>) {
     this.page = page;
     this.token = token;
+    this.configured = configured;
   }
 
-  // Opens Settings > Integrations on a logged-in Saleshandy page and takes the token
-  // from webui's own Refold request (getApp, refold.ts:544).
+  // Opens Salesforce > Triggers & Activity on a logged-in Saleshandy page, takes the token
+  // from webui's own Refold request and the workflow ids from its config response. A
+  // dropped connection sends the page to the integrations list (no config): the ids are
+  // then looked up in this account's runs instead.
   static async open(page: Page): Promise<RefoldRunNow> {
     const request = page.waitForRequest((r) => r.url().startsWith('https://app.refold.ai/') && !!r.headers().authorization, { timeout: 60_000 });
-    await page.goto('/api-and-integrations/integrations');
+    const config = page
+      .waitForResponse((r) => /\/api\/v2\/f-sdk\/slug\/salesforce\/config/.test(r.url()) && r.ok(), { timeout: 60_000 })
+      .then((r) => r.json(), () => undefined);
+    await page.goto('/api-and-integrations/integrations/salesforce?tab=triggers-activity');
     const token = (await request).headers().authorization.replace(/^Bearer\s+/i, '');
-    return new RefoldRunNow(page, token);
+    const workflows: { id?: string; name?: string }[] = (await config)?.workflows ?? [];
+    const configured = new Map(workflows.filter((w) => w.id && w.name).map((w) => [w.name!.trim().toLowerCase(), w.id!]));
+    return new RefoldRunNow(page, token, configured);
   }
 
   private headers() {
@@ -45,13 +66,15 @@ export class RefoldRunNow {
     return res.json();
   }
 
-  // A 24-hex id is used as is. A name is looked up in this account's past runs
-  // (each run carries associated_workflow {_id, name}; the cron runs every 3 h once the
-  // trigger is on), then in Refold's workflow list.
+  // A 24-hex id is used as is. A name is looked up in the account's Refold config (the
+  // Triggers & Activity names), then in its past runs (each carries associated_workflow
+  // {_id, name}), then in Refold's workflow list.
   async workflowId(nameOrId: string): Promise<string> {
     if (/^[0-9a-f]{24}$/.test(nameOrId)) return nameOrId;
     const wanted = nameOrId.trim().toLowerCase();
-    const seen = new Set<string>();
+    const fromConfig = this.configured.get(wanted);
+    if (fromConfig) return fromConfig;
+    const seen = new Set<string>(this.configured.keys());
     const runs = await this.get(`/execution?page=1&limit=100&sort=-createdAt&slug=${SLUG}`);
     for (const run of runs.docs ?? []) {
       const wf = typeof run.associated_workflow === 'string' ? JSON.parse(run.associated_workflow) : run.associated_workflow;

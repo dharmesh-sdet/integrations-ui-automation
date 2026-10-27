@@ -16,7 +16,7 @@ import { pipedriveIndustry } from './pipedrive-industries.ts';
 export const dataDir = path.resolve(import.meta.dirname, '../../test-data');
 
 // The 21 template fields, in the template's order.
-const TEMPLATE_FIELDS = [
+export const TEMPLATE_FIELDS = [
   'First Name', 'Last Name', 'Email', 'Phone Number', 'Job Title', 'Department', 'Industry', 'Experience',
   'LinkedIn', 'Twitter', 'Facebook', 'Website', 'Icebreaker', 'City', 'State', 'Country', 'Company',
   'Company Website', 'Company Industry', 'Company Founded Year', 'Company LinkedIn',

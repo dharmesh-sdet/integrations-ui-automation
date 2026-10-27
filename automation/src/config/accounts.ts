@@ -32,6 +32,13 @@ export const accounts = {
   pdemailbounced: { saleshandy: 'dharmesh+pdemailbounced@saleshandy.com' }, // Email is Bounced in Saleshandy, Pipedrive
   pdunsubscribed: { saleshandy: 'dharmesh+pdunsubscribed@saleshandy.com' }, // Prospect is Unsubscribed in Saleshandy, Pipedrive
   pdoutcomeupdated: { saleshandy: 'dharmesh+pdoutcomeupdated@saleshandy.com' }, // Prospect Outcome is updated in Saleshandy, Pipedrive
+  // Lead / Contact / Account / Opportunity is created in Salesforce (tests/salesforce/*-created.spec.ts).
+  // One account for the four Salesforce-side workflows: each spec turns on only its own
+  // trigger, and fewer accounts on the shared Salesforce user means fewer token drops.
+  // QA sets up by hand: the account, Salesforce connected, Field Mapping (Lead, Contact as in
+  // src/config/salesforce-field-mapping.ts), Sequence A (Step 1) and Sequence B, both paused,
+  // OTP off, both logins (npm run login:saleshandy -- sfcreated, npm run login:salesforce -- sfcreated).
+  sfcreated: { saleshandy: 'TODO(needs-input): the staging login QA creates for this account' },
   // Production smoke tests (notes/production-testing/). `environment: 'production'`
   // points the Saleshandy side at my.saleshandy.com (src/config/environments.ts).
   // The HubSpot portal is the same shared one.

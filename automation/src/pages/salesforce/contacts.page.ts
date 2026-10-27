@@ -1,5 +1,24 @@
+import type { Page } from '@playwright/test';
 import { SalesforceObjectPage, waitForCreated } from './object.page.ts';
 import { fillOpportunityForm, type OpportunityInput } from './opportunities.page.ts';
+
+export type ContactInput = { firstName: string; lastName: string; email: string; phone?: string; department?: string };
+
+// Fills and saves an open New Contact dialog: from the Contacts list (createContact) or
+// from an Account's Contacts related list (accounts.page.ts newContact), where Salesforce
+// fills the Account in. Not run on this org yet: the locators follow the standard labels.
+export async function fillContactForm(page: Page, person: ContactInput): Promise<void> {
+  const form = page.getByRole('dialog').last();
+  await form.getByRole('textbox', { name: 'Last Name' }).waitFor({ timeout: 30_000 });
+  await form.getByRole('textbox', { name: 'Last Name' }).fill(person.lastName);
+  await form.getByRole('textbox', { name: 'First Name' }).fill(person.firstName);
+  await form.getByRole('textbox', { name: 'Email' }).fill(person.email);
+  // Phone and Department are the standard Contact form labels (not run on this org yet).
+  if (person.phone) await form.getByRole('textbox', { name: 'Phone', exact: true }).fill(person.phone);
+  if (person.department) await form.getByRole('textbox', { name: 'Department' }).fill(person.department);
+  await form.getByRole('button', { name: 'Save', exact: true }).click();
+  await waitForCreated(page, 'Contact');
+}
 
 // Salesforce Contacts. Details API names follow the Contact Properties mapping on
 // sfemailsent: First/Last Name -> Name, Email, Phone Number -> Phone (Business
@@ -15,20 +34,11 @@ export class SalesforceContactsPage extends SalesforceObjectPage {
   // Creates a Contact through the standard Lightning New Contact form. Setup
   // for scenarios that need a Contact to exist first. Not run on this org yet:
   // the locators follow the standard field labels.
-  async createContact(person: { firstName: string; lastName: string; email: string; phone?: string; department?: string }): Promise<void> {
+  async createContact(person: ContactInput): Promise<void> {
     // Opened from the list's New button; the direct /new URL loaded blank for Lead.
     await this.openList();
     await this.page.getByRole('button', { name: 'New', exact: true }).click();
-    const form = this.page.getByRole('dialog').last();
-    await form.getByRole('textbox', { name: 'Last Name' }).waitFor({ timeout: 30_000 });
-    await form.getByRole('textbox', { name: 'Last Name' }).fill(person.lastName);
-    await form.getByRole('textbox', { name: 'First Name' }).fill(person.firstName);
-    await form.getByRole('textbox', { name: 'Email' }).fill(person.email);
-    // Phone and Department are the standard Contact form labels (not run on this org yet).
-    if (person.phone) await form.getByRole('textbox', { name: 'Phone', exact: true }).fill(person.phone);
-    if (person.department) await form.getByRole('textbox', { name: 'Department' }).fill(person.department);
-    await form.getByRole('button', { name: 'Save', exact: true }).click();
-    await waitForCreated(this.page, 'Contact');
+    await fillContactForm(this.page, person);
   }
 
   // Opens the Contact, its Related tab, then the first Note whose title is

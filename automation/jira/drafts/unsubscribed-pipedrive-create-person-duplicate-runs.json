@@ -1,0 +1,28 @@
+{
+  "type": "bug",
+  "project": "AL",
+  "priority": "Medium",
+  "environment": "Production",
+  "epic": "AL-3982",
+  "assignee": {
+    "name": "Darshan",
+    "accountId": "5af5d8dd244bc90a10605d4f"
+  },
+  "qa": {
+    "name": "Dharmesh Patel",
+    "accountId": "712020:c7dedb58-9cb3-4450-a98f-5b5b56f6556b"
+  },
+  "links": [
+    "AL-4170",
+    "AL-4176"
+  ],
+  "attachments": [],
+  "summary": "Prospect is Unsubscribed in Saleshandy: Create a Person in Pipedrive activity runs twice for one unsubscribe and creates two persons with the same email",
+  "description": "**Prerequisites:**\n- The Pipedrive integration is connected to Saleshandy.\n- The Prospect is Unsubscribed in Saleshandy trigger is enabled with the Create a Person activity only, and saved.\n- A sequence with at least one prospect that is not a person in Pipedrive.\n\n**Steps to Reproduce:**\n1. Go to Triggers and Activities, enable Prospect is Unsubscribed in Saleshandy, select Create a Person, and click Save.\n2. Add a prospect to the sequence. No email needs to be sent.\n3. Open the sequence > Prospects, and mark the prospect as Unsubscribed (Mark as Unsubscribe).\n4. Wait 15 seconds, then search People in Pipedrive by the prospect's email.\n5. Go to Integrations > Pipedrive > Logs and check the Prospect is Unsubscribed in Saleshandy entries.\n\n**Actual Result:**\n- Pipedrive has two persons with the same email.\n- Logs show two Prospect is Unsubscribed in Saleshandy entries for the one unsubscribe, 5.2 s and 5.3 s, both with status Success.\n- It does not happen on every attempt.\n- The same doubling was also seen in automated runs with Create a Lead, Create Organization and with Create a Lead, Create a Deal and Create a Person together (two persons, two organizations or two activities instead of one).\n\n**Expected Result:**\n- One unsubscribe runs the workflow once: one Logs entry and one person in Pipedrive.\n\n**Note:**\n- Affected Environment - Staging.\n- Same symptom as AL-4066 (HubSpot, Done), where the unsubscribe action was logged twice for a single event.\n- Seen on the Email Sent from Saleshandy trigger in the same account as well, so it may not be specific to this trigger.\n",
+  "sent": {
+    "key": "AL-4177",
+    "url": "https://saleshandy.atlassian.net/browse/AL-4177",
+    "problems": [],
+    "at": "2026-10-26T10:54:09.380Z"
+  }
+}

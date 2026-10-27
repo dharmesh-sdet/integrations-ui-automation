@@ -1,0 +1,345 @@
+- generic [ref=e1]:
+  - generic [ref=e4]:
+    - link [ref=e6] [cursor=pointer]:
+      - /url: /sequence
+    - generic [ref=e26]:
+      - link [ref=e768] [cursor=pointer]:
+        - /url: /sequence
+        - generic [ref=e29]: Sequences
+      - link [ref=e769] [cursor=pointer]:
+        - /url: /tasks
+        - generic [ref=e36]: Tasks
+      - link [ref=e770] [cursor=pointer]:
+        - /url: /conversations
+        - generic [ref=e44]: Unified Inbox
+      - link [ref=e771] [cursor=pointer]:
+        - /url: /v2/leads
+        - generic [ref=e52]: Lead Finder
+      - link [ref=e772] [cursor=pointer]:
+        - /url: /crm/list
+        - generic [ref=e60]: CRM
+      - generic [ref=e66]:
+        - link [ref=e773] [cursor=pointer]:
+          - /url: /dialer
+          - generic [ref=e68]:
+            - generic [ref=e69]: New
+            - generic [ref=e77]: Dialer
+          - generic [ref=e78]: New
+        - button [ref=e80] [cursor=pointer]
+        - generic [ref=e84]:
+          - link [ref=e774] [cursor=pointer]:
+            - /url: /dialer/call-logs
+            - generic [ref=e87]: Call Logs
+          - link [ref=e775] [cursor=pointer]:
+            - /url: /dialer/phone-numbers
+            - generic [ref=e99]: Phone Numbers
+      - link [ref=e776] [cursor=pointer]:
+        - /url: /email-verifier
+        - generic [ref=e106]: Email Verifier
+      - link [ref=e777] [cursor=pointer]:
+        - /url: /email-accounts
+        - generic [ref=e114]: Email Accounts
+      - link [ref=e778] [cursor=pointer]:
+        - /url: /templates
+        - generic [ref=e122]: Templates
+      - link [ref=e779] [cursor=pointer]:
+        - /url: /inbox-radar
+        - generic [ref=e131]: Inbox Radar
+      - link [ref=e780] [cursor=pointer]:
+        - /url: /reports
+        - generic [ref=e140]: Analytics
+      - generic [ref=e148]:
+        - link [ref=e781] [cursor=pointer]:
+          - /url: /api-and-integrations
+          - generic [ref=e150]: API & Integrations
+        - button [ref=e160] [cursor=pointer]
+        - generic [ref=e164]:
+          - link [ref=e782] [cursor=pointer]:
+            - /url: /api-and-integrations/api-keys
+            - generic [ref=e167]: API Key
+          - link [ref=e783] [cursor=pointer]:
+            - /url: /api-and-integrations/mcp
+            - generic [ref=e174]: MCP
+          - link [ref=e784] [cursor=pointer]:
+            - /url: /api-and-integrations/integrations
+            - generic [ref=e183]: Integrations
+          - link [ref=e785] [cursor=pointer]:
+            - /url: /api-and-integrations/webhook
+            - generic [ref=e191]: Webhook
+      - link [ref=e786] [cursor=pointer]:
+        - /url: /billing
+        - generic [ref=e198]: Billing & Subscription
+      - generic [ref=e204]:
+        - generic [ref=e205] [cursor=pointer]: More
+        - button [ref=e211] [cursor=pointer]
+        - generic [ref=e215]:
+          - link [ref=e787] [cursor=pointer]:
+            - /url: /clients
+            - generic [ref=e218]: Client Management
+          - link [ref=e788] [cursor=pointer]:
+            - /url: /warmup
+            - generic [ref=e227]: Email Warm-up
+          - generic [ref=e233]: Refer A Friend
+    - generic [ref=e242]:
+      - link [ref=e789] [cursor=pointer]:
+        - /url: /settings
+        - generic [ref=e246]: Settings
+      - button [ref=e790] [cursor=pointer]:
+        - generic [ref=e253]: Submit Feedback
+      - button [ref=e791] [cursor=pointer]:
+        - generic [ref=e261]: Need support?
+    - main [ref=e268]:
+      - generic [ref=e269]:
+        - generic [ref=e591]:
+          - link [ref=e792] [cursor=pointer]:
+            - /url: /sequence
+            - text: Sequence
+          - textbox [ref=e597]: Pipedrive Outcome Updated QA
+          - button [ref=e793] [cursor=pointer]:
+            - generic [ref=e651]: all
+        - generic [ref=e275]:
+          - generic [ref=e276]: "3"
+          - button [ref=e283] [cursor=pointer]
+          - button [ref=e794] [cursor=pointer]:
+            - generic [ref=e290]: GP
+            - generic [ref=e292]: 
+      - generic [ref=e653]:
+        - alert [ref=e654]:
+          - generic [ref=e655]:
+            - generic [ref=e659]: Not sure where to begin ? Let our AI Generate a high-converting sequence for you.
+            - button [ref=e795] [cursor=pointer]:
+              - generic [ref=e661]: Generate sequence with AI
+          - button [ref=e662] [cursor=pointer]
+        - generic [ref=e666]:
+          - tablist [ref=e667]:
+            - generic [ref=e669]:
+              - tab [selected] [ref=e796] [cursor=pointer]:
+                - generic [ref=e672]: Steps
+              - tab [ref=e797] [cursor=pointer]:
+                - generic [ref=e680]: Prospects
+              - tab [ref=e798] [cursor=pointer]:
+                - generic [ref=e689]: Settings
+              - tab [ref=e799] [cursor=pointer]:
+                - generic [ref=e695]: Subsequence
+              - tab [ref=e800] [cursor=pointer]:
+                - generic [ref=e707]:
+                  - img [ref=e709]:
+                    - generic [ref=e712]: "0"
+                  - generic [ref=e713]: Sequence Score
+            - button [ref=e801] [cursor=pointer]:
+              - generic [ref=e718]: Set ICP Criteria
+          - tabpanel [ref=e802]:
+            - generic [ref=e727]:
+              - generic [ref=e728]:
+                - generic [ref=e729]: Start your Sequence
+                - generic [ref=e730]: Automate the engagement with your prospects by adding steps in your Sequence.
+              - generic [ref=e731]:
+                - generic [ref=e732]: Add step
+                - generic [ref=e733]:
+                  - button [ref=e803] [cursor=pointer]:
+                    - generic [ref=e739]: Email
+                  - generic [ref=e740]:
+                    - button [ref=e804] [cursor=pointer]:
+                      - generic [ref=e744]: LinkedIn Automation
+                    - generic [aria-hidden]: New
+                  - button [ref=e805] [cursor=pointer]:
+                    - generic [ref=e749]: LinkedIn Manual Task
+                  - button [ref=e806] [cursor=pointer]:
+                    - generic [ref=e756]: Call
+                  - button [ref=e807] [cursor=pointer]:
+                    - generic [ref=e761]: WhatsApp
+                  - button [ref=e808] [cursor=pointer]:
+                    - generic [ref=e767]: Task
+  - iframe [aria-hidden] [ref=e584]:
+    - generic [ref=f4e4]:
+      - generic [ref=f4e5]:
+        - heading "Latest changes" [level=3] [ref=f4e7]
+        - generic [ref=f4e8]:
+          - link "New Recent internet security issues, and where Saleshandy stands. Your Saleshandy account and data are safe. You don’t need to change your password or reconnect yo..." [ref=f4e9] [cursor=pointer]:
+            - /url: "#"
+            - generic [ref=f4e10]: New
+            - strong [ref=f4e11]: Recent internet security issues, and where Saleshandy stands.
+            - text: Your Saleshandy account and data are safe. You don’t need to change your password or reconnect yo...
+          - 'link "New Fresh Data, Every Month: October Update. Our October Lead Finder data refresh is live in production as of October 20. This month, we added..." [ref=f4e12] [cursor=pointer]':
+            - /url: "#"
+            - generic [ref=f4e13]: New
+            - strong [ref=f4e14]: "Fresh Data, Every Month: October Update."
+            - text: Our October Lead Finder data refresh is live in production as of October 20. This month, we added...
+          - link "New Exclude Leads You Already Have. Find new prospects without spending reveal credits on contacts you already own. You can now uploa..." [ref=f4e15] [cursor=pointer]:
+            - /url: "#"
+            - generic [ref=f4e16]: New
+            - strong [ref=f4e17]: Exclude Leads You Already Have.
+            - text: Find new prospects without spending reveal credits on contacts you already own. You can now uploa...
+          - link "New UCC complaints are now easier to track and manage. You can now see complaints against your Indian phone numbers and respond to them inside Saleshand..." [ref=f4e18] [cursor=pointer]:
+            - /url: "#"
+            - generic [ref=f4e19]: New
+            - strong [ref=f4e20]: UCC complaints are now easier to track and manage.
+            - text: You can now see complaints against your Indian phone numbers and respond to them inside Saleshand...
+          - 'link "New Fresh Data, Every Month: September Update. Our monthly Lead Finder refresh is live. This month we added nearly twice as many new people as i..." [ref=f4e21] [cursor=pointer]':
+            - /url: "#"
+            - generic [ref=f4e22]: New
+            - strong [ref=f4e23]: "Fresh Data, Every Month: September Update."
+            - text: Our monthly Lead Finder refresh is live. This month we added nearly twice as many new people as i...
+          - link "New Your active search filters are now easier to find and change. Your applied filters now appear at the top of the filter panel of Lead Finder, making it easier t..." [ref=f4e24] [cursor=pointer]:
+            - /url: "#"
+            - generic [ref=f4e25]: New
+            - strong [ref=f4e26]: Your active search filters are now easier to find and change.
+            - text: Your applied filters now appear at the top of the filter panel of Lead Finder, making it easier t...
+        - generic [ref=f4e27]:
+          - link "Saleshandy updates" [ref=f4e28] [cursor=pointer]:
+            - /url: https://headwayapp.co/saleshandy-updates?utm_medium=widget
+          - text: powered by
+          - link "Headway" [ref=f4e29] [cursor=pointer]:
+            - /url: https://headwayapp.co?utm_medium=widget&utm_source=saleshandy
+      - generic [ref=f4e30]:
+        - generic [ref=f4e31]:
+          - generic [ref=f4e32]:
+            - link [ref=f4e33] [cursor=pointer]:
+              - /url: "#back"
+            - heading "Recent internet security issues, and where Saleshandy stands" [level=3] [ref=f4e34]
+          - paragraph [ref=f4e37]:
+            - link "Read the whole post" [ref=f4e38] [cursor=pointer]:
+              - /url: https://headwayapp.co/saleshandy-updates/recent-internet-security-issues-and-where-saleshandy-stands-349422
+        - generic [ref=f4e39]:
+          - generic [ref=f4e40]:
+            - link [ref=f4e41] [cursor=pointer]:
+              - /url: "#back"
+            - 'heading "Fresh Data, Every Month: October Update" [level=3] [ref=f4e42]'
+          - generic [ref=f4e43]:
+            - paragraph
+        - generic [ref=f4e45]:
+          - generic [ref=f4e46]:
+            - link [ref=f4e47] [cursor=pointer]:
+              - /url: "#back"
+            - heading "Exclude Leads You Already Have" [level=3] [ref=f4e48]
+          - generic [ref=f4e49]:
+            - paragraph
+        - generic [ref=f4e51]:
+          - generic [ref=f4e52]:
+            - link [ref=f4e53] [cursor=pointer]:
+              - /url: "#back"
+            - heading "UCC complaints are now easier to track and manage" [level=3] [ref=f4e54]
+          - generic [ref=f4e55]:
+            - paragraph
+        - generic [ref=f4e57]:
+          - generic [ref=f4e58]:
+            - link [ref=f4e59] [cursor=pointer]:
+              - /url: "#back"
+            - 'heading "Fresh Data, Every Month: September Update" [level=3] [ref=f4e60]'
+          - paragraph [ref=f4e63]:
+            - link "Read the whole post" [ref=f4e64] [cursor=pointer]:
+              - /url: https://headwayapp.co/saleshandy-updates/fresh-data-every-month-september-update-346705
+        - generic [ref=f4e65]:
+          - generic [ref=f4e66]:
+            - link [ref=f4e67] [cursor=pointer]:
+              - /url: "#back"
+            - heading "Your active search filters are now easier to find and change" [level=3] [ref=f4e68]
+          - generic [ref=f4e69]:
+            - paragraph
+  - iframe [aria-hidden] [ref=e585]
+  - dialog [active] [ref=e810]:
+    - generic [ref=e811]:
+      - generic [ref=e812]:
+        - generic [ref=e815]:
+          - generic [ref=e816]:
+            - generic [ref=e817]: Step 1
+            - generic [ref=e818]: A
+          - generic [ref=e820]: Email
+        - generic [ref=e825]:
+          - button [ref=e826] [cursor=pointer]
+          - generic [ref=e829]:
+            - generic [ref=e831]:
+              - paragraph [ref=e832]: Subject
+              - generic [ref=e834]:
+                - generic [ref=e835]: Enter a Subject...
+                - generic [ref=e839]:
+                  - img "emoji" [ref=e841] [cursor=pointer]
+                  - generic [ref=e843] [cursor=pointer]
+                  - img "spintax" [ref=e851] [cursor=pointer]
+            - button "Set Pre-Header" [ref=e854] [cursor=pointer]
+          - generic [ref=e859]:
+            - generic [ref=e861]:
+              - generic [ref=e862]:
+                - application [ref=e864]:
+                  - group [ref=e867]:
+                    - group [ref=e868]:
+                      - toolbar [ref=e869]:
+                        - button "Fonts" [ref=e870] [cursor=pointer]
+                      - toolbar [ref=e875]:
+                        - button "Font sizes" [ref=e876] [cursor=pointer]
+                      - toolbar [ref=e881]:
+                        - button "Bold" [ref=e882] [cursor=pointer]
+                        - button "Italic" [ref=e886] [cursor=pointer]
+                        - button "Underline" [ref=e890] [cursor=pointer]
+                        - button "Text color" [ref=e895]
+                        - button "Clear formatting" [ref=e905] [cursor=pointer]
+                      - toolbar [ref=e912]:
+                        - button [ref=e913]
+                      - toolbar [ref=e921]:
+                        - button "Numbered list" [ref=e922]
+                        - button "Bullet list" [ref=e935]
+                      - toolbar [ref=e948]:
+                        - button "Insert/edit link" [ref=e949] [cursor=pointer]
+                        - button "Insert Attachment" [ref=e954] [cursor=pointer]
+                        - button "Insert/edit image" [ref=e958] [cursor=pointer]
+                        - button "Source Code" [ref=e963] [cursor=pointer]
+                      - toolbar [ref=e967]:
+                        - button "More..." [ref=e968] [cursor=pointer]
+                - generic [ref=e972]:
+                  - generic [ref=e974] [cursor=pointer]
+                  - img "spintax" [ref=e981] [cursor=pointer]
+              - button [ref=e982] [cursor=pointer]:
+                - img "Icon" [ref=e983]
+                - paragraph [ref=e984]: Template
+            - paragraph [ref=e991] [cursor=pointer]: Styling Removes Automatically
+        - generic [ref=e992]:
+          - generic [ref=e994]:
+            - generic [ref=e995]:
+              - text: Start this step on Day
+              - generic [ref=e998]:
+                - generic [ref=e999]:
+                  - button "" [ref=e1000] [cursor=pointer]
+                  - button "" [ref=e1003] [cursor=pointer]
+                - spinbutton "Start this step on Day  " [ref=e1007]: "1"
+            - generic [ref=e1009]: Wait for
+            - generic [ref=e1011]:
+              - textbox "Hours" [ref=e1012]:
+                - /placeholder: "00"
+                - text: "00"
+              - generic [ref=e1013]: hrs
+              - generic [ref=e1014]: ":"
+              - textbox "Minutes" [ref=e1015]:
+                - /placeholder: "00"
+                - text: "00"
+              - generic [ref=e1016]: mins
+            - generic [ref=e1017]: after the sequence starts
+          - button "Save" [ref=e1019] [cursor=pointer]
+      - generic [ref=e1020]:
+        - button "" [ref=e1022] [cursor=pointer]
+        - generic [ref=e1026]:
+          - tablist [ref=e1027]:
+            - generic [ref=e1029]:
+              - tab "Content Guide" [ref=e1031] [cursor=pointer]
+              - tab "Email Preview" [selected] [ref=e1039] [cursor=pointer]
+          - tabpanel "Email Preview" [ref=e1047]:
+            - generic [ref=e1049]:
+              - generic [ref=e1051]:
+                - paragraph [ref=e1053]: From
+                - generic [ref=e1054]: No email account connected
+              - generic [ref=e1059]:
+                - generic [ref=e1060]:
+                  - paragraph [ref=e1062]: To
+                  - generic [ref=e1063]: No prospect added
+                - generic [ref=e1068]:
+                  - button [ref=e1069]
+                  - button [ref=e1072]
+              - generic [ref=e1075]:
+                - generic [ref=e1076]:
+                  - paragraph [ref=e1077]: "To: Example Contact <example@google.com>"
+                  - paragraph [ref=e1078]: "Subject:"
+                - paragraph [ref=e1088]: Write something to generate the Email preview
+        - button "Send Test Email" [disabled] [ref=e1090]
+  - application [ref=e1092]:
+    - generic [ref=e1094]:
+      - group:
+        - group

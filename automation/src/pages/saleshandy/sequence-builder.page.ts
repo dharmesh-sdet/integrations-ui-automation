@@ -82,7 +82,14 @@ export class SequenceBuilderPage extends SaleshandyPage {
     await picker.getByText('Saleshandy Library', { exact: true }).click();
     await picker.getByText(template, { exact: true }).click();
     await picker.getByRole('button', { name: 'Use Template', exact: true }).click();
-    await expect(picker).toBeHidden();
+    // The dialog fades out slowly on a busy staging (2026-10-24: still visible after 5 s, though the
+    // template was applied), so give the default 5 s more room.
+    // 2026-10-26: on the second step the template filled the body but the modal and its backdrop
+    // stayed on screen for good; Escape closes it.
+    await expect(picker).toBeHidden({ timeout: 20_000 }).catch(async () => {
+      await this.page.keyboard.press('Escape');
+      await expect(picker).toBeHidden({ timeout: 10_000 });
+    });
     // The template fills the body in more than one pass; text typed in between
     // was lost (seen 2026-10-09). Wait until two reads a second apart match.
     let previous = '';
@@ -221,6 +228,11 @@ export class SequenceBuilderPage extends SaleshandyPage {
       const dialog = this.page.getByRole('dialog').filter({ hasText: 'Select email accounts to add to the sequence' });
       await dialog.waitFor({ state: 'visible', timeout: 20_000 });
       for (const email of missing) {
+        // The dialog lists only the first accounts until scrolled (seen 2026-10-26, gpipedrive: Kartik 5 was
+        // below the fold), so the account is searched for.
+        await dialog.getByPlaceholder('Search').fill(email);
+        await this.page.keyboard.press('Enter');
+        await this.page.waitForTimeout(2_000);
         const row = rowOf(dialog, email);
         // The list shows grey loading bars while it loads and again after a tick (seen
         // 2026-10-22, production: the second account was judged missing mid-load).

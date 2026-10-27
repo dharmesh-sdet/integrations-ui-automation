@@ -1,7 +1,7 @@
 // Staging URLs, confirmed in context/project.md (section 4 answers).
 import { accounts, type Account } from './accounts.ts';
 
-export type Platform = 'saleshandy' | 'hubspot' | 'salesforce';
+export type Platform = 'saleshandy' | 'hubspot' | 'salesforce' | 'pipedrive';
 export type Browser = 'chromium' | 'edge';
 
 export const platforms: Record<Platform, { baseURL: string; loginPath: string }> = {
@@ -19,6 +19,13 @@ export const platforms: Record<Platform, { baseURL: string; loginPath: string }>
   salesforce: {
     baseURL: 'https://saleshandy-dev-ed.develop.lightning.force.com',
     loginPath: '/lightning/page/home',
+  },
+  // Login page given by QA, 2026-10-23. One saved session per account
+  // (npm run login:pipedrive -- <account>). The company is saleshandy.pipedrive.com
+  // (seen 2026-10-24: app.pipedrive.com/auth/login sends a logged-in session there).
+  pipedrive: {
+    baseURL: 'https://saleshandy.pipedrive.com',
+    loginPath: '/auth/login',
   },
 };
 

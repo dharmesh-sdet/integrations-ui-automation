@@ -22,6 +22,16 @@ export const accounts = {
   sfreplyreceived: { saleshandy: 'dharmesh+salesforce+1@saleshandy.com' }, // Reply is received in Saleshandy, Salesforce (QA, 2026-10-16)
   sfemailsent: { saleshandy: 'dharmesh+salesforce+emailsent@saleshandy.com' }, // Email Sent from Saleshandy, Salesforce (QA, 2026-10-19). Own Saleshandy-side session (playwright-sfemailsent, auth/saleshandy-sfemailsent-chromium.json) and own Salesforce-org session (playwright-salesforce-emailsent, auth/salesforce-sfemailsent-chromium.json), separate from sfreplyreceived's
   sfoutcomeupdated: { saleshandy: 'dharmesh+salesforce+prospectoutcome@saleshandy.com' }, // Prospect Outcome is updated in Saleshandy, Salesforce (QA, 2026-10-20). Own Saleshandy-side session (playwright-sfoutcomeupdated, auth/saleshandy-sfoutcomeupdated-chromium.json) and own Salesforce-org session (playwright-salesforce-outcomeupdated, auth/salesforce-sfoutcomeupdated-chromium.json)
+  // Pipedrive workflows (QA, 2026-10-23). Each has its own Saleshandy account and Pipedrive company, and its own saved sessions
+  // (auth/saleshandy-<account>-chromium.json, auth/pipedrive-<account>-chromium.json). Addresses are a default, TODO(needs-input): confirm each one QA signs up with.
+  gpipedrive: { saleshandy: 'dharmesh+gpipedrive@saleshandy.com' }, // QA, 2026-10-24: Saleshandy account for Pipedrive, with its own Saleshandy and Pipedrive sessions
+  pdemailsent: { saleshandy: 'dharmesh+pdemailsent@saleshandy.com' }, // Email Sent from Saleshandy, Pipedrive
+  pdreplyreceived: { saleshandy: 'dharmesh+pdreplyreceived@saleshandy.com' }, // Reply is received in Saleshandy, Pipedrive
+  pdlinkclicked: { saleshandy: 'dharmesh+pdlinkclicked@saleshandy.com' }, // Link Clicked in Saleshandy, Pipedrive
+  pdemailopened: { saleshandy: 'dharmesh+pdemailopened@saleshandy.com' }, // Sequence Email is Opened in Saleshandy, Pipedrive
+  pdemailbounced: { saleshandy: 'dharmesh+pdemailbounced@saleshandy.com' }, // Email is Bounced in Saleshandy, Pipedrive
+  pdunsubscribed: { saleshandy: 'dharmesh+pdunsubscribed@saleshandy.com' }, // Prospect is Unsubscribed in Saleshandy, Pipedrive
+  pdoutcomeupdated: { saleshandy: 'dharmesh+pdoutcomeupdated@saleshandy.com' }, // Prospect Outcome is updated in Saleshandy, Pipedrive
   // Production smoke tests (notes/production-testing/). `environment: 'production'`
   // points the Saleshandy side at my.saleshandy.com (src/config/environments.ts).
   // The HubSpot portal is the same shared one.

@@ -1,0 +1,251 @@
+- generic [ref=f4e1]:
+  - navigation [ref=f4e2]:
+    - generic [ref=f4e3]:
+      - menu [ref=f4e4]:
+        - menuitem [ref=f4e5]:
+          - link "home" [ref=f4e6] [cursor=pointer]:
+            - /url: /setup-guide
+        - menuitem [ref=f4e10] [cursor=pointer]:
+          - link "Nova AI notetaker" [ref=f4e11]:
+            - /url: /nova-paywall?entry_source=main_menu
+        - menuitem [ref=f4e18] [cursor=pointer]:
+          - link "Setup guide" [ref=f4e19]:
+            - /url: /setup-guide
+            - generic [ref=f4e20]:
+              - generic [ref=f4e21]: Setup guide
+              - generic [ref=f4e22]: "12"
+        - menuitem [ref=f4e26] [cursor=pointer]:
+          - link "Contacts" [ref=f4e27]:
+            - /url: /persons/list/user/everyone
+        - menuitem [ref=f4e32] [cursor=pointer]:
+          - link "Activities" [ref=f4e33]:
+            - /url: /activities/list
+            - generic [ref=f4e34]:
+              - generic [ref=f4e35]: Activities
+              - generic [ref=f4e36]: "2"
+        - menuitem [ref=f4e40] [cursor=pointer]:
+          - link "Deals" [ref=f4e41]:
+            - /url: /pipeline/1/user/everyone
+        - menuitem [ref=f4e46] [cursor=pointer]:
+          - link "Leads" [ref=f4e47]:
+            - /url: /leads/inbox
+        - menuitem [ref=f4e52] [cursor=pointer]:
+          - link "Insights" [ref=f4e53]:
+            - /url: /progress/insights
+        - menuitem [ref=f4e58] [cursor=pointer]:
+          - link "Sales Inbox" [ref=f4e59]:
+            - /url: /mail
+        - menuitem [ref=f4e64] [cursor=pointer]:
+          - button "More" [ref=f4e65]
+      - button "Hide menu" [expanded] [ref=f4e70]
+  - generic [ref=f4e71]:
+    - banner [ref=f4e72]:
+      - generic [ref=f4e73]:
+        - button "menu-toggle" [ref=f4e75] [cursor=pointer]
+        - generic [ref=f4e78]:
+          - heading "Contacts" [level=1] [ref=f4e79]
+          - generic [ref=f4e80]: /
+          - heading "People" [level=1] [ref=f4e81]
+        - img "Info" [ref=f4e83]
+      - generic [ref=f4e84]:
+        - textbox "Search Pipedrive" [ref=f4e89]
+        - button "Quick add" [ref=f4e92] [cursor=pointer]
+        - button [ref=f4e96] [cursor=pointer]
+      - generic [ref=f4e100]:
+        - list [ref=f4e103]:
+          - listitem [ref=f4e104] [cursor=pointer]:
+            - button [ref=f4e106]
+        - button "Quick Help" [ref=f4e109] [cursor=pointer]
+        - button "Notifications" [ref=f4e113] [cursor=pointer]
+        - button "DP" [ref=f4e116] [cursor=pointer]
+    - generic [ref=f4e118]:
+      - generic [ref=f4e120]:
+        - menu [ref=f4e121]:
+          - menuitem [ref=f4e122] [cursor=pointer]:
+            - link "People" [ref=f4e123]:
+              - /url: /persons/list/user/everyone
+          - menuitem [ref=f4e126] [cursor=pointer]:
+            - link "Organizations" [ref=f4e127]:
+              - /url: /organizations/list
+          - menuitem [ref=f4e130] [cursor=pointer]:
+            - link "Contacts timeline" [ref=f4e131]:
+              - /url: /persons/timeline
+          - menuitem [ref=f4e134] [cursor=pointer]:
+            - link "Merge duplicates" [ref=f4e135]:
+              - /url: /settings/duplicates
+          - menuitem "Add + enrich LinkedIn leads Close logo Surfe 4.5 Learn more" [ref=f4e146]:
+            - generic [ref=f4e152]:
+              - generic [ref=f4e153]:
+                - generic [ref=f4e154]: Add + enrich LinkedIn leads
+                - button "Close" [ref=f4e155] [cursor=pointer]
+              - generic [ref=f4e160]:
+                - img "logo" [ref=f4e161]
+                - generic [ref=f4e162]: Surfe
+                - generic [ref=f4e164]: "4.5"
+              - text: Learn more
+        - button "change" [ref=f4e139] [cursor=pointer]
+      - main [ref=f4e140]:
+        - generic [ref=f4e167]:
+          - generic [ref=f4e171]:
+            - generic [ref=f4e181]:
+              - heading [level=1] [ref=f4e182]:
+                - textbox "Walk Through" [ref=f4e183]
+              - heading "Walk_Through" [level=1] [ref=f4e184]
+            - generic [ref=f4e185]:
+              - generic [ref=f4e186]:
+                - generic [ref=f4e190]:
+                  - link "Dharmesh Pipedrive" [ref=f4e193] [cursor=pointer]:
+                    - /url: /users/details/34611243
+                  - generic [ref=f4e194]: Owner
+                - button "Transfer ownership" [ref=f4e195] [cursor=pointer]
+              - button "1 follower" [ref=f4e197] [cursor=pointer]
+              - generic [ref=f4e200]:
+                - button "Deal" [ref=f4e201] [cursor=pointer]
+                - button "Options" [ref=f4e204] [cursor=pointer]
+              - button [ref=f4e209] [cursor=pointer]
+              - button [ref=f4e213] [cursor=pointer]
+          - generic [ref=f4e215]:
+            - generic [ref=f4e216]:
+              - generic [ref=f4e218]:
+                - generic [ref=f4e219]:
+                  - button "Summary" [ref=f4e221] [cursor=pointer]
+                  - button [ref=f4e226] [cursor=pointer]
+                - generic [ref=f4e229]:
+                  - generic [ref=f4e230]: Add labels
+                  - generic [ref=f4e243]:
+                    - link "dharmesh+pipedrive-walk@saleshandy.com" [ref=f4e244] [cursor=pointer]:
+                      - /url: mailto:dharmesh%2Bpipedrive-walk%40saleshandy.com?bcc=saleshandy%40pipedrivemail.com
+                    - generic [ref=f4e245]: (Work)
+                  - generic [ref=f4e246]: Add phone
+                  - button "Organization" [ref=f4e253]
+              - generic [ref=f4e258]:
+                - generic [ref=f4e259]:
+                  - button "Details" [ref=f4e261] [cursor=pointer]
+                  - generic [ref=f4e265]:
+                    - button [ref=f4e266] [cursor=pointer]
+                    - button [ref=f4e269] [cursor=pointer]
+                - generic [ref=f4e271]:
+                  - button "First name Walk" [ref=f4e272]:
+                    - generic [ref=f4e273]: First name
+                    - generic [ref=f4e274]: Walk
+                  - button "Last name Through" [ref=f4e279]:
+                    - generic [ref=f4e280]: Last name
+                    - generic [ref=f4e281]: Through
+              - generic [ref=f4e287]:
+                - button "Organization" [ref=f4e290] [cursor=pointer]
+                - generic [ref=f4e293]:
+                  - generic [ref=f4e294]: No organization is linked to this person.
+                  - button "Organization" [ref=f4e297] [cursor=pointer]
+              - generic [ref=f4e301]:
+                - generic [ref=f4e302]:
+                  - button "Deals" [ref=f4e304] [cursor=pointer]
+                  - button [ref=f4e308] [cursor=pointer]
+                - generic [ref=f4e311]:
+                  - generic [ref=f4e312]: No deals added yet.
+                  - button "New deal" [ref=f4e313] [cursor=pointer]
+              - generic [ref=f4e317]:
+                - generic [ref=f4e318]:
+                  - button "Overview" [ref=f4e320] [cursor=pointer]
+                  - button "Refresh" [ref=f4e324] [cursor=pointer]
+                - generic [ref=f4e326]:
+                  - generic [ref=f4e327]:
+                    - generic [ref=f4e328]:
+                      - paragraph [ref=f4e329]: Inactive (days)
+                      - img "Info" [ref=f4e330]
+                    - paragraph [ref=f4e331]: "0"
+                  - generic [ref=f4e332]:
+                    - paragraph [ref=f4e334]: Created
+                    - paragraph [ref=f4e335]: October 24, 2026
+              - generic [ref=f4e337]:
+                - button "Smart Bcc" [ref=f4e339] [cursor=pointer]
+                - generic [ref=f4e343]:
+                  - generic [ref=f4e344]:
+                    - paragraph [ref=f4e345]: Universal address
+                    - img "Info" [ref=f4e346]
+                  - textbox [ref=f4e350]: saleshandy@pipedrivemail.com
+              - generic [ref=f4e354]:
+                - generic [ref=f4e355]:
+                  - button "leads" [ref=f4e357] [cursor=pointer]
+                  - button "Add new lead" [ref=f4e361] [cursor=pointer]
+                - link "+ Add new lead" [ref=f4e365] [cursor=pointer]:
+                  - /url: "#"
+              - generic [ref=f4e369]:
+                - generic [ref=f4e370]:
+                  - button "Projects" [ref=f4e372] [cursor=pointer]
+                  - img "Info" [ref=f4e377]
+                - generic [ref=f4e379]:
+                  - button "Project" [ref=f4e380] [cursor=pointer]
+                  - button "Link project" [ref=f4e383] [cursor=pointer]
+              - generic [ref=f4e387]:
+                - generic [ref=f4e388]:
+                  - generic [ref=f4e389]: "Updated:"
+                  - generic [ref=f4e390]: Saturday, October 24, 2026 11:34 AM
+                - generic [ref=f4e391]:
+                  - generic [ref=f4e392]: "Created:"
+                  - generic [ref=f4e393]: Saturday, October 24, 2026 11:34 AM
+            - generic [ref=f4e396]:
+              - list [ref=f4e400]:
+                - generic [ref=f4e403]:
+                  - listitem [ref=f4e404] [cursor=pointer]:
+                    - generic [ref=f4e406]: Activity
+                  - listitem [ref=f4e407] [cursor=pointer]:
+                    - generic [ref=f4e409]: Notes
+                  - listitem [ref=f4e410]:
+                    - listitem [ref=f4e412] [cursor=pointer]:
+                      - generic [ref=f4e414]: Meeting scheduler
+                  - listitem [ref=f4e415] [cursor=pointer]:
+                    - generic [ref=f4e417]: Call
+                  - listitem [ref=f4e418] [cursor=pointer]:
+                    - generic [ref=f4e420]: WhatsApp
+                  - listitem [ref=f4e421] [cursor=pointer]:
+                    - generic [ref=f4e423]: Email
+                  - listitem [ref=f4e424] [cursor=pointer]:
+                    - generic [ref=f4e426]: Files
+                  - listitem [ref=f4e427] [cursor=pointer]:
+                    - generic [ref=f4e429]: Documents
+                  - listitem
+                - generic [ref=f4e430]: Click here to add an activity...
+              - generic [ref=f4e433]:
+                - generic [ref=f4e434]:
+                  - button "Focus" [ref=f4e435] [cursor=pointer]
+                  - generic [ref=f4e439]:
+                    - switch "Expand all items" [ref=f4e440]
+                    - generic [ref=f4e441] [cursor=pointer]
+                    - generic [ref=f4e442] [cursor=pointer]: Expand all items
+                - generic [ref=f4e443]:
+                  - generic [ref=f4e444]: No focus items yet
+                  - generic [ref=f4e445]: Scheduled activities, pinned notes, email drafts and scheduled emails will appear here.
+                  - button "Schedule an activity" [ref=f4e447] [cursor=pointer]
+              - generic [ref=f4e451]:
+                - button "History" [ref=f4e453] [cursor=pointer]
+                - list [ref=f4e456]:
+                  - listitem [ref=f4e457]:
+                    - button "All" [ref=f4e459] [cursor=pointer]
+                  - listitem [ref=f4e461]:
+                    - button "Activities (0)" [ref=f4e463] [cursor=pointer]
+                  - listitem [ref=f4e465]:
+                    - button "Notes (0)" [ref=f4e467] [cursor=pointer]
+                  - listitem [ref=f4e469]:
+                    - button "WhatsApp" [ref=f4e471] [cursor=pointer]
+                  - listitem [ref=f4e473]:
+                    - button "Emails" [ref=f4e475] [cursor=pointer]
+                  - listitem [ref=f4e477]:
+                    - button "Files" [ref=f4e479] [cursor=pointer]
+                  - listitem [ref=f4e481]:
+                    - button "Documents" [ref=f4e483] [cursor=pointer]
+                  - listitem [ref=f4e485]:
+                    - button "Leads" [ref=f4e487] [cursor=pointer]
+                  - listitem [ref=f4e489]:
+                    - button "Deals" [ref=f4e491] [cursor=pointer]
+                  - listitem [ref=f4e493]:
+                    - button "Changelog" [ref=f4e495] [cursor=pointer]
+                - generic [ref=f4e506]:
+                  - generic [ref=f4e507]:
+                    - generic [ref=f4e508]: Person created
+                    - generic [ref=f4e510]:
+                      - text: ":"
+                      - time [ref=f4e511]: Today at 11:34 AM
+                  - generic [ref=f4e512]:
+                    - generic [ref=f4e513]: Today at 11:34 AM
+                    - generic [ref=f4e514]: ·
+                    - text: Dharmesh Pipedrive (Web App)

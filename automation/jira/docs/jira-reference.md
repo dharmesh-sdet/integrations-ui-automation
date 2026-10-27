@@ -31,6 +31,7 @@ Assignee and QA need an accountId. Passing an email fails with "User
 |---|---|---|---|
 | Darshan | darshan@saleshandy.com | `5af5d8dd244bc90a10605d4f` | Assignee |
 | Dharmesh Patel | dharmesh@saleshandy.com | `712020:c7dedb58-9cb3-4450-a98f-5b5b56f6556b` | QA |
+| Rudra Chauhan | rudra@saleshandy.com | `712020:a24ee286-dfc7-4be1-9a49-4d9ba8799676` | None. Tag only when QA says so (QA, 2026-10-26) |
 
 For anyone else, look them up (for example with `lookupJiraAccountId` via
 `discover`) and add them here.
@@ -111,6 +112,31 @@ file the order is `"links": ["AL-4131", "AL-4132"]`; add siblings after them.
 | AL-4142 | Opportunity is Created in Salesforce |
 | AL-4143 | Account is Created in Salesforce |
 | AL-4144 | Lead is Created in Salesforce |
+
+## Pipedrive workflow tracking tickets
+
+The parent is AL-4170 ("[Pipedrive] Triggers and Activities", Task, Epic
+AL-3982), with one sub-task per workflow, titled with the workflow name.
+Looked up in Jira on 2026-10-26. Email is Bounced has no sub-task yet; ask QA
+before linking it. Exploration parent: AL-3990 ("Other CRM Connectors -
+Salesforce, Zoho, Pipedrive - Exploration").
+
+Pipedrive bugs link AL-4170 first, then the sub-task of the trigger they were
+found on (QA's choice for AL-4177, 2026-10-26). In a draft file:
+`"links": ["AL-4170", "AL-4176"]`; add siblings after them. Staging account
+is `gpipedrive`; Pipedrive company is saleshandy.pipedrive.com.
+
+| Sub-task | Trigger |
+|---|---|
+| AL-4171 | Email Sent from Saleshandy |
+| AL-4172 | Reply is Received in Saleshandy |
+| AL-4173 | Prospect Outcome is Updated in Saleshandy |
+| AL-4174 | Sequence Email is Opened in Saleshandy |
+| AL-4175 | Link is Clicked in Saleshandy |
+| AL-4176 | Prospect is Unsubscribed in Saleshandy |
+
+Filed Pipedrive bugs: AL-4177 (Prospect is Unsubscribed: Create a Person runs
+twice for one unsubscribe and creates two persons).
 
 ## `createJiraIssue` payload
 

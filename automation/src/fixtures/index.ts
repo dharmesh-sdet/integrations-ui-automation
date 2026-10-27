@@ -13,6 +13,11 @@ import { SequenceBuilderPage } from '../pages/saleshandy/sequence-builder.page.t
 import { SaleshandySequencePage } from '../pages/saleshandy/sequence.page.ts';
 import { HubSpotIntegrationPage } from '../pages/saleshandy/hubspot-integration.page.ts';
 import { SalesforceIntegrationPage } from '../pages/saleshandy/salesforce-integration.page.ts';
+import { PipedriveIntegrationPage } from '../pages/saleshandy/pipedrive-integration.page.ts';
+import { PipedriveDealsPage } from '../pages/pipedrive/deals.page.ts';
+import { PipedriveLeadsPage } from '../pages/pipedrive/leads.page.ts';
+import { PipedriveOrganizationsPage } from '../pages/pipedrive/organizations.page.ts';
+import { PipedrivePeoplePage } from '../pages/pipedrive/people.page.ts';
 import { SalesforceEmailSentPage } from '../pages/saleshandy/salesforce-email-sent.page.ts';
 import { SalesforceOutcomePage } from '../pages/saleshandy/salesforce-outcome.page.ts';
 import { SalesforceAccountsPage } from '../pages/salesforce/accounts.page.ts';
@@ -38,6 +43,12 @@ type Fixtures = {
   hubspotPage: Page;
   saleshandyPage: Page;
   salesforcePage: Page;
+  pipedrivePage: Page;
+  pipedriveIntegration: PipedriveIntegrationPage;
+  pipedrivePeople: PipedrivePeoplePage;
+  pipedriveDeals: PipedriveDealsPage;
+  pipedriveLeads: PipedriveLeadsPage;
+  pipedriveOrganizations: PipedriveOrganizationsPage;
   salesforceIntegration: SalesforceIntegrationPage;
   salesforceLeads: SalesforceLeadsPage;
   salesforceEmailSent: SalesforceEmailSentPage;
@@ -152,6 +163,13 @@ export const test = base.extend<Options & Fixtures, WorkerFixtures>({
     loggedInPage(sessionContexts, 'saleshandy', account, testInfo, use),
   salesforcePage: async ({ sessionContexts, account }, use, testInfo) =>
     loggedInPage(sessionContexts, 'salesforce', account, testInfo, use),
+  pipedrivePage: async ({ sessionContexts, account }, use, testInfo) =>
+    loggedInPage(sessionContexts, 'pipedrive', account, testInfo, use),
+  pipedriveIntegration: async ({ saleshandyPage }, use) => use(new PipedriveIntegrationPage(saleshandyPage)),
+  pipedrivePeople: async ({ pipedrivePage }, use) => use(new PipedrivePeoplePage(pipedrivePage)),
+  pipedriveDeals: async ({ pipedrivePage }, use) => use(new PipedriveDealsPage(pipedrivePage)),
+  pipedriveLeads: async ({ pipedrivePage }, use) => use(new PipedriveLeadsPage(pipedrivePage)),
+  pipedriveOrganizations: async ({ pipedrivePage }, use) => use(new PipedriveOrganizationsPage(pipedrivePage)),
   salesforceIntegration: async ({ saleshandyPage, sessionContexts, account }, use, testInfo) =>
     use(new SalesforceIntegrationPage(saleshandyPage, reconnectFor(saleshandyPage, sessionContexts, account, testInfo))),
   salesforceLeads: async ({ salesforcePage }, use) => use(new SalesforceLeadsPage(salesforcePage)),

@@ -100,6 +100,17 @@ export class SaleshandySequencePage extends SaleshandyPage {
     await this.page.getByRole('columnheader', { name: 'Clicked' }).waitFor();
   }
 
+  // The Emails list loads 25 rows a page. A sequence with many rows (86 on
+  // Pipedrive Regression, 2026-10-27) keeps a new prospect's row off page 1, so
+  // search for its email when the row is not there.
+  private async searchIfOffFirstPage(fullName: string, step: number, email?: string): Promise<void> {
+    if (!email || await this.emailRow(fullName, step, email).isVisible()) return;
+    const search = this.page.getByRole('textbox', { name: 'Search' });
+    await search.fill(email);
+    // Typing alone does not filter; the request goes out on Enter.
+    await search.press('Enter');
+  }
+
   async ensureSent(sequenceId: string, fullName: string, step = 1, email?: string): Promise<void> {
     await this.sendNow(sequenceId, fullName, step, email);
   }
@@ -111,6 +122,7 @@ export class SaleshandySequencePage extends SaleshandyPage {
     // look failed). The list does not refresh itself, so reopen it on each try.
     await expect(async () => {
       await this.openEmails(sequenceId);
+      await this.searchIfOffFirstPage(fullName, step, email);
       await expect(this.emailRow(fullName, step, email)).toBeVisible({ timeout: 8_000 });
     }).toPass({ timeout: 120_000, intervals: [5_000] });
     const row = this.emailRow(fullName, step, email);
@@ -135,6 +147,7 @@ export class SaleshandySequencePage extends SaleshandyPage {
     // each try.
     await expect(async () => {
       await this.openEmails(sequenceId);
+      await this.searchIfOffFirstPage(fullName, step, email);
       const fresh = this.emailRow(fullName, step, email);
       await expect(fresh).toBeVisible({ timeout: 10_000 });
       expect((await (await this.cell(fresh, 'Scheduled/Sent')).innerText()).trim()).toMatch(/^Sent/);
@@ -350,6 +363,16 @@ export class SaleshandySequencePage extends SaleshandyPage {
     await this.toolbarAction(sequenceId, email, 'right-arrow');
     await this.page.getByRole('button', { name: 'Apply changes' }).click();
     await expect(this.page.getByText('Prospect(s) status updated successfully').first()).toBeVisible({ timeout: 15_000 });
+  }
+
+  // The prospect's row on the Prospects tab as one line of text (status included), after a hard refresh.
+  async prospectRowText(sequenceId: string, email: string): Promise<string> {
+    await this.openProspects(sequenceId);
+    await this.page.reload({ waitUntil: 'load' });
+    await this.closeSidebar();
+    await this.searchProspect(email);
+    await expect(this.prospectRow(email)).toBeVisible({ timeout: 30_000 });
+    return (await this.prospectRow(email).first().innerText()).replace(/\s+/g, ' ').trim();
   }
 
   // Reloads the Prospects tab until the prospect's row shows `status`.

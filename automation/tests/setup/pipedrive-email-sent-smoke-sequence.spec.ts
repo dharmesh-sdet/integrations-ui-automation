@@ -11,7 +11,9 @@ import { libraryTemplates } from '../../src/config/account-setup.ts';
 // Email accounts: the two read on the Email Accounts page on 2026-10-22 (Salesforce EmailSent SMTP
 // Default 50 a day, Rudra EmailSent SMTP 150 a day). The page was not read again for this run, so
 // SMOKE_EMAIL_ACCOUNTS=a@x.com,b@y.com overrides them. The run sends 8 emails, under the cap of 20 a day.
-const NAME = `Pipedrive Email Sent Smoke ${new Date().toISOString().slice(0, 10)}`;
+// SMOKE_SEQUENCE_NAME sets another name, so the Prospect Outcome smoke run
+// (scripts/run-pipedrive-outcome-updated-smoke.sh) gets its own sequence from the same steps.
+const NAME = process.env.SMOKE_SEQUENCE_NAME ?? `Pipedrive Email Sent Smoke ${new Date().toISOString().slice(0, 10)}`;
 const TEMPLATE = libraryTemplates[0];
 const EMAIL_ACCOUNTS = (process.env.SMOKE_EMAIL_ACCOUNTS ?? 'Rachelgreen47sh+3@gmail.com,rudra+emailsentprod@saleshandy.com').split(',').map((e) => e.trim());
 

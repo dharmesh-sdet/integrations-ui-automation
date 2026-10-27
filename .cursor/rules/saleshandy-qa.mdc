@@ -1,0 +1,6 @@
+---
+description: Saleshandy QA project rules (carried over from Claude Code)
+alwaysApply: true
+---
+
+Before any work, read `AGENTS.md`, then `HANDOFF.md`, then `CLAUDE.md` and `plan.md` section 0 (these win over everything). QA's standing preferences are in `.cursor/claude-memory/` (index: `MEMORY.md`). Skills in `.claude/skills/*/SKILL.md` are plain instruction files: open and follow the relevant one. Replies follow `.claude/skills/no-ai-slop/SKILL.md` General Response Mode: short, direct, no filler, no recap, no hedging. Ask before assuming: one round of questions, each with a suggested default.

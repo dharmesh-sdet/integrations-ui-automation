@@ -1,0 +1,28 @@
+- [Check live sessions on resume](check-live-sessions-on-resume.md) — ListAgents + ps + file mtimes first, then propose an unowned workflow
+- [Resume pointers](resume-pointers.md) — files that hold project state and the current phase (Link Clicked: link-clicked-progress.md; Reply Received: reply-received-progress.md; Prospect Outcome: prospect-outcome-updated-progress.md)
+- [No unnecessary stops](no-unnecessary-stops.md) — keep going once data is given; log refresh 15s then 10s
+- [Ask before assuming](ask-before-assuming.md) — batch questions up front for any open point (scope, layout, meaning), then work
+- [Multi-account plan](multi-account-plan.md) — one Saleshandy account per workflow for parallel runs; built, see context/project.md
+- [QA only runs the script](qa-only-runs-script.md) — Claude runs specs, fixes script failures, handles data; do not wait on QA
+- [Notify when blocked](notify-when-blocked.md) — PushNotification + notify-send (PushNotification is skipped while terminal is active) whenever Claude needs QA or a run QA waits on ends
+- [Jira: verify, then draft](jira-verify-then-draft.md) — bugs only: ask QA bug-or-not first, draft from template to jira/drafts, one-click send
+- [Jira comments via chat, not draft files](jira-comments-via-chat-not-draft-files.md) — comments go through chat confirm + direct MCP post
+- [Set sender settings myself](set-sender-settings-myself.md) — fix wrong sender interval/limits on staging, no stop; verify after reload
+- [Do not open report.html](dont-open-report-html.md) — never show/open report.html mid-task; QA reviews it after the task is done
+- [Log product issues, do not wait](log-product-issues-dont-wait.md) — note product failures in the progress file, keep running, QA reviews later
+- [Jira Environment = Production](jira-environment-production.md) — bug drafts: Environment Production, Note says 'Affected Environment - Staging'
+- [Realistic test data](realistic-test-data-dont-bend.md) — never rename test data to make the product pass; prove causes from logs, not data changes
+- [Unsubscribed workflow plan](unsubscribed-workflow-plan.md) — AL-4015: MCP explore, test agents plan/generate/heal, QA gates before any script
+- [Drafts human readable](drafts-human-readable.md) — show drafts as rendered text, not in a code block
+- [Minimal, accurate updates](minimal-accurate-updates.md) — short status, verified facts only, no long recaps
+- [Use Playwright agents for workflows](use-playwright-agents-for-workflows.md) — from 2026-10-14 planner/generator/healer for every new workflow, not hand-written specs
+- [Salesforce: hand-write specs](salesforce-hand-written-specs.md) — QA 2026-10-19: no planner/generator/healer for Salesforce workflows; hand-write like HubSpot, overrides the line above
+- [Rerun failed rows, not whole suite](run-failed-rows-not-whole-suite.md) — run once to learn errors, then only failed/unrun rows with KEEP_TEST_DATA; QA runs the full script
+- [Compact at 120K, cheap subagents](compact-at-130k-cheap-subagents.md) — at 120K: notify both ways, stop subagents, ask QA to switch model and /compact
+- [Use no-ai-slop on test cases](use-no-ai-slop-on-test-cases.md) — run QA Test Case Mode on every test case file after drafting, before QA review
+- [no-ai-slop General Response Mode](no-ai-slop-general-response-mode.md) — STRICT, every reply in every session: no-slop rules for ordinary replies, also in CLAUDE.md "Replies" bullet
+- [No Claude in Chrome, realistic cases](no-claude-in-chrome-realistic-cases.md) — use project Playwright MCP, narrow reads; proposals must be doable by hand
+- [Cap real email sends](cap-real-email-sends.md) — QA's mailbox was exhausted; sends capped per day via SEND_CAP (default 40, of the 150 a day the mailbox allows)
+- [Check the CRM first, Logs fallback](check-crm-first-logs-fallback.md) — wait 15s, look in CRM; Logs only if missing; Error is asked, not failed; keep specs short
+- [Salesforce bug links](jira-salesforce-links-parent-first.md) — links AL-4131 first, then the trigger ticket (AL-4132...)
+- [Usage-limit handoff](usage-limit-handoff.md) — at QA's 95% weekly usage call, write HANDOFF.md for Cursor, keep progress files current

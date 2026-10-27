@@ -11,6 +11,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { readCsv, type Row } from './csv.ts';
 import { EXTRA_NATIONALITIES, type Nationality } from './countries.ts';
+import { pipedriveIndustry } from './pipedrive-industries.ts';
 
 export const dataDir = path.resolve(import.meta.dirname, '../../test-data');
 
@@ -202,8 +203,10 @@ class PersonFactory {
 // A new person in place of `old`: template fields replaced, other columns
 // (Scenario, HubSpot Setup, Deal Value, ...) kept, "Updated ..." values re-made
 // to fit the new person. Only columns in `header` are filled.
-function replacePerson(old: Row, header: string[], factory: PersonFactory): Row {
+function replacePerson(old: Row, header: string[], factory: PersonFactory, csv = ''): Row {
   const person = factory.next();
+  // Pipedrive rejects an organization whose Industry is not on its picklist, so its data takes list values.
+  if (csv.startsWith('pipedrive/')) for (const key of ['Industry', 'Company Industry']) person[key] = pipedriveIndustry(person[key]);
   if (!old['Company']) for (const f of COMPANY_FIELDS) person[f] = '';
   const row: Row = {};
   for (const h of header) row[h] = TEMPLATE_FIELDS.includes(h) ? (person[h] ?? '') : (old[h] ?? '');
@@ -279,7 +282,7 @@ export function generateFrom(outCsv: string, sourceCsv: string): string[] {
   const factory = new PersonFactory();
   const changes = new Map<string, [Row, Row]>();
   const rows = readCsv(sourceCsv).map((old) => {
-    const fresh = replacePerson(old, header, factory);
+    const fresh = replacePerson(old, header, factory, outCsv);
     if (old['Email']) changes.set(old['Email'].toLowerCase(), [old, fresh]);
     return fresh;
   });
@@ -308,7 +311,7 @@ function replaceRows(csv: string, shouldReplace: (email: string) => boolean): st
   const rows = readCsv(csv).map((old) => {
     const email = (old['Email'] ?? '').toLowerCase();
     if (!email || !shouldReplace(email)) return old;
-    const fresh = replacePerson(old, header, factory);
+    const fresh = replacePerson(old, header, factory, csv);
     changes.set(email, [old, fresh]);
     return fresh;
   });

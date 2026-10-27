@@ -9,7 +9,7 @@ export type SalesforceLogEntry ={ id: string; status: string; text: string };
 // Opportunity have "Closing date" (Days, spinbutton, default 0) and "Opportunity
 // Stage" (list); Record(log) an Email Activity has "Select Object" (Lead,
 // Opportunity, Contact). Every other activity opens no dialog.
-export type ExtraConfig = { closingDays?: number; stage?: string; object?: 'Lead' | 'Opportunity' | 'Contact' };
+export type ExtraConfig = { closingDays?: number; stage?: string; object?: 'Lead' | 'Opportunity' | 'Contact'; pipeline?: string };
 
 // An activity chip to select; `extra` is filled in its Extra Configuration dialog.
 export type ActivityPick = string | { activity: string; extra: ExtraConfig };
@@ -21,7 +21,7 @@ const escapeRegExp = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&
 // .switchToggle rows, .bs-select-box activity boxes, .action-container chips),
 // so the locators follow src/pages/saleshandy/hubspot-integration.page.ts.
 export class SalesforceIntegrationPage extends SaleshandyPage {
-  private readonly path = '/api-and-integrations/integrations/salesforce';
+  protected readonly path: string = '/api-and-integrations/integrations/salesforce';
 
   // ---- Triggers & Activity ----
 

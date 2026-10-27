@@ -15,6 +15,7 @@ Read the page you need, not all of them.
 | Salesforce Contacts: related lists, campaign membership, Notes & Attachments | [product/salesforce-contacts.md](product/salesforce-contacts.md) |
 | Salesforce field mapping: how users map fields, all available fields per object (Lead 60, Opportunity 46, Account 66) | [product/salesforce-field-mapping.md](product/salesforce-field-mapping.md) |
 | HubSpot integration: workflows, activities, intended behavior, field mapping | [../automation/context/hubspot/00-overview.md](../automation/context/hubspot/00-overview.md) (single source, not copied here) |
+| Start here before testing any workflow: how it is fired, what correct looks like, accepted behaviour, known bugs, which workflows affect each other (developer API test runs, all 33 logs in `../integration-skills/test-logs/`) | [product/workflow-behaviour-dev-kit.md](product/workflow-behaviour-dev-kit.md) |
 | How we test: environments, data, timing, verification, false failures | [testing/how-to-test.md](testing/how-to-test.md) |
 | Reusable test code and the checklist for a new integration (Salesforce next) | [testing/reusable-building-blocks.md](testing/reusable-building-blocks.md) |
 | Production smoke: scope, rules, setup, checklists per workflow | [../automation/notes/production-testing/README.md](../automation/notes/production-testing/README.md) (single source, not copied) |

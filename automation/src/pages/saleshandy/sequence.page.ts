@@ -1,6 +1,6 @@
 import { expect, type Locator } from '@playwright/test';
 import type { Row } from '../../data/csv.ts';
-import { claimSend } from '../../data/send-cap.ts';
+import { checkSendCap, recordSend } from '../../data/send-cap.ts';
 import { SaleshandyPage } from './saleshandy.page.ts';
 
 // Create & Add Prospect form: CSV column to input (no accessible names; ids
@@ -115,7 +115,7 @@ export class SaleshandySequencePage extends SaleshandyPage {
     }).toPass({ timeout: 120_000, intervals: [5_000] });
     const row = this.emailRow(fullName, step, email);
     if ((await (await this.cell(row, 'Scheduled/Sent')).innerText()).trim().startsWith('Sent')) return;
-    claimSend();
+    checkSendCap();
     // The row's three-dot menu has no accessible name.
     await row.locator('#dropdown-basic').click();
     await this.page.getByText('Send now', { exact: true }).click();
@@ -124,7 +124,7 @@ export class SaleshandySequencePage extends SaleshandyPage {
     // POST .../emails/send aborted by the next page load).
     const sent = this.page.waitForResponse((r) => r.url().includes(`/sequences/${sequenceId}/emails/send`) && r.request().method() === 'POST', { timeout: 30_000 });
     await this.page.getByRole('dialog').filter({ hasText: 'Send the email now' }).getByRole('button', { name: 'Yes', exact: true }).click();
-    await sent;
+    if ((await sent).ok()) recordSend(`sequence ${sequenceId} ${fullName} step ${step}`);
     // The "Email sent successfully" / "Email has already been sent" toast
     // (seen 2026-10-09) has the same race as markAsReplied's toast (found
     // 2026-10-19): it can be gone before the assertion polls it, even though

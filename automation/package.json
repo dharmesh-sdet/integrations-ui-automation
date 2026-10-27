@@ -9,6 +9,8 @@
   "scripts": {
     "test": "playwright test --project=chromium",
     "test:edge": "playwright test --project=edge",
+    "parallel": "node scripts/run-parallel.ts",
+    "sf:run-now": "node scripts/run-now.ts",
     "test:email-opened": "bash scripts/run-email-opened.sh",
     "test:email-bounced": "bash scripts/run-email-bounced.sh",
     "smoke:company-created": "bash scripts/run-company-created-smoke.sh",
@@ -27,6 +29,7 @@
     "login:hubspot:edge": "node scripts/login.ts hubspot edge",
     "login:salesforce": "node scripts/login.ts salesforce chromium",
     "login:salesforce:fresh": "node scripts/login-salesforce-fresh.ts",
+    "login:salesforce:auto": "node --env-file-if-exists=.env scripts/login-salesforce-auto.ts",
     "prospect:delete": "node scripts/delete-prospect.ts",
     "hubspot:delete-contact": "node scripts/delete-hubspot-contact.ts",
     "data:generate": "node scripts/generate-data.ts",

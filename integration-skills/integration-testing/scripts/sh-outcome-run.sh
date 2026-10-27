@@ -48,5 +48,6 @@ for i in $(seq 1 24); do
   sleep 10
 done
 [ -z "${ID:-}" ] && { echo "NO RUN FOUND (contact $CID, outcome $OUTCOME)"; exit 3; }
+sleep 20  # COMPLETED can be reported before the last nodes are logged
 $H "$ENV" get "$ID" "$RUN/$TS-$SC-nodes-$ID.json" >/dev/null
 echo "RUN $SC $ID $ST contact=$CID $RUN/$TS-$SC-nodes-$ID.json"

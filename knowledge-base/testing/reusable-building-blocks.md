@@ -18,6 +18,10 @@ writing any helper, page object or fixture.
 | Prove nothing happens | `staysTrue(page, check, times)` | `src/utils/wait.ts` |
 | Page object base (goto plus login-page check) | `BasePage` | `src/pages/base.page.ts` |
 | Saleshandy sidebar covering the page | `SaleshandyPage.closeSidebar()` | `src/pages/saleshandy/saleshandy.page.ts` |
+| Salesforce card shows "Re-connect" mid-run | Automatic, once per test, staging only: reuses the worker's Salesforce login; if the popup asks for a login, runs `npm run login:salesforce:auto` (`.env` username and password; SMS code: a window opens, QA is notified, it waits 5 min) | `src/flows/salesforce-connection.ts`, `scripts/login-salesforce-auto.ts` |
+| Run a Salesforce-side workflow now instead of waiting for its 3-hour cron | `npm run sf:run-now -- <account> "<workflow name or id>"`; in a spec `RefoldRunNow.open(page)`, then `run()` and `waitForEnd()` | `scripts/run-now.ts`, `src/flows/refold-run-now.ts` |
+| Run chosen workflows in parallel, with a warning for workflows that affect each other | `npm run parallel -- salesforce/email-sent hubspot/link-clicked` (one lane per account; `--yes` skips the question) | `scripts/run-parallel.ts` |
+| Daily send cap shared by parallel runs | `checkSendCap()` before, `recordSend()` after a successful send (`test-data/sends-<date>.log`) | `src/data/send-cap.ts` |
 | Find a prospect in Saleshandy CRM and read its fields | `SaleshandyCrmPage.search/openProspect/field` | `src/pages/saleshandy/crm.page.ts` |
 | Plain-English report after a run | reporter | `reporter/plain-report.ts`, `reporter/plain-english.ts` |
 | Jira bug and comment drafts | Jira kit | `jira/CLAUDE.md` |

@@ -89,3 +89,20 @@ placeholder, not a real action. Request bodies: copy from the HubSpot workflows 
 - A link click also counts as an **open** (fires "Email Opened" workflows even with open tracking off). Disable every other workflow subscribed to the account before testing click/open workflows, or their actions race yours.
 - Salesforce standard duplicate rules match Contact↔Lead across objects and also fuzzy-match names (95% on a similar name + email) — use clearly distinct names per scenario.
 - Click-by-script (`link-is-clicked-in-saleshandy/click-email.py`) needs TEST_MAILBOX_USERNAME / TEST_MAILBOX_APP_PASSWORD in refold-qa-automation/.env (empty today → user clicks by hand).
+
+## Learned 2026-10-12 (Zoho) — app config + field mapping by API
+- **Read app config** (field mappings + every workflow's `enabled`): `GET $REFOLD_PUBLIC_BASE/slug/<crm>/config/<config_id>` with
+  `x-api-key: $REFOLD_ORG_API_KEY` + `linked_account_id: <id>` (the LA token gives "Missing API Key"). `config_id` = the
+  `config_id` on any execution record (80121 here). `GET $REFOLD_PUBLIC_BASE/config` does not exist.
+- **Save a field mapping** (what the webui's `cobalt.updateConfigField(crm, mapFieldId, obj)` does): `PUT $REFOLD_PUBLIC_BASE/config/field/<appFieldId>`
+  (no `workflow_id`) with the LA token + `slug: <crm>`, body `{"value": {"<shKey>": "<CRM api name>"}}`.
+  shKey = `formatProspectLabel(label)` for default fields (= `mappingDefaultField`, e.g. `phoneNumber`, `jobTitle`),
+  `camelCase(label)` for custom ones (webui `configuration-content.tsx:59`). CRM api names = the map field's `options[].value`.
+- Zoho app field ids (staging): Deal Fields `64a7d3aa65d5483aa1e724bd`, Contact Fields `64b8b4990edd2d8358d64717`,
+  Account Fields `64b8b4f30edd2d8358d64735`, Lead Fields `64e41f7b83771b6c370352ac`.
+
+## Learned 2026-10-14 (HubSpot Email Opened)
+- HubSpot/Salesforce action selection is stored by the webui as an **array in the first action slot**: `Hubspot Action1 = ["update-deal","create-note"]`
+  (`saleshandy-webui .../triggers-and-activity/triggers-and-activity.tsx:176-187`). A plain string saves fine via the API but the UI shows "no action" — always PUT the array.
+- `text-only-email`: `0` off, `1` remove styling automatically (tracking still works), `2` text only (forces open tracking off).
+- `refold-qa-automation/.env` `HUBSPOT_ACCESS_TOKEN` has trailing text after a space — use `${L%% *}` (see `hubspot/staging/sequence-email-is-opened-in-saleshandy/hs.sh`).

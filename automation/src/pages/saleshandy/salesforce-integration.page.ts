@@ -1,4 +1,4 @@
-import type { Locator } from '@playwright/test';
+import type { Locator, Page } from '@playwright/test';
 import { SaleshandyPage } from './saleshandy.page.ts';
 
 export type MappingObject = 'Lead' | 'Contact' | 'Opportunity' | 'Account';
@@ -23,6 +23,32 @@ const escapeRegExp = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&
 export class SalesforceIntegrationPage extends SaleshandyPage {
   private readonly path = '/api-and-integrations/integrations/salesforce';
 
+  // Set by the fixture (reconnectSalesforce in src/flows/salesforce-connection.ts).
+  // Without it a dropped connection fails the test, as before.
+  private readonly reconnect?: () => Promise<void>;
+
+  private reconnected = false;
+
+  constructor(page: Page, reconnect?: () => Promise<void>) {
+    super(page);
+    this.reconnect = reconnect;
+  }
+
+  // The page falls back to the integrations list and the Salesforce card says "Re-connect"
+  // when Saleshandy lost its Salesforce connection (seen 2026-10-21, sfoutcomeupdated).
+  // Reconnects once per test; a second drop in the same test fails it.
+  private async reconnectIfDropped(): Promise<boolean> {
+    if (!(await this.page.getByRole('link', { name: 'Re-connect' }).or(this.page.getByText('Re-connect', { exact: true })).first().isVisible())) {
+      return false;
+    }
+    if (!this.reconnect || this.reconnected) {
+      throw new Error('Saleshandy lost its Salesforce connection: the Salesforce card shows "Re-connect". Click Re-connect on this account and run again.');
+    }
+    this.reconnected = true;
+    await this.reconnect();
+    return true;
+  }
+
   // ---- Triggers & Activity ----
 
   async openTriggers(): Promise<void> {
@@ -31,10 +57,9 @@ export class SalesforceIntegrationPage extends SaleshandyPage {
     // timed out). It renders on a reload, so reload up to 3 times, 30 s apart.
     for (let attempt = 1; ; attempt++) {
       if (await this.triggerRows().first().waitFor({ timeout: 30_000 }).then(() => true, () => false)) return;
-      // The page falls back to the integrations list and the Salesforce card says "Re-connect"
-      // when Saleshandy lost its Salesforce connection (seen 2026-10-21, sfoutcomeupdated).
-      if (await this.page.getByRole('link', { name: 'Re-connect' }).or(this.page.getByText('Re-connect', { exact: true })).first().isVisible()) {
-        throw new Error('Saleshandy lost its Salesforce connection: the Salesforce card shows "Re-connect". Click Re-connect on this account and run again.');
+      if (await this.reconnectIfDropped()) {
+        await this.goto(`${this.path}?tab=triggers-activity`);
+        continue;
       }
       if (attempt === 3) throw new Error('The Triggers & Activity page showed no triggers after 3 loads.');
       await this.page.reload();
@@ -182,6 +207,8 @@ export class SalesforceIntegrationPage extends SaleshandyPage {
   // Opportunity Properties, Account Properties, salesforce_api_version.
   async openFieldMapping(): Promise<void> {
     await this.goto(this.path);
+    if (await this.leadPropertiesCard().waitFor({ timeout: 30_000 }).then(() => true, () => false)) return;
+    if (await this.reconnectIfDropped()) await this.goto(this.path);
     await this.leadPropertiesCard().waitFor();
   }
 

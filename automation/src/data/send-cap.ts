@@ -2,26 +2,29 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 // Real emails go out through QA's own mailbox, which has a daily limit. Every
-// "Send now" counts here, per calendar day, in test-data/send-count.json. Past
-// the cap the test fails before sending. Raise it with SEND_CAP=<n>.
+// successful "Send now" appends one line to test-data/sends-<date>.log. A one-line
+// append is atomic, so parallel runs never lose a count (the old read, add 1, write
+// of send-count.json could), and failed attempts are not counted. Past the cap the
+// test fails before sending. Raise it with SEND_CAP=<n>.
+// ponytail: check and send are two steps, so lanes that check at cap - 1 at the same
+// moment can each send one more; fine below the mailbox's own 150 a day.
 const DEFAULT_CAP = 80;
 
-function countFile(): string {
-  return path.resolve(import.meta.dirname, '../../test-data/send-count.json');
+function logFile(): string {
+  return path.resolve(import.meta.dirname, `../../test-data/sends-${new Date().toISOString().slice(0, 10)}.log`);
 }
 
-export function claimSend(): void {
+export function checkSendCap(): void {
   const cap = Number(process.env.SEND_CAP ?? DEFAULT_CAP);
-  const today = new Date().toISOString().slice(0, 10);
-  const file = countFile();
-  let state: { date: string; count: number } = { date: today, count: 0 };
-  if (fs.existsSync(file)) {
-    const saved = JSON.parse(fs.readFileSync(file, 'utf8'));
-    if (saved.date === today) state = saved;
+  const file = logFile();
+  const count = fs.existsSync(file) ? fs.readFileSync(file, 'utf8').split('\n').filter(Boolean).length : 0;
+  if (count >= cap) {
+    throw new Error(`Send cap reached: ${count} of ${cap} emails sent today. Raise SEND_CAP or wait until tomorrow.`);
   }
-  if (state.count >= cap) {
-    throw new Error(`Send cap reached: ${state.count} of ${cap} emails sent today. Raise SEND_CAP or wait until tomorrow.`);
-  }
-  state.count += 1;
-  fs.writeFileSync(file, JSON.stringify(state));
+}
+
+// Called after POST .../emails/send answered 2xx.
+export function recordSend(what: string): void {
+  fs.mkdirSync(path.dirname(logFile()), { recursive: true });
+  fs.appendFileSync(logFile(), `${new Date().toISOString()} ${what}\n`);
 }

@@ -20,6 +20,7 @@ import { SalesforceContactsPage } from '../pages/salesforce/contacts.page.ts';
 import { SalesforceLeadsPage } from '../pages/salesforce/leads.page.ts';
 import { SalesforceOpportunitiesPage } from '../pages/salesforce/opportunities.page.ts';
 import { Salesforce } from '../pages/salesforce/salesforce.ts';
+import { reconnectSalesforce } from '../flows/salesforce-connection.ts';
 import { assertSessionFresh } from '../utils/session.ts';
 
 type Options = {
@@ -117,6 +118,21 @@ async function loggedInPage(
   for (const page of context.pages()) await page.close();
 }
 
+// What the Salesforce integration page calls when the card shows "Re-connect"
+// (src/flows/salesforce-connection.ts). The worker's Salesforce context is the
+// "logged-in Salesforce tab" whose cookies the Re-connect popup reuses; a missing or
+// old Salesforce session just means the popup may ask for a login.
+function reconnectFor(page: Page, sessions: SessionContexts, account: Account | undefined, testInfo: TestInfo) {
+  return async (): Promise<void> => {
+    const browserName = testInfo.project.metadata.browser;
+    if (!account || !isBrowser(browserName)) return;
+    // Room for the reconnect, a login and up to 5 minutes for QA to type an SMS code.
+    if (testInfo.timeout > 0) testInfo.setTimeout(testInfo.timeout + 10 * 60_000); // 0 = no limit, keep it
+    await reconnectSalesforce(page, account, browserName, () => sessions.get('salesforce', account, browserName).catch(() => undefined));
+    testInfo.annotations.push({ type: 'Salesforce reconnected', description: new Date().toISOString() });
+  };
+}
+
 export const test = base.extend<Options & Fixtures, WorkerFixtures>({
   account: [undefined, { option: true }],
   sessionContexts: [
@@ -136,9 +152,11 @@ export const test = base.extend<Options & Fixtures, WorkerFixtures>({
     loggedInPage(sessionContexts, 'saleshandy', account, testInfo, use),
   salesforcePage: async ({ sessionContexts, account }, use, testInfo) =>
     loggedInPage(sessionContexts, 'salesforce', account, testInfo, use),
-  salesforceIntegration: async ({ saleshandyPage }, use) => use(new SalesforceIntegrationPage(saleshandyPage)),
+  salesforceIntegration: async ({ saleshandyPage, sessionContexts, account }, use, testInfo) =>
+    use(new SalesforceIntegrationPage(saleshandyPage, reconnectFor(saleshandyPage, sessionContexts, account, testInfo))),
   salesforceLeads: async ({ salesforcePage }, use) => use(new SalesforceLeadsPage(salesforcePage)),
-  salesforceEmailSent: async ({ saleshandyPage }, use) => use(new SalesforceEmailSentPage(saleshandyPage)),
+  salesforceEmailSent: async ({ saleshandyPage, sessionContexts, account }, use, testInfo) =>
+    use(new SalesforceEmailSentPage(saleshandyPage, reconnectFor(saleshandyPage, sessionContexts, account, testInfo))),
   salesforceOutcome: async ({ saleshandyPage }, use) => use(new SalesforceOutcomePage(saleshandyPage)),
   salesforceAccounts: async ({ salesforcePage }, use) => use(new SalesforceAccountsPage(salesforcePage)),
   salesforceContacts: async ({ salesforcePage }, use) => use(new SalesforceContactsPage(salesforcePage)),

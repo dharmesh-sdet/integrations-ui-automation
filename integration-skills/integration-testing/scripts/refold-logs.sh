@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Read-only Refold execution logs. GET only — never add a write call here.
-# usage: refold-logs.sh <env> list [query]        e.g. "slug=salesforce&linked_account_id=<linked-account-id>&limit=10"
+# usage: refold-logs.sh <env> list [query]        e.g. "slug=salesforce&linked_account_id=80121&limit=10"
 #        refold-logs.sh <env> get <executionId> [outfile]   node-level detail JSON (auth headers never saved)
 #        refold-logs.sh <env> nodes <file>                  per-node id/status/input/output summary
 # list + get = public v2 execution API (REFOLD_LA_TOKEN); no org dashboard token needed.

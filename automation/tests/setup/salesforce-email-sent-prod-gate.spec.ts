@@ -12,9 +12,11 @@ import type { MappingObject } from '../../src/pages/saleshandy/salesforce-integr
 //   2. Per object (Lead, Contact, Opportunity, Account): every pair in EXPECTED_MAPPING is
 //      mapped. Missing or different pairs are mapped and saved, then the card is reopened
 //      and every pair is read again. The gate passes only when all four match after reload.
-// The gate writes the outcome to test-data/salesforce/prod-gate.status
+// The gate writes the outcome to test-data/salesforce/prod-gate.status, or to
+// GATE_STATUS_FILE: each runner gives its own, so two runners in parallel never read
+// or delete each other's result
 // (passed | reconnect | mapping) for the script to read.
-const STATUS_FILE = path.resolve(import.meta.dirname, '../../test-data/salesforce/prod-gate.status');
+const STATUS_FILE = path.resolve(import.meta.dirname, '../..', process.env.GATE_STATUS_FILE ?? 'test-data/salesforce/prod-gate.status');
 
 function writeStatus(status: 'passed' | 'reconnect' | 'mapping'): void {
   fs.mkdirSync(path.dirname(STATUS_FILE), { recursive: true });

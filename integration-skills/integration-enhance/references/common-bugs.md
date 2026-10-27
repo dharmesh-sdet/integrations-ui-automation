@@ -913,6 +913,9 @@ Found 2026-10-06 (SF "Sequence Email is Opened", v1): rule 75 checks `Actions co
 Detect: every `compare_value` a rule tests against a multi-select config field must be in that field's `possible_options`
 (the #51 check run in the other direction). Fix: add the option to `config_fields[].possible_options` only; don't touch the
 saved value or any other config field. Proven live: V7 rule 75 true after the fix.
+Recurrence (2026-10-12, SF Call Logged): an option added in v2 was **gone again** in the next live export (every node
+identical to v2, only `config_fields[0]` lost `record-call-activity`). So re-check #54 on every new export, even of a
+workflow already fixed. If it disappears a third time, the reset is on the Refold side, not in the JSON.
 
 ## 55. Loop `fanout_array` fed straight from an optional multi-select config field — **auto**
 Found live 2026-10-07 (SF "Lead is created (V1)", run I1): group 68 `fanout_array = {{<Select a list>}}`; nothing selected →
@@ -937,3 +940,71 @@ nodes: pass `{{node.<group>.body.array_item}}` into the consumer and read each l
 for it (fall back to old behaviour when the item is unreadable). Not yet proven live either way.
 Also from this round: a workflow **cloned** from a fixed one can silently lose later fixes (here Email-Sent v4's
 Account `soql_name`). Always diff a clone node-by-node against the latest signed-off sibling.
+
+## 58. Create branches run on an event with no prospect — **flag**
+Call events (`call-logged`, `call-outcome-updated`) can have no linked prospect: `prepareProspectPayloadForEvent` returns
+`{}` (`integration.service.ts:413`). Every ticked create branch then tries to create a Contact/Lead/Opp/Account with an
+empty LastName/Name, so you get REQUIRED_FIELD_MISSING on every such call. Update branches are safe (an email lookup with
+`Email != null AND Email=''` finds nothing). Fix without new nodes: add a second AND clause to each create rule, on the field
+that branch is keyed on: `{{event.body.prospect.email}} exist` (contact/lead/opportunity), `prospect.firstName exist` (account,
+named after the person). An unresolved slot makes `exist` false, the same thing the "X exists?" rules rely on. Leave the
+call-activity branch alone: it matches by phone. Applied in SF Call Logged v4 (not yet live-proven). Check Call Outcome Updated too.
+
+# Zoho (Saleshandy → Zoho) lessons (2026-10-12, 7 old workflows → `integration-tests/zoho/staging/*/v2-static-fixes.json`)
+Shape: Start → (category gate) → 5 OR-rules over `Select Pipedrive Action1..11` (names copied from Pipedrive; never rename,
+saved configs use them) → Account/Contact/Lead/Deal = get_prospect_fields → Mapping Function → `upsert_*` → `create_note`;
+Task = Contacts search → exists? → task / (upsert contact → task). Upsert already is find+update/create: don't rebuild it as
+search+rule+create. Bulk (#19/#21) does not apply (one prospect per event). Zoho date fields take plain `YYYY-MM-DD` (#37 n/a).
+
+## 59. Rule value must match what the webui SAVES, not what looks correct — **flag**
+#51 in reverse: webui `triggers-and-activity/utils/helper.ts` `zohoTriggersOptions` saves `create- contact` (with a space).
+Workflows comparing `create-contact` have a dead Contact branch. Always read the CRM's option list in that file before "fixing"
+a compare value. Fix used: accept both spellings (11 + 11 OR clauses) so a later webui fix doesn't break it again.
+
+## 60. Setting read by the wrong action — **flag**
+Zoho deal closing date was computed from `Due In` (Task setting). Which settings an action shows comes from webui
+`get-data-slots-has-configuration-setting.ts` (Zoho: Task hides /Layout|Stages|Pipeline|Closing/, Deal hides
+/Layout|Subject|Module|Status|Priority|Due/). Check every `{{workflow.fields.X}}` a branch reads is shown for that branch.
+Same file hides `Select Layout` for Deal, and Pipelines/Stages are its children → the layout/pipeline deal variants are
+unreachable from the UI (webui bug, reported, not changed).
+
+## 61. Webui option key typo `:Meeting Booked` — **ask** (webui, all CRMs)
+`saleshandy-webui/src/components/settings/components/integrations/utils/helper.ts:48` `staticOptionsForCategory` key
+`:Meeting Booked`; the event sends `Meeting Booked` → category gate never matches Meeting Booked. Report on every
+outcome/category workflow until the webui key (and saved values) are fixed.
+
+## 62. Zoho search "no match" passes an `exist` rule — **auto**
+Zoho `GET /crm/v2/<Module>/search` answers 204 No Content when nothing matches; the Zoho connector returns
+`{"data":[],"type":"Buffer"}`. A rule `{{node.X.body.data}} exist` is **true on `[]`**, so the "not found" branch never runs
+(live: orphan Task with `Who_Id: {}`, no contact created). Always test `{{node.X.body.data.0.id}}`. Same for related lists
+(`/Contacts/{id}/Deals` with no deals → empty body).
+
+## 63. Child of a skipped/failed record still runs → run ERRORED — **auto**
+A node_rule skip (or a failed upsert) does not stop its children (#57). A `create_note` under it runs with an empty
+`Parent_Id` → 400 MANDATORY_NOT_FOUND → whole run ERRORED. Give every note node_rule "<Parent_Id template> exist".
+
+## 64. Zoho deal upsert matches by Deal_Name — **flag/structural** (user rule = #44)
+`upsert_deal` dedupes on Deal_Name: re-events reset Stage/Closing_Date, with same-named deals the **oldest** is updated,
+and deals are never linked to the contact. User rule: link deals to the contact (`Contact_Name: {"id"}`) and update the
+contact's latest deal: `GET /crm/v2/Contacts/{id}/Deals?sort_by=Created_Time&sort_order=desc&per_page=1` (sort proven both
+ways) → `PUT /crm/v2/Deals/{id}` with mapped fields + Closing/Pipeline/Stage from settings (empties dropped; `{"data":[{}]}` → 200).
+No contact / no linked deal → keep the upsert. Implemented in `integration-tests/zoho/patches-shared/v3_latest_deal.py`.
+
+## 65. Zoho rejects the whole record for one mistyped mapped value — **report (user: customer-side)**
+`additional_fields` value Zoho can't coerce → 400 INVALID_DATA, no record: text "11-50" → integer, URL → Twitter handle,
+SH date `YYYY-MM-DD HH:mm:ss` → date. Numeric strings ("25") are coerced fine, unknown picklist values are accepted.
+User decision 2026-10-12 (as SF B5): customer's mapping choice, document only.
+
+## 66. Live-test harness notes (Refold) — **process**
+- Refold app config: `GET $REFOLD_PUBLIC_BASE/slug/<crm>/config/<config_id>` with org `x-api-key` + `linked_account_id`.
+  Field mappings are saved with `PUT config/field/<appFieldId>` (no workflow_id); null mapping = setup gap, not a bug.
+- The linked-account session token expires: renew via edge `GET /integration/session-token` (SH JWT).
+- An execution can be COMPLETED before its last nodes are logged: wait ~20 s before fetching node detail.
+- Saleshandy sequence settings via Open API accept numeric codes only (`{"code":5,"value":"1"}` = track opens).
+
+## 67. Two parallel branches create the same CRM record — **structural** (Zoho v3 → v4, user chose "shared step")
+Zoho upsert is not atomic across simultaneous calls: Contact branch + Task branch's "create contact if missing" for a
+brand-new prospect → 2 contacts with the same email (v3 A1). Fixing an orphan (#62) can expose this. Fix used: one shared
+"Contact or Task selected?" → fields → mapping → upsert step before the fan-out; Task (Who_Id) and Deal (Contact_Name)
+read its id; a no-op join (catalog #20 pattern: incoming = upsert + rule.false) holds the Deal branch until it finished.
+Patch: `integration-tests/zoho/patches-shared/v4_shared_contact.py`.

@@ -47,7 +47,7 @@ state_file="test-data/salesforce/outcome-smoke.state"
 state_get() { grep "^$1=" "$state_file" 2>/dev/null | tail -1 | cut -d= -f2-; }
 state_set() { mkdir -p "$(dirname "$state_file")"; { grep -v "^$1=" "$state_file" 2>/dev/null; echo "$1=$2"; } > "$state_file.tmp"; mv "$state_file.tmp" "$state_file"; }
 
-gate_status_file="test-data/salesforce/prod-gate.status"
+gate_status_file="test-data/salesforce/prod-gate-outcome-updated.status"
 
 if [ "${FORCE_GATE:-0}" != "1" ] && [ "$(state_get gate_date)" = "$today" ]; then
   echo "=== Gate: passed earlier today, skipped (FORCE_GATE=1 runs it again) ==="
@@ -55,7 +55,7 @@ if [ "${FORCE_GATE:-0}" != "1" ] && [ "$(state_get gate_date)" = "$today" ]; the
 else
 echo "=== Gate: Salesforce connected, Field Mapping complete ==="
 rm -f "$gate_status_file"
-KEEP_TEST_DATA=1 REPORTS_DIR=reports/salesforce-outcome-updated-smoke-gate REPORT_OPEN=never \
+GATE_STATUS_FILE="$gate_status_file" KEEP_TEST_DATA=1 REPORTS_DIR=reports/salesforce-outcome-updated-smoke-gate REPORT_OPEN=never \
   npx playwright test tests/setup/salesforce-email-sent-prod-gate.spec.ts --project=chromium ${HEADED:+--headed} \
   --workers=1 --reporter=list --output=test-results-salesforce-outcome-updated-smoke-gate
 gate="$(cat "$gate_status_file" 2>/dev/null || echo failed)"

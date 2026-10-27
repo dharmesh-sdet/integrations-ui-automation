@@ -121,7 +121,7 @@ Perform the exact real-world event, via the same API the UI would call — not a
 **SH → CRM (Saleshandy-side trigger):** use `references/saleshandy-web-apis.md`.
 1. Create one test sequence with an email step (or reuse the scenario's sequence).
 2. Add a prospect whose email = the sending account's email with a `+suffix` — default
-   `<your-name>+<crm>-<scenario>@<your-domain>` (e.g. `<your-name>+sf-c1@<your-domain>`) unless the user names
+   `rudra+<crm>-<scenario>@saleshandy.com` (e.g. `rudra+sf-c1@saleshandy.com`) unless the user names
    another. New suffix per scenario so records are distinguishable in the CRM.
 3. Activate the sequence; if the email doesn't send on its own, call the send-now endpoint.
 4. Opened/clicked/replied events: use the endpoint listed for it; if none exists, ask the user.
@@ -169,7 +169,7 @@ Only then move on. The pass is done when every row of the matrix has a result.
 | `JSON` | Workflow node/template/mapping/type in the JSON | Goes into the next version (step 9) |
 | `ACTION` | Needed Saleshandy connector action doesn't exist / is wrong | New-action spec (#43) for the user |
 | `EDGE` | saleshandy-edge code (`src/refold-workflows/`, `src/settings/integration/`, Cobalt event emitters, webhook payloads, public API DTOs) | `file:line`, faulty logic, proposed change. Don't edit without approval |
-| `WEBUI` | saleshandy-webui code (`<path-to>/saleshandy-webui`, integration/settings screens, field-mapping UI) | Same as EDGE |
+| `WEBUI` | saleshandy-webui code (`/home/rudra/Desktop/work/saleshandy-webui`, integration/settings screens, field-mapping UI) | Same as EDGE |
 | `PLATFORM` | Refold/Pyxis platform behaviour | Evidence + what to report to Refold |
 | `CRM-CONFIG` | CRM app/permissions/scopes/field settings | Exact setting to change |
 

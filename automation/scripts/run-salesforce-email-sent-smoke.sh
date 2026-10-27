@@ -38,11 +38,11 @@ for session in auth/saleshandy-emailopenedprod-chromium.json auth/salesforce-ema
   fi
 done
 
-gate_status_file="test-data/salesforce/prod-gate.status"
+gate_status_file="test-data/salesforce/prod-gate-email-sent.status"
 rm -f "$gate_status_file"
 
 echo "=== Gate: Salesforce connected, Field Mapping complete ==="
-KEEP_TEST_DATA=1 REPORTS_DIR=reports/salesforce-email-sent-smoke-gate REPORT_OPEN=never \
+GATE_STATUS_FILE="$gate_status_file" KEEP_TEST_DATA=1 REPORTS_DIR=reports/salesforce-email-sent-smoke-gate REPORT_OPEN=never \
   npx playwright test tests/setup/salesforce-email-sent-prod-gate.spec.ts --project=chromium \
   --workers=1 --reporter=list --output=test-results-salesforce-email-sent-smoke-gate
 gate="$(cat "$gate_status_file" 2>/dev/null || echo failed)"

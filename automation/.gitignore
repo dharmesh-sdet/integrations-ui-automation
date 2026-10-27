@@ -7,3 +7,4 @@ test-results/
 node_modules/
 test-data/*
 !test-data/.gitkeep
+locks/

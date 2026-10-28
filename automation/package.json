@@ -20,6 +20,7 @@
     "smoke:salesforce-outcome-updated": "bash scripts/run-salesforce-outcome-updated-smoke.sh",
     "smoke:pipedrive-email-sent": "bash scripts/run-pipedrive-email-sent-smoke.sh",
     "smoke:pipedrive-outcome-updated": "bash scripts/run-pipedrive-outcome-updated-smoke.sh",
+    "smoke:pipedrive-link-clicked": "bash scripts/run-pipedrive-link-clicked-smoke.sh",
     "test:unsubscribed": "bash scripts/run-unsubscribed.sh",
     "test:outcome-updated": "bash scripts/run-prospect-outcome-updated.sh",
     "test:reply-all": "bash scripts/run-reply-received-all-activities.sh",

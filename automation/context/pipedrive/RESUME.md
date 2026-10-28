@@ -1,15 +1,20 @@
-# Pipedrive: resume (saved 2026-10-23)
+# Pipedrive: resume (saved 2026-10-23, State section updated 2026-10-28)
 
 Staging, workflow version v2. Rules and behaviour: `00-overview.md` and one file per workflow in this folder.
 
-## State
+## State (QA, 2026-10-28)
+
+Status as QA gave it, except the Link Clicked row, which holds Claude's 2026-10-28 run results and QA's go-ahead for production. The per-workflow progress files and the dated sections below hold older run numbers. If they differ, this table wins.
 
 | Workflow | Test cases | State |
 |---|---|---|
-| Email Sent | `../../test-cases/pipedrive/email-sent.md` (33 rows, saved) | QA OK'd. Next: QA connects `pdemailsent`, then Claude runs it and confirms the rows marked "(proposed, unconfirmed)" |
-| Reply Received, Link Clicked, Email Opened, Email Bounced, Prospect Unsubscribed, Prospect Outcome Updated | `drafts/<workflow>.md` (17 to 20 rows each), NOT in test-cases | QA said "everything is okay" but gave no per-file "looks good". Needs that, then the no-ai-slop QA Test Case Mode pass, then save to `test-cases/pipedrive/` |
+| Email Sent | `../../test-cases/pipedrive/email-sent.md` (33 rows) | All 33 rows passed, 1 skipped. The only skip in the spec is Create a Person 4, where a mapped value has the wrong type. It needs a wrong-type Contact Fields mapping on the Configure screen. QA is not sure about this skip. Production smoke (note 09) is blocked by the Refold deploy issue. |
+| Prospect Unsubscribed | `../../test-cases/pipedrive/prospect-unsubscribed.md` (29 rows) | Its tickets are fixed. |
+| Prospect Outcome Updated | `../../test-cases/pipedrive/prospect-outcome-updated.md` | Done on staging. Production smoke is written, not run, blocked by the Refold deploy issue. |
+| Link Clicked (AL-4175) | `../../test-cases/pipedrive/link-clicked.md` (32 rows) | Done on staging, 2026-10-28. All 32 rows passed: 28 in the full run (48.5 min), 4 on reruns after script fixes. The 4 were script failures: 3 from the People reader skipping rows, 1 because the company already had organizations (Delete Organization 2). Not run as one suite after the fixes. Sequence 197376, `PD_LINK_SEQUENCE_ID=197376`. Known product issues are recorded, not filed (B1, B2, AL-4177). QA, 2026-10-28: ready for production. Production smoke: cases approved by QA 2026-10-28 (`../../notes/production-testing/11-pipedrive-link-clicked.md`, 11 checks, 10 sends), spec, setup spec, data script and run script written, typecheck clean, NOT run. QA runs it: `npm run smoke:pipedrive-link-clicked`. Details: `link-clicked-progress.md`. |
+| Reply Received (AL-4172), Email Opened (AL-4174), Email Bounced (AL-4183) | `../../test-cases/pipedrive/<workflow>.md` (33, 27 and 37 rows) | As QA gave it on 2026-10-28: cases approved and scripts generated, not run, sequences not created (Email Bounced has an empty draft). Other sessions have worked on these since. Read their progress files for the current state. |
 
-`drafts/gen.py` builds the six drafts: `python3 gen.py <outdir>`.
+`drafts/gen.py` built the first six drafts. They are history now. The approved cases are in `test-cases/pipedrive/`.
 
 ## Decisions (QA, 2026-10-23)
 
@@ -89,3 +94,27 @@ Salesforce (from HANDOFF.md, 2026-10-23)
 HubSpot: released to production (QA, 2026-10-24). Out of scope, do not revisit.
 
 Priority (QA, 2026-10-24): Pipedrive first. Salesforce after.
+
+## Update 2026-10-27 (QA): Prospect Outcome Updated is complete, deploy blocked
+
+Test cases and scripts are done for staging (30 rows) and production smoke (9 checks, `notes/production-testing/10-pipedrive-prospect-outcome-updated.md`, `tests/pipedrive/prospect-outcome-updated-smoke.spec.ts`, `npm run smoke:pipedrive-outcome-updated`). The smoke is not run: an issue on the Refold side blocks the workflow deploy to production. Details and the steps for after the deploy: `prospect-outcome-updated-progress.md`, section "STATUS". Email Sent smoke (note 09) is in the same state.
+
+## Update 2026-10-27 (Reply Received regression)
+
+Run 2026-10-28 on staging: 21 passed, 10 failed, 2 skipped of 33. The 10 failures are five reproducible product issues, waiting on QA bug-or-not (`reply-received-product-issues.md`). State and next steps: STATUS section of `reply-received-progress.md`.
+
+## Update 2026-10-27 (Link Clicked)
+
+Cases saved (`test-cases/pipedrive/link-clicked.md`, 32 rows, ticket AL-4175, QA approved). The spec is written and the typecheck is clean. It has not run. Open points and next steps: `link-clicked-progress.md`. QA said not to run the script.
+
+## Update 2026-10-28 (Link Clicked, staging done)
+
+QA allowed the run. Sequence 197376 was finished by the setup spec (steps 1 and 2, link tracking, activation). It needed the custom tracking domain `cd1.shengage02.com` on gpipedrive, which the Email Opened session set. The sender is whatever QA connected to the sequence; the setup spec no longer adds one. `sequence-builder.page.ts` now retypes the step subject and unticks "same thread" on step 2. All 32 rows pass (see the State table). Next: QA decides the production smoke, written in smoke mode from the fixed tickets only. Nothing is run on production.
+
+## Update 2026-10-27 (session local-project-1b): Email Bounced, saved mid-way
+
+Cases saved and approved (37 rows, `test-cases/pipedrive/email-bounced.md`, AL-4183). Spec `tests/pipedrive/email-bounced.spec.ts` written (37 tests), never run. The sequence setup failed three times; the sequence "Pipedrive Email Bounced QA" is an empty draft and `SEQUENCE_ID` is a placeholder. QA told Claude not to run anything until further notice. Everything else, including a data-replacement mistake from two setup runs without `KEEP_TEST_DATA`, is in `email-bounced-progress.md`. Link Clicked is owned by session local-project-f9; message it before and after any run.
+
+## Update 2026-10-27 (Email Opened regression, AL-4174)
+
+Cases saved and approved by QA (`test-cases/pipedrive/email-opened.md`, 27 rows). Spec, sequence setup spec and data script are written, NOT run, nothing set up (QA: do not run yet). Open points, files and next steps: `email-opened-progress.md`.

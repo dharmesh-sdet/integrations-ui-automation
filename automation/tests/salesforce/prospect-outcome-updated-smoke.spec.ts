@@ -20,7 +20,7 @@
 // Run through scripts/run-salesforce-outcome-updated-smoke.sh
 // (npm run smoke:salesforce-outcome-updated), which runs the gate, then Prepare data, then the rows. Needs, once:
 //   npm run login:saleshandy -- emailopenedprod
-//   npm run login:salesforce -- emailopenedprod    (the dev org, SMS code)
+//   Salesforce (the dev org) logs in by itself through the API (src/utils/salesforce-login.ts)
 // Data: test-data/salesforce/prospect-outcome-updated-smoke.csv (scripts/make-outcome-smoke-data.ts).
 import type { Page } from '@playwright/test';
 import { expect, test as base } from '../../src/fixtures/index.ts';

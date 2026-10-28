@@ -1,0 +1,13 @@
+{
+  "type": "comment",
+  "ticket": "AL-4183",
+  "body": "**Verification:** Production testing is done. Smoke tested the Email is Bounced in Saleshandy (Pipedrive) trigger on Production with a short manual pass, 3 checks:\n\n| # | Activity | What was checked | Status |\n| --- | --- | --- | --- |\n| 1 | Create a Lead, Create a Deal and Create a Person in Pipedrive | New prospect, step 1 email marked as bounced. One person with one lead and one deal titled with the prospect email, and one activity. | Pass |\n| 2 | Delete Person in Pipedrive | Existing person, step 1 email marked as bounced. The person is deleted. | Pass |\n| 3 | Create a Person in Pipedrive (real bounce) | Real-bounce address, Send now on step 1. The Emails tab shows Bounced, with one person and one activity (type email, done, subject \"Email is bounced in Saleshandy\"). | Pass |\n\n**Note:** This was a short manual pass, so the other activities (Update a Person, Update a Deal, Delete Deal, and the Organization activities) are not covered by this verification. Known issues B1 and B2 (Update a Person, Update a Deal and Delete Deal with no person end in Error) are still open and not checked.",
+  "waitingFor": "QA to check the wording and send. Source: manual production smoke by QA, 2026-10-28, account emailopenedprod, Pipedrive saleshandy.pipedrive.com. All 3 checks passed.",
+  "sent": {
+    "key": "AL-4183",
+    "url": "https://saleshandy.atlassian.net/browse/AL-4183",
+    "commentId": "79528",
+    "problems": [],
+    "at": "2026-10-28"
+  }
+}

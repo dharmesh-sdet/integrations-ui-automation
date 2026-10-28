@@ -69,3 +69,7 @@ QA approved the cases (note `notes/production-testing/12-pipedrive-email-bounced
 - Changes from the approved note: one email step instead of two (only step 1 is bounced). Check 10 turns "Email is Bounced" off and waits 3 min before it looks. Check 11 asserts 1 person and 1 activity, as the cases say. On staging that row only recorded the result.
 - Old person name is "A. Keita" style, so a changed name proves the update. Deals are "Annual renewal" and "Onboarding package".
 - Blocked like the other Pipedrive smokes by the Refold deploy issue. QA runs it after the deploy.
+
+## Production smoke, manual run done (2026-10-28)
+QA released the workflow to production (the Refold block no longer applies) and ran a short manual smoke: checks 1, 6 and 11 all Pass (Create a Lead/Deal/Person, Delete Person, real bounce). Summary posted on AL-4183, Jira comment 79528 (draft `jira/drafts/al-4183-pipedrive-email-bounced-production-smoke-summary.json`). The other 8 checks were not run by hand. The script `npm run smoke:pipedrive-email-bounced` was not run and stays optional.
+Next: nothing required. B1 and B2 are still open and not covered.

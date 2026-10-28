@@ -41,3 +41,7 @@ Written, typecheck clean, 11 tests listed, NOT run: `tests/pipedrive/link-clicke
 Reuses the note 09 gate. The spec waits 90 s (first click) and 180 s (second click) after the send, and stops before any send when Email Sent or Email is Opened is on. Deal names are "Annual renewal" and "Onboarding package" (no "Legacy", QA 2026-10-28).
 Before QA runs: `npm run login:saleshandy -- emailopenedprod` and `npm run login:pipedrive -- emailopenedprod` (headed), Email Sent and Email is Opened off on emailopenedprod, no other smoke run on that account. Trigger name `Link is Clicked in Saleshandy` and subject `Link is clicked in Saleshandy` were seen on staging.
 After the run: draft the summary from `jira/templates/comments/04-production-smoke-summary.md` into `jira/drafts`. QA sends it.
+
+## Production smoke, manual run done (2026-10-28)
+QA released the workflow to production and ran a short manual smoke on emailopenedprod: checks 1, 5 and 11 all Pass (Create a Lead/Deal/Person, Update a Person, no click gives no record). Summary posted on AL-4175, Jira comment 79527 (draft `jira/drafts/al-4175-pipedrive-link-clicked-production-smoke-summary.json`). The other 8 checks were not run by hand. The script `npm run smoke:pipedrive-link-clicked` was not run and stays optional.
+Next: nothing required. Open on QA's side: the duplicate trigger run on automated clicks (AL-4177).

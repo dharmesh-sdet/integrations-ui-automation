@@ -1,0 +1,13 @@
+{
+  "type": "comment",
+  "ticket": "AL-4175",
+  "body": "**Verification:** Production testing is done. Smoke tested the Link is Clicked in Saleshandy (Pipedrive) trigger on Production with a short manual pass, 3 checks:\n\n| # | Activity | What was checked | Status |\n| --- | --- | --- | --- |\n| 1 | Create a Lead, Create a Deal and Create a Person in Pipedrive | New prospect, first link clicked 90 s after the send. One person with one lead and one deal titled with the prospect email, and one activity. | Pass |\n| 2 | Update a Person in Pipedrive | Existing person with an old value in a mapped field. The mapped fields are updated and one activity is added. | Pass |\n| 3 | Create a Person in Pipedrive (no click) | Email opened in Mailinator, link not clicked. No person and no activity is created. | Pass |\n\n**Note:** This was a short manual pass, so the other activities (Update a Deal, Delete Deal, Delete Person, and the Organization activities) and the second link click are not covered by this verification. The duplicate trigger run on automated clicks (AL-4177) is still open and did not appear in these checks.",
+  "waitingFor": "QA to check the wording and send. Source: manual production smoke by QA, 2026-10-28, account emailopenedprod, Pipedrive saleshandy.pipedrive.com. All 3 checks passed.",
+  "sent": {
+    "key": "AL-4175",
+    "url": "https://saleshandy.atlassian.net/browse/AL-4175",
+    "commentId": "79527",
+    "problems": [],
+    "at": "2026-10-28"
+  }
+}

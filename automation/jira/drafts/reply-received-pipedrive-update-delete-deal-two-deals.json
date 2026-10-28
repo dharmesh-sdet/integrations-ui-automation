@@ -1,0 +1,28 @@
+{
+  "type": "bug",
+  "project": "AL",
+  "priority": "Medium",
+  "environment": "Production",
+  "epic": "AL-3982",
+  "assignee": {
+    "name": "Darshan",
+    "accountId": "5af5d8dd244bc90a10605d4f"
+  },
+  "qa": {
+    "name": "Dharmesh Patel",
+    "accountId": "712020:c7dedb58-9cb3-4450-a98f-5b5b56f6556b"
+  },
+  "links": [
+    "AL-4170",
+    "AL-4172"
+  ],
+  "attachments": [],
+  "summary": "Reply is Received in Saleshandy: Update a Deal in Pipedrive and Delete Deal in Pipedrive activities show Success but do not change any deal when the person has two deals",
+  "description": "**Prerequisites:**\n- The Pipedrive integration is connected to Saleshandy.\n- The Reply is Received in Saleshandy trigger is enabled with one activity only, saved. Run the steps once with Update a Deal in Pipedrive (Extra Configuration: Pipeline = Pipeline, Stage = Contact Made) and once with Delete Deal in Pipedrive.\n- A sequence with a prospect that is already a person in Pipedrive, and that person has 2 deals (for example \"Legacy deal 1\" and \"Legacy deal 2\", both in Pipeline / Qualified).\n\n**Steps to Reproduce:**\n1. Go to Triggers and Activities, enable Reply is Received in Saleshandy, select Update a Deal in Pipedrive, set the Extra Configuration, and click Save.\n2. Add the prospect to the sequence and send step 1 with Send now. Wait until the email shows Sent.\n3. Open the sequence > Emails and use Mark as Replied for the prospect.\n4. Wait 15 seconds, then open the person in Pipedrive and check both deals.\n5. Go to Integrations > Pipedrive > Logs and open the newest Reply is Received in Saleshandy entry.\n6. Repeat steps 1 to 5 with a new prospect and the Delete Deal in Pipedrive activity only.\n\n**Actual Result:**\n- Update a Deal in Pipedrive: neither deal changes. Both keep their title and stay in Qualified, also several hours later. Logs show the status Success.\n- Delete Deal in Pipedrive: neither deal is deleted. Both stay on the person. Logs show the status Success.\n\n**Expected Result:**\n- Update a Deal in Pipedrive: the newest deal is renamed to the prospect's email and moves to Contact Made. The older deal stays unchanged.\n- Delete Deal in Pipedrive: the newest deal is deleted. The older deal stays.\n\n**Note:**\n- Affected Environment - Staging.\n- The same activities change the newest deal correctly on the Email Sent trigger.\n- Seen on patience.gaye@mailinator.com (person 344, deals 156 and 157) and ravi.ramdeen@mailinator.com (person 357, deals 169 and 170). The result was the same in three runs.\n",
+  "sent": {
+    "key": "AL-4184",
+    "url": "https://saleshandy.atlassian.net/browse/AL-4184",
+    "problems": [],
+    "at": "2026-10-28T08:18:52.239Z"
+  }
+}

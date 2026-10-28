@@ -160,9 +160,18 @@ export class SequenceBuilderPage extends SaleshandyPage {
         intervals: [500],
       })
       .toBe(2);
-    await this.subjectEditor().click();
-    await this.page.keyboard.type(subject);
-    await expect(this.subjectEditor()).toContainText(subject);
+    // A follow-up step starts ticked "Send this email in same thread as follow-up", which locks the
+    // subject to "Re: <step 1 subject>" (seen 2026-10-28). Untick it so the step keeps its own subject.
+    const sameThread = this.editor().getByRole('checkbox', { name: /same thread/i });
+    if ((await sameThread.count()) > 0 && (await sameThread.isChecked())) await sameThread.uncheck();
+    // The subject field resets after the box changes, so the first keystrokes can be lost: type until it shows.
+    await expect(async () => {
+      if (!((await this.subjectEditor().textContent()) ?? '').includes(subject)) {
+        await this.subjectEditor().click();
+        await this.page.keyboard.type(subject);
+      }
+      await expect(this.subjectEditor()).toContainText(subject, { timeout: 1_500 });
+    }).toPass({ timeout: 15_000 });
 
     // TinyMCE can add a trailing slash to a bare host, so match the URL without it.
     const withoutSlash = (u: string) => u.replace(/\/$/, '');
@@ -177,6 +186,13 @@ export class SequenceBuilderPage extends SaleshandyPage {
         { message: 'Body links did not read back', intervals: [1_500], timeout: 30_000 },
       )
       .toBe(true);
+
+    // Setting the body can clear the subject (seen 2026-10-28, sequence 197376): type it again if so.
+    if (!((await this.subjectEditor().textContent()) ?? '').includes(subject)) {
+      await this.subjectEditor().click();
+      await this.page.keyboard.type(subject);
+    }
+    await expect(this.subjectEditor()).toContainText(subject);
 
     const toast = this.page.getByRole('alert').filter({ hasText: 'Sequence step created successfully' });
     const save = this.editor().getByRole('button', { name: 'Save', exact: true });

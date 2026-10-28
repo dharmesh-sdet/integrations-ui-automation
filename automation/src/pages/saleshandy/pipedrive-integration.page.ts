@@ -45,13 +45,16 @@ export class PipedriveIntegrationPage extends SalesforceIntegrationPage {
         .locator('.transfer-select-box li')
         .filter({ hasText: new RegExp(`^\\s*${choice.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*$`) });
       for (let attempt = 1; ; attempt++) {
-        await lists.nth(index).click();
+        // Bounded: with no timeout this click waited 6 minutes for a list of a dialog that was already closed
+        // (Create a Deal 1, 2026-10-28; the chip was on the trigger and no dialog was open).
+        await lists.nth(index).click({ timeout: 10_000 });
         try {
           await option.waitFor({ timeout: 8_000 });
           break;
         } catch (error) {
           if (attempt === 4) throw error;
-          await this.page.keyboard.press('Escape');
+          // Escape can close the whole dialog; a click on its heading closes only the open list.
+          await dialog.getByText('Extra Configuration').first().click({ timeout: 5_000 });
           await this.page.waitForTimeout(1_500);
         }
       }

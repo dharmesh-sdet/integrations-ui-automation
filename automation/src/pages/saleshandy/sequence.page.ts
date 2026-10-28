@@ -195,10 +195,16 @@ export class SaleshandySequencePage extends SaleshandyPage {
   // Emails tab > row > three dots > "Mark as bounced" (no confirm dialog; seen
   // 2026-10-12). The row then reads "Hard Bounced" and Latest Status Bounced.
   // It works on a sent row and on an Active or paused sequence (QA).
-  async markAsBounced(sequenceId: string, fullName: string, step = 1): Promise<void> {
-    await this.openEmails(sequenceId);
-    const row = this.emailRow(fullName, step);
-    await expect(row).toBeVisible({ timeout: 20_000 });
+  // `email` picks the row when the prospect has no name (Pipedrive Create a Person 4).
+  async markAsBounced(sequenceId: string, fullName: string, step = 1, email?: string): Promise<void> {
+    // The Emails tab loads 25 rows a page and a new prospect's row can be on page 2 (28 prospects on Pipedrive Email
+    // Bounced, 2026-10-28), so the tab is opened again and searched before the row is judged missing.
+    const row = this.emailRow(fullName, step, email);
+    await expect(async () => {
+      await this.openEmails(sequenceId);
+      await this.searchIfOffFirstPage(fullName, step, email);
+      await expect(row).toBeVisible({ timeout: 15_000 });
+    }).toPass({ timeout: 90_000, intervals: [2_000] });
     await row.locator('#dropdown-basic').click();
     await row.getByRole('button', { name: /Mark as bounced$/ }).click();
     await expect(this.page.getByRole('alert').filter({ hasText: 'Email has been marked as bounced' })).toBeVisible({ timeout: 15_000 });
@@ -240,9 +246,9 @@ export class SaleshandySequencePage extends SaleshandyPage {
     await expect(this.page.getByRole('alert').filter({ hasText: active ? 'Sequence resumed successfully' : 'Sequence paused successfully' })).toBeVisible({ timeout: 15_000 });
   }
 
-  async clickedCount(sequenceId: string, fullName: string, step = 1): Promise<number> {
+  async clickedCount(sequenceId: string, fullName: string, step = 1, email?: string): Promise<number> {
     await this.openEmails(sequenceId);
-    const row = this.emailRow(fullName, step);
+    const row = this.emailRow(fullName, step, email);
     await expect(row).toBeVisible({ timeout: 20_000 });
     return Number((await (await this.cell(row, 'Clicked')).innerText()).trim()) || 0;
   }

@@ -32,18 +32,24 @@ export class PipedrivePeoplePage extends PipedrivePage {
     // The list is virtual: only about 49 rows are in the page at once (49 of 58 on 2026-10-27), the
     // rest are swapped in as it scrolls. Read what is there, scroll, and merge by person id until
     // every person has been seen.
+    // Scrolling loads past 100 rows: 198 of 198 were read on 2026-10-28, with the list sorted by Name,
+    // where a cap of 100 missed new persons (Email Opened, Create a Deal 2 and Update a Deal 2).
+    const target = total;
     const seen = new Map<string, PipedrivePerson>();
     let stale = 0;
-    for (let step = 0; step < 40 && seen.size < total && stale < 3; step++) {
+    // The window is about 49 rows (about 1500 px), so a 1500 px step left no overlap and skipped a block of 12
+    // rows (names D to M of 210, 2026-10-28, only on the page that had just saved a person). Scroll 600 px.
+    // Six scrolls without a new row before giving up: 3 stopped at 97 of 98 and 98 of 102 on 2026-10-27.
+    for (let step = 0; step < 150 && seen.size < target && stale < 6; step++) {
       const before = seen.size;
       for (const row of await this.visibleRows()) seen.set(row.id || `${row.name}|${row.emails.join(',')}`, row);
       stale = seen.size === before ? stale + 1 : 0;
-      if (seen.size >= total) break;
+      if (seen.size >= target) break;
       await this.byId('person.name').last().scrollIntoViewIfNeeded();
-      await this.page.mouse.wheel(0, 1500);
-      await this.page.waitForTimeout(750);
+      await this.page.mouse.wheel(0, 600);
+      await this.page.waitForTimeout(1000);
     }
-    if (total > seen.size) throw new Error(`The People list shows ${total} people but only ${seen.size} were read; the reader would miss records`);
+    if (target > seen.size) throw new Error(`The People list shows ${total} people but only ${seen.size} were read; the reader would miss records`);
     return [...seen.values()];
   }
 
@@ -132,7 +138,7 @@ export class PipedrivePeoplePage extends PipedrivePage {
   async dealTitles(): Promise<string[]> {
     return (await this.byId('pipeline-deal-tile').getByRole('link').allInnerTexts())
       .map((t) => t.trim())
-      .filter((t) => t && !/^[₹$€£]/.test(t));
+      .filter((t) => t && !/^\p{Sc}/u.test(t));
   }
 
   // Ids of the deals in the Deals block, oldest first (ids rise with creation time).

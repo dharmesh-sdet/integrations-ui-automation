@@ -107,6 +107,16 @@ const COMPANIES: [name: string, industry: string, founded: number][] = [
   ['Contentful', 'Content Management', 2013], ['Asana', 'Work Management', 2008], ['Partnerstack', 'Partnership Software', 2015],
   ['Substack', 'Publishing', 2017], ['ChurnZero', 'Customer Success Software', 2015], ['Linear', 'Project Management Software', 2019],
   ['Productboard', 'Product Management Software', 2014], ['Shopify', 'Ecommerce', 2006], ['Brex', 'Financial Services', 2017],
+  // Added 2026-10-28: every name above already had an organization in Pipedrive (rows do not delete their records).
+  ['Datadog', 'Observability', 2010], ['Twilio', 'Communications Software', 2008], ['Atlassian', 'Software Development', 2002],
+  ['Zendesk', 'Customer Service Software', 2007], ['Okta', 'Identity Management', 2009], ['MongoDB', 'Database Software', 2007],
+  ['Dropbox', 'File Storage', 2007], ['Airtable', 'Productivity Software', 2012], ['Canva', 'Design Software', 2013],
+  ['Calendly', 'Scheduling Software', 2013], ['Miro', 'Collaboration Software', 2011], ['Gusto', 'HR Software', 2011],
+  ['Rippling', 'HR Software', 2016], ['Mailchimp', 'Marketing Automation', 2001], ['PagerDuty', 'Incident Management', 2009],
+  ['DocuSign', 'E-signature Software', 2003], ['Webflow', 'Website Builder', 2013], ['Typeform', 'Survey Software', 2012],
+  ['GitLab', 'Developer Tools', 2011], ['Cloudflare', 'Network Security', 2009], ['Mixpanel', 'Product Analytics', 2009],
+  ['Pendo', 'Product Analytics', 2013], ['Freshworks', 'Customer Service Software', 2010], ['ClickUp', 'Project Management Software', 2017],
+  ['Retool', 'Developer Tools', 2017],
 ];
 
 // Lowercase ASCII with no spaces, hyphens, apostrophes or dots, for emails and URLs.
@@ -114,6 +124,19 @@ const plain = (s: string) => s.normalize('NFKD').replace(/[^A-Za-z]/g, '').toLow
 const pick = <T>(list: T[]): T => list[Math.floor(Math.random() * list.length)];
 const shuffled = <T>(list: T[]): T[] => [...list].sort(() => Math.random() - 0.5);
 const domainOf = (url = '') => url.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '');
+
+export const companyNames = (): string[] => COMPANIES.map(([name]) => name);
+
+// The five company columns of a prospect row for a company of the pool, made as `next()` makes them.
+export function companyFields(name: string): Row {
+  const found = COMPANIES.find(([n]) => n === name);
+  if (!found) throw new Error(`"${name}" is not in the company pool`);
+  const [, industry, founded] = found;
+  return {
+    Company: name, 'Company Website': `https://www.${plain(name)}.com`, 'Company Industry': industry,
+    'Company Founded Year': String(founded), 'Company LinkedIn': `https://www.linkedin.com/company/${plain(name)}/`,
+  };
+}
 
 export const usedFileOf = (csv: string) => path.join(dataDir, csv.replace(/\.csv$/, '.used.txt'));
 

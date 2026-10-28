@@ -32,6 +32,22 @@ export class PipedriveLeadsPage extends PipedrivePage {
     return (await this.titles()).filter((t) => t === title).length;
   }
 
+  // Add lead dialog (Inbox > Lead button, seen 2026-10-27): Contact person, Organization, Title, Value,
+  // Labels, Owner, and so on. A lead needs a person or an organization, so the person is picked first
+  // (typed by name, picked from the list). The dialog is not confirmed on a page yet, so the check is
+  // that the title shows in the Inbox afterwards.
+  async createForPerson(personName: string, title: string): Promise<void> {
+    await this.openInbox();
+    await this.page.getByRole('button', { name: 'Lead', exact: true }).click();
+    const dialog = this.page.getByRole('dialog').filter({ hasText: 'Add lead' });
+    await dialog.getByText('Contact person', { exact: true }).waitFor();
+    await dialog.getByRole('combobox').first().getByRole('textbox').fill(personName);
+    await this.page.getByRole('option', { name: personName }).first().click();
+    await dialog.getByText('Title', { exact: true }).locator('xpath=following::input[1]').fill(title);
+    await dialog.getByRole('button', { name: 'Save', exact: true }).click();
+    await dialog.waitFor({ state: 'hidden' });
+  }
+
   // Deletes every lead with exactly this title: tick each row, Delete in the toolbar, confirm.
   // Pipedrive keeps deleted leads in "Restore data" for 30 days.
   async deleteByTitle(title: string): Promise<void> {

@@ -13,6 +13,15 @@ export class PipedriveOrganizationsPage extends PipedrivePage {
   // Every organization on the list page whose name is exactly `name` (a company can have several,
   // because Create Organization adds a new one on every event).
   async idsByName(name: string): Promise<string[]> {
+    return (await this.readAll()).filter((f) => f.text === name).map((f) => f.id);
+  }
+
+  // The name of every organization on the list (one entry per organization).
+  async names(): Promise<string[]> {
+    return (await this.readAll()).map((f) => f.text);
+  }
+
+  private async readAll(): Promise<{ id: string; text: string }[]> {
     await this.openList();
     const rows = this.page.locator('a[href*="/organization/"]');
     await rows.first().waitFor();
@@ -20,13 +29,25 @@ export class PipedriveOrganizationsPage extends PipedrivePage {
     // header reads "2 organizations" (seen 2026-10-26, not a verified element type, so it is only
     // enforced when found). A list longer than what loaded must fail, not hide a record.
     const label = this.page.getByText(/^[\d,]+ organizations?$/).first();
-    if (await label.count()) {
-      const total = Number((await label.innerText()).replace(/\D/g, ''));
-      const loaded = await rows.count();
-      if (total > loaded) throw new Error(`The Organizations list shows ${total} organizations but only ${loaded} loaded; the reader would miss records`);
+    const total = (await label.count()) ? Number((await label.innerText()).replace(/\D/g, '')) : 0;
+    // The list is virtual, like People: only about 48 rows are in the page at once (49 and 50 listed,
+    // 48 loaded, 2026-10-28), the rest are swapped in as it scrolls. Read what is there, scroll, and merge
+    // by organization id until every organization has been seen. One page holds 100 rows.
+    const target = Math.min(total, 100);
+    const seen = new Map<string, { id: string; text: string }>();
+    let stale = 0;
+    for (let step = 0; step < 60 && stale < 6; step++) {
+      const before = seen.size;
+      const found = await rows.evaluateAll((as) => as.map((a) => ({ href: a.getAttribute('href'), text: (a as HTMLElement).innerText.trim() })));
+      for (const f of found) seen.set(PipedrivePage.idOf(f.href), { id: PipedrivePage.idOf(f.href), text: f.text });
+      stale = seen.size === before ? stale + 1 : 0;
+      if (seen.size >= target) break;
+      await rows.last().scrollIntoViewIfNeeded();
+      await this.page.mouse.wheel(0, 1500);
+      await this.page.waitForTimeout(1000);
     }
-    const found = await rows.evaluateAll((as) => as.map((a) => ({ href: a.getAttribute('href'), text: (a as HTMLElement).innerText.trim() })));
-    return found.filter((f) => f.text === name).map((f) => PipedrivePage.idOf(f.href));
+    if (target > seen.size) throw new Error(`The Organizations list shows ${total} organizations but only ${seen.size} were read; the reader would miss records`);
+    return [...seen.values()];
   }
 
   async countByName(name: string): Promise<number> {

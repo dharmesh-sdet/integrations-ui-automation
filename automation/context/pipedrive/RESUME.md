@@ -115,6 +115,10 @@ QA allowed the run. Sequence 197376 was finished by the setup spec (steps 1 and 
 
 Cases saved and approved (37 rows, `test-cases/pipedrive/email-bounced.md`, AL-4183). Spec `tests/pipedrive/email-bounced.spec.ts` written (37 tests), never run. The sequence setup failed three times; the sequence "Pipedrive Email Bounced QA" is an empty draft and `SEQUENCE_ID` is a placeholder. QA told Claude not to run anything until further notice. Everything else, including a data-replacement mistake from two setup runs without `KEEP_TEST_DATA`, is in `email-bounced-progress.md`. Link Clicked is owned by session local-project-f9; message it before and after any run.
 
+## Update 2026-10-28 (Email Bounced production smoke)
+
+Script ready, not run. Cases: `../../notes/production-testing/12-pipedrive-email-bounced.md` (11 checks, 1 send, QA approved). Spec, setup spec, data script and run script are written and typecheck clean. QA cannot publish the workflow to production because of the Refold deploy issue, the same block as Email Sent and Outcome Updated. QA runs `npm run smoke:pipedrive-email-bounced` after the deploy. Details: `email-bounced-progress.md`.
+
 ## Update 2026-10-27 (Email Opened regression, AL-4174)
 
 Cases saved and approved by QA (`test-cases/pipedrive/email-opened.md`, 27 rows). Spec, sequence setup spec and data script are written, NOT run, nothing set up (QA: do not run yet). Open points, files and next steps: `email-opened-progress.md`.

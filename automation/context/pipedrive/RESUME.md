@@ -118,3 +118,7 @@ Cases saved and approved (37 rows, `test-cases/pipedrive/email-bounced.md`, AL-4
 ## Update 2026-10-27 (Email Opened regression, AL-4174)
 
 Cases saved and approved by QA (`test-cases/pipedrive/email-opened.md`, 27 rows). Spec, sequence setup spec and data script are written, NOT run, nothing set up (QA: do not run yet). Open points, files and next steps: `email-opened-progress.md`.
+
+## Update 2026-10-28 (Email Opened production smoke)
+
+Note `notes/production-testing/13-pipedrive-email-opened.md` approved by QA (9 checks). Spec, setup spec, data script, run script and `npm run smoke:pipedrive-email-opened` are written and typecheck clean. Not run: the Refold deploy issue blocks production. Details: `email-opened-progress.md`, last section.

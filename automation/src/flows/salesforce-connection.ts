@@ -1,11 +1,9 @@
-import { spawn } from 'node:child_process';
-import { once } from 'node:events';
 import fs from 'node:fs';
 import path from 'node:path';
 import type { BrowserContext, Page } from '@playwright/test';
 import type { Account } from '../config/accounts.ts';
 import { isProduction, type Browser } from '../config/environments.ts';
-import { authFile } from '../utils/session.ts';
+import { freshSalesforceCookies } from '../utils/salesforce-login.ts';
 
 // Saleshandy shows "Re-connect" on the Salesforce card when Refold's getApp() returns
 // reauth_required (saleshandy-webui crm-view.tsx:83). Clicking it opens a "Continue"
@@ -19,7 +17,7 @@ import { authFile } from '../utils/session.ts';
 
 const AUTOMATION_DIR = path.resolve(import.meta.dirname, '../..');
 const LOCK = path.join(AUTOMATION_DIR, 'locks', 'salesforce-reconnect');
-const LOCK_STALE_MS = 15 * 60_000; // longer than a reconnect with a 5-minute wait for QA
+const LOCK_STALE_MS = 15 * 60_000; // far longer than a reconnect with an API login
 
 type Outcome = 'connected' | 'login' | 'stuck';
 
@@ -42,16 +40,9 @@ export async function reconnectSalesforce(
     if (first === 'connected') return;
     if (first === 'stuck') throw new Error('The Re-connect popup neither closed nor showed a login within 2 minutes. Reconnect by hand.');
 
-    // Case 2 and 3: the popup asked for a login. Log in with the .env username and
-    // password in a separate process; it waits for QA when Salesforce asks for a code.
-    const code = await runLoginScript(account, browser);
-    if (code !== 0) {
-      throw new Error(
-        `Salesforce login for ${account} did not finish (see the lines above). ` +
-          `Log in with npm run login:salesforce:auto -- ${account}, then reconnect and run again.`,
-      );
-    }
-    const { cookies } = JSON.parse(fs.readFileSync(authFile('salesforce', account, browser), 'utf8'));
+    // Case 2 and 3: the popup asked for a login. Log in again through the Salesforce
+    // API (no code: src/utils/salesforce-login.ts) and retry with the new cookies.
+    const cookies = await freshSalesforceCookies(account, browser);
     await page.context().addCookies(cookies);
     await sfContext?.addCookies(cookies); // the worker's Salesforce pages use the new login too
     const second = await clickReconnect(page);
@@ -82,17 +73,6 @@ async function clickReconnect(page: Page): Promise<Outcome> {
   ]);
   if (outcome !== 'connected' && !auth.isClosed()) await auth.close();
   return outcome;
-}
-
-async function runLoginScript(account: Account, browser: Browser): Promise<number> {
-  // spawn, not execFileSync: the test's event loop keeps running while QA types a code.
-  const child = spawn(
-    process.execPath,
-    ['--env-file-if-exists=.env', 'scripts/login-salesforce-auto.ts', account, browser],
-    { cwd: AUTOMATION_DIR, stdio: 'inherit' },
-  );
-  const [code] = await once(child, 'exit');
-  return code ?? 1;
 }
 
 // One reconnect at a time across all lanes: two at once take two token slots and can

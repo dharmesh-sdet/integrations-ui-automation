@@ -26,6 +26,7 @@ import { SalesforceLeadsPage } from '../pages/salesforce/leads.page.ts';
 import { SalesforceOpportunitiesPage } from '../pages/salesforce/opportunities.page.ts';
 import { Salesforce } from '../pages/salesforce/salesforce.ts';
 import { reconnectSalesforce } from '../flows/salesforce-connection.ts';
+import { freshSalesforceCookies, registerSalesforceContext } from '../utils/salesforce-login.ts';
 import { assertSessionFresh } from '../utils/session.ts';
 
 type Options = {
@@ -87,11 +88,15 @@ class SessionContexts {
     const key = `${platform}:${account}:${browserName}`;
     let context = this.contexts.get(key);
     if (!context) {
+      // Salesforce logs in fresh through the API (no code), so an expired or missing
+      // saved session never fails the run. If that login fails, the saved one is used.
+      if (platform === 'salesforce') await freshSalesforceCookies(account, browserName).catch((e) => console.warn(`${e.message} Using the saved session.`));
       context = await this.browser.newContext({
         ...devices[browsers[browserName].device],
         baseURL: baseUrlFor(platform, account),
         storageState: assertSessionFresh(platform, account, browserName),
       });
+      if (platform === 'salesforce') registerSalesforceContext(context, account, browserName);
       this.contexts.set(key, context);
     }
     return context;
@@ -137,7 +142,7 @@ function reconnectFor(page: Page, sessions: SessionContexts, account: Account | 
   return async (): Promise<void> => {
     const browserName = testInfo.project.metadata.browser;
     if (!account || !isBrowser(browserName)) return;
-    // Room for the reconnect, a login and up to 5 minutes for QA to type an SMS code.
+    // Room for the reconnect popups, an API login and the lock wait for another lane.
     if (testInfo.timeout > 0) testInfo.setTimeout(testInfo.timeout + 10 * 60_000); // 0 = no limit, keep it
     await reconnectSalesforce(page, account, browserName, () => sessions.get('salesforce', account, browserName).catch(() => undefined));
     testInfo.annotations.push({ type: 'Salesforce reconnected', description: new Date().toISOString() });

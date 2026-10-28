@@ -1,4 +1,5 @@
 import type { Locator, Page } from '@playwright/test';
+import { gotoSalesforce } from '../../utils/salesforce-login.ts';
 import { BasePage } from '../base.page.ts';
 
 // Clicks a tab of the open record and returns the text of the tab panel. The
@@ -52,10 +53,7 @@ export abstract class SalesforceObjectPage extends BasePage {
   // 'networkidle' never settles on Lightning (background polling), so wait for
   // the search box, the concrete thing the next step needs.
   async openList(): Promise<void> {
-    await this.page.goto(this.listPath, { waitUntil: 'domcontentloaded' });
-    if ((await this.page.title()).startsWith('Login')) {
-      throw new Error('salesforce session expired (the page shows the Salesforce Login). Run npm run login:salesforce -- <account of the spec> in automation/ and log in again (npm run login:salesforce:fresh if that session is rejected again).');
-    }
+    await gotoSalesforce(this.page, this.listPath); // logs in again if the session expired
     await this.page.getByPlaceholder('Search this list...').waitFor();
   }
 

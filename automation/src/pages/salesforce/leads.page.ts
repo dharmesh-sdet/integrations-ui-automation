@@ -1,3 +1,4 @@
+import { gotoSalesforce } from '../../utils/salesforce-login.ts';
 import { BasePage } from '../base.page.ts';
 import { readRecordTab, waitForCreated } from './object.page.ts';
 
@@ -21,11 +22,7 @@ export class SalesforceLeadsPage extends BasePage {
   // polling going, so it can hang well past 60s (seen 2026-10-19). Wait for
   // the search box instead, the concrete thing the next step needs.
   async openLeads(): Promise<void> {
-    await this.page.goto(this.listPath, { waitUntil: 'domcontentloaded' });
-    // The saved session was rejected: Salesforce shows its Login page.
-    if ((await this.page.title()).startsWith('Login')) {
-      throw new Error('salesforce session expired (the page shows the Salesforce Login). Run npm run login:salesforce in automation/ and log in again.');
-    }
+    await gotoSalesforce(this.page, this.listPath); // logs in again if the session expired
     await this.page.getByPlaceholder('Search this list...').waitFor();
   }
 

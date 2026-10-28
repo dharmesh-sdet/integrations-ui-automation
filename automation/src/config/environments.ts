@@ -14,8 +14,8 @@ export const platforms: Record<Platform, { baseURL: string; loginPath: string }>
     baseURL: 'https://app-na2.hubspot.com',
     loginPath: '/',
   },
-  // Developer Edition org (QA, 2026-10-15). Login is username, password, then an
-  // SMS code, so the session is saved by hand once (npm run login:salesforce).
+  // Developer Edition org (QA, 2026-10-15). The browser login asks for a code, so the
+  // tests log in through the API instead, no code (src/utils/salesforce-login.ts).
   salesforce: {
     baseURL: 'https://saleshandy-dev-ed.develop.lightning.force.com',
     loginPath: '/lightning/page/home',

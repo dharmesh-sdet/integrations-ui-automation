@@ -14,7 +14,7 @@
 // Run through scripts/run-salesforce-email-sent-smoke.sh (npm run smoke:salesforce-email-sent),
 // which runs the gate (tests/setup/salesforce-email-sent-prod-gate.spec.ts) first. Needs, once:
 //   npm run login:saleshandy -- emailopenedprod    (already saved)
-//   npm run login:salesforce -- emailopenedprod    (the dev org, SMS code)
+//   Salesforce (the dev org) logs in by itself through the API (src/utils/salesforce-login.ts)
 // Data: test-data/salesforce/email-sent-smoke.csv (scripts/make-email-sent-smoke-data.ts).
 import { expect, test as base } from '../../src/fixtures/index.ts';
 import { readCsv, type Row } from '../../src/data/csv.ts';

@@ -18,10 +18,12 @@
 // "(proposed, unconfirmed)" record what happened as a test annotation instead of asserting it.
 import { expect, test as base } from '../../src/fixtures/index.ts';
 import { readCsv, type Row } from '../../src/data/csv.ts';
+import { companyFields, companyNames } from '../../src/data/generate.ts';
 import { markUsed } from '../../src/data/used.ts';
 import { pipedriveIndustry } from '../../src/data/pipedrive-industries.ts';
 import { configure, fullName, recordLog, sendEmail, staysUnchanged, untilInPipedrive } from '../../src/flows/saleshandy-to-pipedrive.ts';
 import { PD, PIPEDRIVE_PIPELINE } from '../../src/pages/saleshandy/pipedrive-integration.page.ts';
+import type { Page } from '@playwright/test';
 import type { MailinatorPage } from '../../src/pages/mailinator.page.ts';
 import type { PipedriveIntegrationPage } from '../../src/pages/saleshandy/pipedrive-integration.page.ts';
 import type { SaleshandySequencePage } from '../../src/pages/saleshandy/sequence.page.ts';
@@ -42,9 +44,21 @@ type Fx = {
   mailinator: MailinatorPage;
 };
 
+// Ctrl+Shift+R after the first load, so both sites start from a fresh cache (QA, 2026-10-27).
+// Waits for DOMContentLoaded only: the Saleshandy start page never reached "load" in 3 of 7 rows
+// (2026-10-27, 5 min test timeout), and goto has no time limit of its own here.
+async function hardRefresh(page: Page, path: string): Promise<void> {
+  await page.goto(path, { waitUntil: 'domcontentloaded', timeout: 60_000 });
+  await page.keyboard.press('Control+Shift+R');
+  await page.waitForLoadState('domcontentloaded', { timeout: 60_000 });
+}
+
 const test = base.extend<{ fx: Fx }>({
-  fx: async ({ pipedriveIntegration, saleshandySequence, pipedrivePeople, pipedriveDeals, pipedriveLeads, pipedriveOrganizations, mailinator }, use) =>
-    use({ pipedriveIntegration, saleshandySequence, people: pipedrivePeople, deals: pipedriveDeals, leads: pipedriveLeads, orgs: pipedriveOrganizations, mailinator }),
+  fx: async ({ pipedriveIntegration, saleshandySequence, pipedrivePeople, pipedriveDeals, pipedriveLeads, pipedriveOrganizations, mailinator }, use) => {
+    await hardRefresh(saleshandySequence.page, '/');
+    await hardRefresh(pipedrivePeople.page, '/');
+    await use({ pipedriveIntegration, saleshandySequence, people: pipedrivePeople, deals: pipedriveDeals, leads: pipedriveLeads, orgs: pipedriveOrganizations, mailinator });
+  },
 });
 
 test.use({ account: 'gpipedrive' });
@@ -78,6 +92,17 @@ function prospect(scenario: string): Prospect {
   // email and find two persons (Combined actions 2, 2026-10-26).
   markUsed(CSV, row['Email']);
   return { row, email: row['Email'], name: fullName(row) };
+}
+
+// Create Organization 1 needs a company that has no organization yet. Rows no longer delete their records, so
+// the pool's names fill up in Pipedrive ("Zapier" had 2, 2026-10-28): take a random pool name that is not on the
+// Organizations list and give the prospect that company.
+async function useFreeCompany(fx: Fx, p: Prospect): Promise<void> {
+  const taken = new Set(await fx.orgs.names());
+  const free = companyNames().filter((n) => !taken.has(n));
+  if (!free.length) throw new Error('Every company of the pool already has an organization in Pipedrive; add companies to COMPANIES in src/data/generate.ts');
+  const fields = companyFields(free[Math.floor(Math.random() * free.length)]);
+  Object.assign(p.row, fields, { 'Company Industry': pipedriveIndustry(fields['Company Industry']) });
 }
 
 // Used only by sendAndClear, before the row starts (QA 2026-10-26: no clean-up after a row). Removes what the
@@ -512,6 +537,7 @@ test.describe('Create Organization', () => {
   test('1: prospect has a company, no organization with that name', async ({ fx }) => {
     test.setTimeout(UI_ROW);
     const p = prospect('Create Organization > 1');
+    await useFreeCompany(fx, p);
     expect(await fx.orgs.countByName(p.row['Company']), 'the company name is free').toBe(0);
     await configure(fx, TRIGGER, [PD.createOrganization]);
     await unsubscribeUi(fx, p);

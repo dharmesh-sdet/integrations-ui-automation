@@ -100,3 +100,21 @@ Product or setup gap (v1): Update a Deal 1 (Logs 6ae03ed57309264ea27db633, 11:34
 ## Rerun 3, new data, 2026-10-27 (log `evidence/2026-10-27-rerun3.log`)
 
 Create a Deal 2 (tau.wari), Create a Deal 3 (tamanda.nyirenda), Update a Deal 1 and Delete Deal 1: 4 failed, same result as rerun 2 with all-new people. Create a Deal 2: person keeps only "Legacy deal 1". Create a Deal 3: person has no deal. Update a Deal 1: newest deal not updated. Delete Deal 1: newest deal not deleted. No script cause.
+
+## State on 2026-10-28 (reruns, fixes, tickets)
+
+Overall: 29 rows, 22 pass, 7 fail. All 7 failures are product problems. No product fix is confirmed. 16 passes date from 2026-10-26 and were not rerun. Trigger behavior 4 passed 2026-10-27. Create a Person 2, Update a Person 1, Create Organization 1 and 2, and Combined actions 2 passed on 2026-10-28.
+
+Failing rows and tickets:
+- Create a Lead 1, Create a Lead 2, Combined actions 1: AL-4178. The "Create a lead" step gets 400 `"lead_fields" is not allowed`. Combined actions 1 also makes 3 persons from one execution (ids 263 to 265 and 281 to 283). The 3 persons have no ticket.
+- Create a Deal 2: AL-4180. Create a Deal 3: AL-4179. The Create Deal step sends only pipeline_id, stage_id and title (the email), with no person.
+- Update a Deal 1 and Delete Deal 1: AL-4185, created 2026-10-28 from `jira/drafts/unsubscribed-pipedrive-update-delete-deal-two-deals.json`. Related: AL-4184 (same symptom on Reply is Received). Logs show "Deal exist? > Custom Code > Find a deal > Get base url" and no update or delete step. "Find a deal" searches `title = <prospect email>`. Open point: those runs used the old "Legacy" deal titles, not realistic ones.
+- AL-4177 (double run): not seen in the runs from 10:25 AM on 2026-10-28. Intermittent, not closed. Comment 79516 was posted on it by mistake (QA wanted a draft only). The MCP cannot delete comments; QA deletes it by hand.
+
+Latest ticket comments (read 2026-10-28): AL-4178, AL-4179 and AL-4180 each have one comment from Rudra Chauhan at 11:00 AM: "there is an error while uploading the json on the pipedrive. blocked by third party." (mentions QA). AL-4177 has three comments, all from QA (79470, 79472, 79516). AL-4184 and AL-4185 have none.
+
+Script changes today (not committed): `organizations.page.ts` reader scrolls and merges by id; `generate.ts` exports `companyNames` and `companyFields`; `countries.ts` adds 12 countries (name pool was down to 64 free combinations); the spec has `useFreeCompany` for Create Organization 1.
+
+Decisions: names. QA 2026-10-28: stop using "Legacy Person" and "Legacy deal N". The spec still creates them (`personFirst`, `legacyDeals`). QA has not answered whether to change the spec. Proposed default: change only the Update a Deal 1 and Delete Deal 1 rows, because Create a Person 2 and Update a Person 1 use the old name as the old value.
+Manual data for Update a Deal 1 (Soa Rakotomalala, Outreach) and Delete Deal 1 (Kossi Ayivi, Asana) was given in chat, with no CSV. Both emails are in `test-data/_generated-emails.txt`.
+Process: logs of runs go to the scratchpad, not to an `evidence/` folder. Check for a live run before starting one (`pgrep -af "playwright test tests/pipedrive/prospect-unsubscribed" | grep -v pgrep`).

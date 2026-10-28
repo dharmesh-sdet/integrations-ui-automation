@@ -73,3 +73,10 @@ Spec `tests/pipedrive/prospect-outcome-updated.spec.ts` (34 tests: Setup + 33 ro
 - Reused: staging test bodies of the same activity, `sendEmail` and the other helpers of `src/flows/saleshandy-to-pipedrive.ts`, the Email Sent gate (`tests/setup/pipedrive-email-sent-prod-gate.spec.ts`) and the Email Sent sequence setup (now takes `SMOKE_SEQUENCE_NAME`).
 - Gaps: Update Organization cannot read the mapped value (no reader in `organizations.page.ts`, same on staging), so row 7 checks no second organization plus the Logs row. The reload after a trigger save reads back the activities, not the categories.
 - Before the first run QA: `npm run login:saleshandy -- emailopenedprod`, `npm run login:pipedrive -- emailopenedprod`, "Email Sent from Saleshandy" off on emailopenedprod.
+
+## STATUS (QA, 2026-10-27): test cases and scripts are complete, deploy is blocked
+
+- Done: staging cases (30 rows, `test-cases/pipedrive/prospect-outcome-updated.md`), staging spec (30 of 30 with QA's hand test of the 2 double-person rows), production smoke cases (`notes/production-testing/10-pipedrive-prospect-outcome-updated.md`, 9 checks, approved) and the production smoke script (see the section above).
+- Blocked: an issue on the Refold side stops the workflow deploy to production (QA, 2026-10-27). The production smoke cannot run until the deploy happens. Nothing is pending on Claude.
+- When the deploy is done: QA logs in headed (`npm run login:saleshandy -- emailopenedprod`, `npm run login:pipedrive -- emailopenedprod`), makes sure Email Sent is off, then runs `npm run smoke:pipedrive-outcome-updated`. Claude reads the report afterwards, then drafts the summary from `jira/templates/comments/04-production-smoke-summary.md` into `jira/drafts` (QA sends it).
+- Open, unchanged: two persons per email on automated runs (cause not proven, not filed); Update Organization mapped value cannot be read; the smoke reload reads back activities, not categories.

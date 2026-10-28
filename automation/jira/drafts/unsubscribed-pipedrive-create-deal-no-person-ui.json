@@ -1,0 +1,28 @@
+{
+  "type": "bug",
+  "project": "AL",
+  "priority": "Medium",
+  "environment": "Production",
+  "epic": "AL-3982",
+  "assignee": {
+    "name": "Darshan",
+    "accountId": "5af5d8dd244bc90a10605d4f"
+  },
+  "qa": {
+    "name": "Dharmesh Patel",
+    "accountId": "712020:c7dedb58-9cb3-4450-a98f-5b5b56f6556b"
+  },
+  "links": [
+    "AL-4170",
+    "AL-4176"
+  ],
+  "attachments": [],
+  "summary": "Prospect is Unsubscribed in Saleshandy: Create a Deal in Pipedrive activity creates the deal without linking it to the existing person when the person already has a deal",
+  "description": "**Prerequisites:**\n- The Pipedrive integration is connected to Saleshandy.\n- The Prospect is Unsubscribed in Saleshandy trigger is enabled with the Create a Deal activity only, and saved.\n- Extra Configuration: Pipeline = Pipeline, Stage = Qualified.\n- A sequence with at least one prospect that is already a person in Pipedrive, and that person has 1 deal.\n\n**Steps to Reproduce:**\n1. Go to Triggers and Activities, enable Prospect is Unsubscribed in Saleshandy, select Create a Deal, set the Extra Configuration, and click Save.\n2. Add the prospect to the sequence. No email needs to be sent.\n3. Open the sequence > Prospects, and mark the prospect as Unsubscribed (Mark as Unsubscribe).\n4. Wait 15 seconds, then open Deals in Pipedrive and find the deal titled with the prospect's email.\n5. Open the person in Pipedrive and check their deals.\n6. Go to Integrations > Pipedrive > Logs and open the Prospect is Unsubscribed in Saleshandy entries.\n\n**Actual Result:**\n- A new deal is created, titled with the prospect's email, in Pipeline / Qualified, but \"No person is linked to this deal\" is shown on the deal. The Contact person is empty.\n- The person still shows only the old deal.\n- Logs show the status Success.\n\n**Expected Result:**\n- The new deal is created on the existing person (Contact person is the prospect) and the old deal is unchanged, so the person shows 2 deals.\n\n**Note:**\n- Affected Environment - Staging.\n",
+  "sent": {
+    "key": "AL-4180",
+    "url": "https://saleshandy.atlassian.net/browse/AL-4180",
+    "problems": [],
+    "at": "2026-10-27T10:52:15.006Z"
+  }
+}

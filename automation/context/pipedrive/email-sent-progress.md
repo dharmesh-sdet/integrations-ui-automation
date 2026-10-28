@@ -160,3 +160,11 @@ Stopped at the gate, no row ran, no email sent (send count stays 5). Pipedrive i
 ## Production smoke, runs 2 and 3, 2026-10-27 (logs: `evidence/2026-10-27-prod-smoke-run2.log`, `evidence/2026-10-27-prod-smoke-row1-rerun.log`)
 
 The gate now maps missing pairs (it only read in run 1, my mistake). Gate passed, sequence 983594 created. Checks 2 to 8 passed. Check 1 (Create a Lead, Create a Deal and Create a Person together) failed twice with a new prospect each time (Albano Baptista, then Limbani Gondwe): person, lead and deal exist, `activityCount` is 0 after 90 s and still 0 minutes later (read again by a throwaway spec). Logs entry of the rerun: 6ae06833afea6d3cf46d94c4, 2:30 PM, 1m 21s, Success. The same row passed on staging (Combined actions 1, 2026-10-26). Rerun prospect Limbani Gondwe has two persons (ids 206, 207), the duplicate trigger run seen before (AL-4177). Bug-or-not: QA. Not filed, nothing sent to Jira.
+
+## Production smoke, check 1 rerun with new data, 2026-10-27 15:31 (log: `evidence/2026-10-27-prod-smoke-row1-rerun2.log`)
+
+QA ran the row by hand first: prachi.mahote@mailinator.com (person 208) has 1 lead, 1 deal and 1 done Email activity, one execution 6ae072ee4a071ef67d43a3cb (3:16 PM, 23.8 s, Success). Automated rerun with a new prospect (aurea.mabunda@mailinator.com, all 8 smoke rows replaced): no person in Pipedrive after 90 s, and still none at 15:34. Logs execution 6ae07693a5c6b2da66c62c53 (3:31 PM) still shows RUNNING at 15:34. So this time the run was slow or stuck, not a missing activity. Not filed.
+
+## QA verdict, 2026-10-27
+
+QA tested the production smoke and says it works. Check 1 validated manually as passed. Production smoke for Pipedrive Email Sent: passed. No ticket exists for this workflow, so no Jira summary is drafted. The slow and doubled runs seen on automated sends stay open under AL-4177.

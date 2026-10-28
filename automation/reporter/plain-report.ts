@@ -164,7 +164,7 @@ function userSteps(steps: TestStep[]): Step[] {
 }
 
 // tests/<integration>/... gives the top section of the page.
-const INTEGRATIONS: Record<string, string> = { hubspot: 'HubSpot', salesforce: 'Salesforce', saleshandy: 'Saleshandy', setup: 'Account setup' };
+const INTEGRATIONS: Record<string, string> = { hubspot: 'HubSpot', salesforce: 'Salesforce', pipedrive: 'Pipedrive', zoho: 'Zoho', saleshandy: 'Saleshandy', setup: 'Account setup' };
 function integrationOf(file: string): string {
   const dir = file.split(/[\\/]/)[1] ?? '';
   return INTEGRATIONS[dir] ?? (dir ? dir[0].toUpperCase() + dir.slice(1) : 'Other');

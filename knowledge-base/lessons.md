@@ -15,6 +15,12 @@ Entry shape:
 - Status: Proposed | Applied | Rejected
 ```
 
+## 2026-10-28: Treated a RUNNING Logs entry as a possible product issue (Pipedrive Email Opened)
+- What went wrong: the first failure of Combined actions (Create a Person and Update a Person, person exists) carried the Logs annotation "RUNNING". I listed a run that stayed RUNNING for more than 90 seconds as a possible product issue. Pipedrive reports to Saleshandy through Refold, and Refold is slow. A RUNNING status means Refold has not finished. It is not a finding. The row passed on the rerun with no change aimed at it.
+- Why: the rule exists three times (lesson 2026-10-08, lesson 2026-10-13, memory `check-crm-first-logs-fallback`). It covers cadence and "Logs is not a per-activity result". It never says what each Logs status means. The spec also attaches the latest Logs row to every row, so I read the status as a result.
+- Change: `.claude/skills/ui-test-from-workflow/SKILL.md`, in the failure-analysis step where the 2026-10-13 rule lives. New text: "Check the CRM first. If the data is not in the CRM after the wait, open Logs and read the entry for errors. RUNNING means Refold has not finished: refresh, do not report it. Success does not prove the record. Error is a finding only with its steps and the CRM state: ask QA, do not fail the row alone." Add the same sentence to memory `check-crm-first-logs-fallback`.
+- Status: Applied (QA OK 2026-10-28), now in `.claude/skills/ui-test-from-workflow/SKILL.md` Stage 4 step 2 and in memory `check-crm-first-logs-fallback`. The older wording at SKILL.md line 182 (refresh Logs 15 seconds after the action) still says Logs first: not changed, QA to decide.
+
 ## 2026-10-22: Smoke checklist drafted without the template, README or a row count (Salesforce Email Sent production)
 - What went wrong: the first draft was invented bullets with 14 rows, then 13, and listed an unsettled staging row (Update a Opportunity with 1 Opportunity). QA wanted 10 to 12 rows in the template format and had to say so. The first runner plan also left out creating the sequence, adding the email accounts and enabling it (QA added them after). The README said the sender allows 15 a day; production now has two other accounts (50 and 150 a day), found only by reading the Email Accounts page.
 - Why: Stage 2 step 1 says "read the README first" but not what to take from it, so the session read nothing and drafted from the staging file. README facts (sender, limits) go stale and were used as fact.

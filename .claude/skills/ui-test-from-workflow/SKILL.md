@@ -275,6 +275,11 @@ After the run (yours or QA's):
 
 1. Read `reports/results.json`.
 2. For each failed test, open its screenshot (Read the PNG) and the error.
+   Check the CRM first. If the data is not in the CRM after the wait, open
+   Logs and read the entry for errors. RUNNING means Refold has not finished:
+   refresh, do not report it. Success does not prove the record. Error is a
+   finding only with its steps and the CRM state: ask QA, do not fail the row
+   alone (QA, 2026-10-28).
 3. Failures live in the report page, not in a separate file (QA, 2026-10-09).
    The page already shows each failure's step, expected result, what happened,
    screenshots and replay command. Add the likely reason for each failed test

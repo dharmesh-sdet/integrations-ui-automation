@@ -62,8 +62,8 @@ createServer(async (req, res) => {
   const url = new URL(req.url ?? '/', `http://localhost:${PORT}`);
   try {
     if (req.method === 'GET' && url.pathname === '/api/drafts') {
-      // Each draft also carries its platform (Salesforce, HubSpot or other) for the
-      // Dashboard. A comment is judged by the ticket it is posted on, read from Jira.
+      // Each draft also carries its platform (Salesforce, HubSpot, Pipedrive, Zoho or
+      // other) for the Dashboard. A comment is judged by the ticket it is posted on, read from Jira.
       const drafts = await Promise.all(
         listDrafts().map(async (d) => {
           const live = d.type === 'bug' ? (d.sent ? await liveStatus(d.sent.key) : undefined) : await liveStatus(d.ticket);
@@ -117,9 +117,9 @@ createServer(async (req, res) => {
     }
 
     if (req.method === 'GET') {
-      // The review page, the Dashboard and the two platform pages are one page; it reads
-      // the address to decide what to show.
-      const pages = ['/', '/dashboard', '/salesforce', '/hubspot'];
+      // The review page, the Dashboard, Drafts, and the four platform pages are one page;
+      // it reads the address to decide what to show.
+      const pages = ['/', '/dashboard', '/drafts', '/salesforce', '/hubspot', '/pipedrive', '/zoho'];
       const rel = decodeURIComponent(pages.includes(url.pathname.replace(/(.)\/+$/, '$1')) ? '/report.html' : url.pathname);
       const file = path.join(reportsDir, rel);
       if (file.startsWith(reportsDir + path.sep) && existsSync(file) && statSync(file).isFile()) {

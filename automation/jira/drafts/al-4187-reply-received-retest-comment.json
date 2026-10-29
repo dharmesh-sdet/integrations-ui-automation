@@ -1,0 +1,11 @@
+{
+  "type": "comment",
+  "ticket": "AL-4187",
+  "body": "**Verification:** Retested on Staging after the fix. Reply is Received in Saleshandy trigger, with Create a Lead, Create a Deal and Create a Person in Pipedrive activities selected together: for a prospect not in Pipedrive, marking the Step 1 email as replied now creates one person. Pass.",
+  "sent": {
+    "key": "AL-4187",
+    "url": "https://saleshandy.atlassian.net/browse/AL-4187",
+    "problems": [],
+    "at": "2026-10-29T13:30:06.182Z"
+  }
+}

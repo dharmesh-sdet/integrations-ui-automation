@@ -1,0 +1,11 @@
+{
+  "type": "comment",
+  "ticket": "AL-4184",
+  "body": "**Verification:** Retested on Staging after the fix. Reply is Received in Saleshandy trigger, Update a Deal in Pipedrive activity and Delete Deal in Pipedrive activity: for a person with two deals, marked the Step 1 email as replied.\n\n* Update a Deal: the newest deal is updated (title, configured Pipeline and Stage) and the older deal is unchanged. Pass.\n* Delete Deal: the newest deal is deleted and the older deal remains. Pass.",
+  "sent": {
+    "key": "AL-4184",
+    "url": "https://saleshandy.atlassian.net/browse/AL-4184",
+    "problems": [],
+    "at": "2026-10-29T13:30:02.934Z"
+  }
+}

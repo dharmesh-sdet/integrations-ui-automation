@@ -1,0 +1,11 @@
+{
+  "type": "comment",
+  "ticket": "AL-4188",
+  "body": "**Verification:** Retested on Staging after the fix. Reply is Received in Saleshandy trigger, Create Organization in Pipedrive activity: for a prospect whose Industry is not in the Pipedrive Industry list, marking the Step 1 email as replied no longer creates the organization. Pass.",
+  "sent": {
+    "key": "AL-4188",
+    "url": "https://saleshandy.atlassian.net/browse/AL-4188",
+    "problems": [],
+    "at": "2026-10-29T13:30:07.202Z"
+  }
+}

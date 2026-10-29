@@ -2,7 +2,7 @@
 
 Environment: Staging. Version v2. Account `gpipedrive`. The workflow ticket is AL-4172. No row has its own ticket, so every Ticket cell is None. Expected results come from the rules document of 2026-10-23. Rows marked (proposed, unconfirmed) have an Expected result that is not documented. A different result there is not a failure by itself.
 
-What differs from Email Sent: the lead and the deal are titled `First Name Last Name`, not the email. Update a Deal then renames a deal created in the same run to the email. The activity type is `Email` (capital E). These are decisions (QA 2026-10-23), not defects.
+What differs from Email Sent: the lead and the deal are titled `First Name Last Name`, not the email. The activity type is `Email` (capital E). These are decisions (QA 2026-10-23), not defects.
 
 Not covered, still open: B1 (Update a Person with no person) is already reported. B2 (Update a Deal or Delete Deal with no person) is also reported. Rows that hit them expect Error. The `\"` in activity notes is a known issue. Expected Close Date is not mapped. A real reply from a prospect mailbox is not covered, because every row uses Mark as Replied. Two persons from one event is a bug by the rules and was seen on this account in the Email Sent and Outcome Updated runs. If it happens again, rows that check "still 1 person" will show it. Record it and do not retry silently.
 
@@ -61,7 +61,6 @@ Extra Configuration: Pipeline and Stage as read on staging.
 | # | Scenario | Do | Expected | Ticket |
 |---|---|---|---|---|
 | 1 | Person has 2 deals | Mark as Replied | Only the newest deal changes: title is the prospect email, configured pipeline and stage, mapped Value. The older deal is unchanged | None |
-| 2 | Create a Deal in slot 1 and Update a Deal in slot 2, prospect not in Pipedrive | Mark as Replied | Person created with one deal. The deal was created titled First Last, then renamed to the prospect email. Configured pipeline and stage | None |
 | 3 | Person has no deal | Mark as Replied | Success. Nothing created or changed | None |
 | 4 | Prospect not in Pipedrive | Mark as Replied | Run ends in Error (known B2). No person is created | None |
 

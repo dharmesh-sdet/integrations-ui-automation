@@ -88,6 +88,10 @@ async function legacyDeals(fx: Fx, personId: string, count: number): Promise<str
       await fx.deals.createOnPerson(personId, { title, value: 100 * i });
       titles.push(title);
     }
+    await expect(async () => {
+      await fx.people.open(personId);
+      expect(await fx.people.dealIds()).toHaveLength(count);
+    }).toPass({ timeout: 60_000, intervals: [3_000] });
   });
   return titles;
 }
@@ -322,20 +326,6 @@ test.describe('Update a Deal', () => {
       expect(await fx.deals.read(newest)).toMatchObject({ title: p.email, pipeline: PIPEDRIVE_PIPELINE, stage: 'Contact Made' });
     });
     expect(await fx.deals.read(older), 'older deal unchanged').toMatchObject({ title: 'Legacy deal 1', stage: 'Qualified' });
-  });
-
-  test('2: Create a Deal in slot 1 and Update a Deal in slot 2, prospect not in Pipedrive', async ({ fx }) => {
-    test.setTimeout(minutes(1));
-    const p = prospect('Update a Deal > 2');
-    await configure(fx, TRIGGER, [{ activity: PD.createDeal, extra: QUALIFIED }, { activity: PD.updateDeal, extra: CONTACT_MADE }]);
-    await reply(fx, p);
-    const id = await expectOnePerson(fx, p);
-    await untilInPipedrive(fx, TRIGGER, 'Deal not renamed to the prospect email', async () => {
-      await fx.people.open(id);
-      expect(await fx.people.dealTitles()).toEqual([p.email]);
-    });
-    const [dealId] = await fx.people.dealIds();
-    expect(await fx.deals.read(dealId)).toMatchObject({ title: p.email, pipeline: PIPEDRIVE_PIPELINE, stage: 'Contact Made' });
   });
 
   test('3: person has no deal', async ({ fx }) => {

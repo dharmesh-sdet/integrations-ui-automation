@@ -1,0 +1,11 @@
+{
+  "type": "comment",
+  "ticket": "AL-4186",
+  "body": "**Verification:** Retested on Staging after the fix. Reply is Received in Saleshandy trigger, Create a Person in Pipedrive and Update a Person in Pipedrive activities: marked the Step 1 email as replied for a prospect not in Pipedrive (Create a Person) and for a prospect already in Pipedrive (Create a Person and Update a Person). The activity is now added to the person in each case. Pass.",
+  "sent": {
+    "key": "AL-4186",
+    "url": "https://saleshandy.atlassian.net/browse/AL-4186",
+    "problems": [],
+    "at": "2026-10-29T13:30:05.265Z"
+  }
+}

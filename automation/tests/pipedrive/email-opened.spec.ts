@@ -68,6 +68,9 @@ const CONTACT_MADE = { pipeline: PIPEDRIVE_PIPELINE, stage: 'Contact Made' };
 // An open registers about 10 s after it is made on staging (HubSpot Email Opened, 2026-10-12).
 const OPEN_TIMEOUT_MS = 3 * 60_000;
 const OPEN_SETTLE_MS = 10_000;
+// Staging: an open counts 10 s after the send, a second open 10 s after the first (QA, 2026-10-12;
+// context/hubspot/email-opened.md). Production is 60 s and 120 s.
+const OPEN_AFTER_MS = 10_000;
 const OPEN_REFRESH_MS = 5_000;
 
 // One row = the sequence gap, Send now, the Mailinator open and a Pipedrive look. A row with a second
@@ -126,6 +129,7 @@ async function send(fx: Fx, p: Prospect): Promise<void> {
 async function open(fx: Fx, p: Prospect): Promise<number> {
   const opened = () => fx.saleshandySequence.openedCount(SEQUENCE_ID, p.name, 1);
   const before = await opened();
+  await test.step(`Wait ${OPEN_AFTER_MS / 1000} s before the open`, () => fx.saleshandySequence.page.waitForTimeout(OPEN_AFTER_MS));
   await test.step(`Open the step 1 email in the Mailinator inbox of ${p.email}`, () => fx.mailinator.openEmail(p.email, STEP_1_SUBJECT));
   let after = before;
   await test.step('Wait until Saleshandy counts the open (refresh the Emails tab)', async () => {
@@ -171,6 +175,16 @@ async function activitiesAtLeast(fx: Fx, personId: string, atLeast: number): Pro
   test.info().annotations.push({ type: 'activities on the person', description: String(count) });
 }
 
+// The history list can load after the count shows (seen 2026-10-29: the first read was empty), so read it again.
+async function firstActivity(fx: Fx) {
+  let first: Awaited<ReturnType<Fx['people']['activities']>>[number] | undefined;
+  await untilInPipedrive(fx, TRIGGER, 'No activity could be read on the person', async () => {
+    [first] = await fx.people.activities();
+    expect(first, 'first activity').toBeDefined();
+  }, 45_000);
+  return first!;
+}
+
 // ---- Trigger behavior ----
 
 test.describe('Trigger behavior', () => {
@@ -195,19 +209,6 @@ test.describe('Trigger behavior', () => {
     await activitiesAtLeast(fx, id, first + 1);
     expect(await fx.people.idsByEmail(p.email), 'still one person').toEqual([id]);
   });
-
-  test('4: only "Reply is Received in Saleshandy" on, with Create a Person', async ({ fx }) => {
-    test.setTimeout(minutes(1));
-    const p = prospect('Trigger behavior > 4');
-    await configure(fx, OTHER_TRIGGER, [PD.createPerson]);
-    // disable() only flips the switch; without Save the earlier setting stays on (seen 2026-10-28: a person
-    // was created by the Email Opened trigger that this row turned off).
-    await fx.pipedriveIntegration.disable(TRIGGER);
-    await fx.pipedriveIntegration.save();
-    await expect(fx.pipedriveIntegration.savedToast()).toBeVisible({ timeout: 15_000 });
-    await sendAndOpen(fx, p);
-    await expectNoPerson(fx, p);
-  });
 });
 
 // ---- Create a Person ----
@@ -220,7 +221,7 @@ test.describe('Create a Person', () => {
     await sendAndOpen(fx, p);
     const id = await expectOnePerson(fx, p);
     await activitiesAtLeast(fx, id, 1);
-    const [activity] = await fx.people.activities();
+    const activity = await firstActivity(fx);
     expect(activity).toMatchObject({ subject: SUBJECT, type: 'Email', done: true });
     expect(await fx.people.name()).toBe(p.name);
     test.info().annotations.push({ type: 'activity note', description: activity.note.slice(0, 300) });
@@ -341,7 +342,7 @@ test.describe('Update a Person', () => {
     await configure(fx, TRIGGER, [PD.updatePerson]);
     await sendAndOpen(fx, p);
     await activitiesAtLeast(fx, id, 1);
-    const [activity] = await fx.people.activities();
+    const activity = await firstActivity(fx);
     expect(activity).toMatchObject({ subject: SUBJECT, type: 'Email', done: true });
     test.info().annotations.push({ type: 'activity note', description: activity.note.slice(0, 300) });
     test.info().annotations.push({ type: 'person details after the update', description: JSON.stringify(await fx.people.details()) });
@@ -556,5 +557,23 @@ test.describe('Combined actions', () => {
     await sendAndOpen(fx, p);
     await activitiesAtLeast(fx, id, 2);
     expect(await fx.people.idsByEmail(p.email), 'still one person').toEqual([id]);
+  });
+});
+
+// Last on purpose: this row turns "Email is Opened in Saleshandy" off and saves. On 2026-10-29 the trigger
+// ran no more after that, although it was switched on and saved again (no Logs entry after the save, 9 rows
+// and one rerun). Rows that run after it would fail. Not proven to be a product issue.
+test.describe('Trigger behavior', () => {
+  test('4: only "Reply is Received in Saleshandy" on, with Create a Person', async ({ fx }) => {
+    test.setTimeout(minutes(1));
+    const p = prospect('Trigger behavior > 4');
+    await configure(fx, OTHER_TRIGGER, [PD.createPerson]);
+    // disable() only flips the switch; without Save the earlier setting stays on (seen 2026-10-28: a person
+    // was created by the Email Opened trigger that this row turned off).
+    await fx.pipedriveIntegration.disable(TRIGGER);
+    await fx.pipedriveIntegration.save();
+    await expect(fx.pipedriveIntegration.savedToast()).toBeVisible({ timeout: 15_000 });
+    await sendAndOpen(fx, p);
+    await expectNoPerson(fx, p);
   });
 });

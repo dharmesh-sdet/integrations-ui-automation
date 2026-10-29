@@ -120,3 +120,11 @@ User: dharmesh+gpipedrive@saleshandy.com; person details after the update: {"Fir
 - Cases approved by QA: `notes/production-testing/13-pipedrive-email-opened.md` (9 checks, 9 sends, baseline, no fixed bug ticket, AL-4174 is the workflow ticket). README row 13 added. Create a Lead, Create a Deal and Create a Person are one row.
 - Written, typecheck clean, NOT run (QA: write only; the Refold deploy issue blocks the workflow deploy to production): `tests/pipedrive/email-opened-smoke.spec.ts`, `tests/setup/pipedrive-email-opened-smoke-sequence.spec.ts`, `scripts/make-pipedrive-email-opened-smoke-data.ts`, `scripts/run-pipedrive-email-opened-smoke.sh`, script `npm run smoke:pipedrive-email-opened`. CSV `test-data/pipedrive/email-opened-smoke.csv` (gitignored).
 - Open points for the QA run: the production account must have a custom tracking domain (link.saleshandy.com is noted in the README, not re-read), otherwise the setup spec fails on "Custom Domain Required". "Email Sent from Saleshandy" and "Link is Clicked in Saleshandy" must be off on `emailopenedprod`. Open timing (60 s, then 120 s) is copied from HubSpot notes, not seen on Pipedrive.
+
+## 2026-10-29: full regression rerun (developer request)
+
+- Full run of `tests/pipedrive/email-opened.spec.ts` with `scripts/run-pipedrive-email-opened.sh --force` and `SEND_CAP=150` (sends logged for the day went from 69 to 101, so the run used 32). New data for 26 rows, sequence 197378, 1 worker.
+- Result: 26 passed, 1 skipped, 0 failed, 53.4 min. The skipped row is Trigger behavior 2 (needs a second sequence).
+- Rows that failed in the 2026-10-28 first run (Create a Deal 1 and 2, Update a Deal 2, Trigger behavior 3, Combined actions 2) all passed, with no script change during the run.
+- Spec changes tested in this run (edited the same day): staging open wait of 10 s (`OPEN_AFTER_MS`), a retry when the activity history loads late (`firstActivity`), and Trigger behavior 4 moved to the end of the file. That row turns Email Opened off and saves, and on 2026-10-29 the trigger stopped firing after it, so it must run last. Not proven to be a product issue.
+- No new product issue found.

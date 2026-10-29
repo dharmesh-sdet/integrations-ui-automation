@@ -192,6 +192,18 @@ export class SaleshandySequencePage extends SaleshandyPage {
     }
   }
 
+  // Waits for a real reply: the Replied cell of the prospect's row stops reading "-". The list does not refresh
+  // itself, so it is reopened on each try (Zoho Reply Received, Real reply).
+  async waitForReplied(sequenceId: string, fullName: string, step: number, email: string, timeoutMs: number): Promise<void> {
+    await expect(async () => {
+      await this.openEmails(sequenceId);
+      await this.searchIfOffFirstPage(fullName, step, email);
+      const row = this.emailRow(fullName, step, email);
+      await expect(row).toBeVisible({ timeout: 8_000 });
+      expect((await (await this.cell(row, 'Replied')).innerText()).trim()).not.toBe('-');
+    }).toPass({ timeout: timeoutMs, intervals: [15_000] });
+  }
+
   // Emails tab > row > three dots > "Mark as bounced" (no confirm dialog; seen
   // 2026-10-12). The row then reads "Hard Bounced" and Latest Status Bounced.
   // It works on a sent row and on an Active or paused sequence (QA).

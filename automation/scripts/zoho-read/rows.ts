@@ -1,0 +1,14 @@
+import { chromium } from 'playwright';
+const root = '/home/dharmesh/Desktop/Dharmesh/Saleshandy/repo/local project/automation';
+const [url, needle, sortHint] = process.argv.slice(2);
+const ctx = await chromium.launchPersistentContext(root + '/auth/mcp-zoho-profile', { headless: false, viewport: { width: 1440, height: 900 } });
+const p = ctx.pages()[0] ?? await ctx.newPage();
+await p.goto(url);
+await p.waitForTimeout(12000);
+console.log('URL', p.url());
+const t = await p.locator('body').innerText();
+console.log('TOTAL', (t.match(/Total Records\s*(\d+)/) || [])[1]);
+const rows = await p.locator('tr, [role=row]').evaluateAll(r => r.map(x => (x as HTMLElement).innerText.replace(/\s+/g, ' ').trim()));
+const hit = rows.filter(r => r.toLowerCase().includes(needle.toLowerCase()));
+console.log('ROWS', hit.length); console.log(hit.slice(0, 10).join('\n'));
+await ctx.close();

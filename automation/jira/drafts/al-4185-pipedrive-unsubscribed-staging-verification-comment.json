@@ -1,0 +1,12 @@
+{
+  "type": "comment",
+  "ticket": "AL-4185",
+  "body": "**Verification:** Retested on Staging after the fix. Prospect is Unsubscribed in Saleshandy trigger, person with two deals, deals not titled with the prospect's email: Update a Deal in Pipedrive changes only the newest deal (title, Pipeline and Stage, mapped Value) and the older deal is unchanged. Delete Deal in Pipedrive deletes only the newest deal and the older deal stays.",
+  "waitingFor": "QA to send from npm run jira. Source: Pipedrive Prospect Unsubscribed reruns on 2026-10-29.",
+  "sent": {
+    "key": "AL-4185",
+    "url": "https://saleshandy.atlassian.net/browse/AL-4185",
+    "problems": [],
+    "at": "2026-10-29T10:51:52.028Z"
+  }
+}

@@ -118,3 +118,13 @@ Script changes today (not committed): `organizations.page.ts` reader scrolls and
 Decisions: names. QA 2026-10-28: stop using "Legacy Person" and "Legacy deal N". The spec still creates them (`personFirst`, `legacyDeals`). QA has not answered whether to change the spec. Proposed default: change only the Update a Deal 1 and Delete Deal 1 rows, because Create a Person 2 and Update a Person 1 use the old name as the old value.
 Manual data for Update a Deal 1 (Soa Rakotomalala, Outreach) and Delete Deal 1 (Kossi Ayivi, Asana) was given in chat, with no CSV. Both emails are in `test-data/_generated-emails.txt`.
 Process: logs of runs go to the scratchpad, not to an `evidence/` folder. Check for a live run before starting one (`pgrep -af "playwright test tests/pipedrive/prospect-unsubscribed" | grep -v pgrep`).
+
+## Bug retest 2026-10-29 (AL-4177, AL-4178, AL-4179, AL-4180, AL-4185)
+
+Pipedrive reconnected by QA first (gpipedrive showed "Re-connect"; the 10 rows of the first attempt stopped in setup). All 12 matched rows then passed at least once on Staging: Create a Person 2, Create a Lead 1 and 2, Create a Deal 2 and 3, Update a Person 1, Update a Deal 1, Delete Deal 1, Create Organization 1 and 2, Combined actions 1 and 2. Create a Deal 2 failed once (test read an empty deal list; Logs entry 6ae31deb5dfd414633a90964 and person 542 showed the deal on the person) and passed on a rerun. That empty read is not explained.
+
+Script fixes: 16 countries added to `countries.ts` (name pool ran out at 12394 ledger emails); People and Organizations readers retry an incomplete read 3 more times and scroll 600 px; `create()` on Organizations waits up to 30 s for the new row; Create Organization 2 counts before the event and expects one more (8 "Shopify" organizations from earlier runs).
+
+Jira: five Verification comments (AL-4177, 4178, 4179, 4180, 4185) written to `jira/drafts/` and sent by QA 2026-10-29. No status change.
+
+Open: QA has not decided whether the spec stops using "Legacy Person" and "Legacy deal N". The Pipedrive page class reuses the Salesforce check, so a dropped Pipedrive connection reads "Saleshandy lost its Salesforce connection".

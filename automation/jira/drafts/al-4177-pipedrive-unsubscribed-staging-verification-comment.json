@@ -1,0 +1,12 @@
+{
+  "type": "comment",
+  "ticket": "AL-4177",
+  "body": "**Verification:** Retested on Staging after the fix. Prospect is Unsubscribed in Saleshandy trigger, one unsubscribe from Mark as Unsubscribe on the Prospects tab: Create a Person with an existing person, Update a Person, Create a Lead, Create Organization (with and without an organization of the same name), and the combinations Create a Lead + Create a Deal + Create a Person and Create a Person + Update a Person. Pipedrive now has one person, one record per selected activity and no duplicate person or organization.",
+  "waitingFor": "QA to send from npm run jira. Source: Pipedrive Prospect Unsubscribed reruns on 2026-10-29. AL-4177 is already QA Approved; this comment does not change its status.",
+  "sent": {
+    "key": "AL-4177",
+    "url": "https://saleshandy.atlassian.net/browse/AL-4177",
+    "problems": [],
+    "at": "2026-10-29T10:51:47.566Z"
+  }
+}

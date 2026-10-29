@@ -551,10 +551,14 @@ test.describe('Create Organization', () => {
     test.setTimeout(UI_ROW);
     const p = prospect('Create Organization > 2');
     await orgFirst(fx, p.row['Company']);
+    // Rows no longer delete what they create, so earlier runs can have left organizations with this
+    // company name (8 "Shopify" on 2026-10-29). Count before the event and expect one more.
+    const before = await fx.orgs.countByName(p.row['Company']);
+    expect(before, 'the organization made for the row is on the list').toBeGreaterThanOrEqual(1);
     await configure(fx, TRIGGER, [PD.createOrganization]);
     await unsubscribeUi(fx, p);
     await untilInPipedrive(fx, TRIGGER, `Second organization "${p.row['Company']}" not created`, async () => {
-      expect(await fx.orgs.countByName(p.row['Company'])).toBe(2);
+      expect(await fx.orgs.countByName(p.row['Company'])).toBe(before + 1);
     });
   });
 });

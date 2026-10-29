@@ -1,0 +1,12 @@
+{
+  "type": "comment",
+  "ticket": "AL-4179",
+  "body": "**Verification:** Retested on Staging after the fix. Prospect is Unsubscribed in Saleshandy trigger, Create a Deal in Pipedrive activity: when the prospect unsubscribes through the link and the person exists with no deal, the deal is created on that person. It is titled with the prospect's email, in the Pipeline and Qualified stage.",
+  "waitingFor": "QA to send from npm run jira. Source: Pipedrive Prospect Unsubscribed rerun on 2026-10-29.",
+  "sent": {
+    "key": "AL-4179",
+    "url": "https://saleshandy.atlassian.net/browse/AL-4179",
+    "problems": [],
+    "at": "2026-10-29T10:51:48.768Z"
+  }
+}

@@ -22,7 +22,19 @@ export class PipedrivePeoplePage extends PipedrivePage {
   // data-test="person.name" / "person.email" (seen 2026-10-24), so the Nth name belongs to the Nth
   // email cell. The list shows the newest records at once (no search index to wait for). It
   // holds 100 rows a page; rows no longer delete their records, so the guard below fails when the list outgrows it.
+  // A person saved a moment ago can be in the header count before the grid shows the row (408 shown,
+  // 407 read right after a save, 2026-10-29, Create a Deal 3), so an incomplete read is repeated on a
+  // fresh page (3 more tries, 5 s apart) before it fails.
   async rows(): Promise<PipedrivePerson[]> {
+    for (let attempt = 1; ; attempt++) {
+      const { total, rows } = await this.readOnce();
+      if (rows.length >= total) return rows;
+      if (attempt === 4) throw new Error(`The People list shows ${total} people but only ${rows.length} were read; the reader would miss records`);
+      await this.page.waitForTimeout(5_000);
+    }
+  }
+
+  private async readOnce(): Promise<{ total: number; rows: PipedrivePerson[] }> {
     await this.openList();
     await this.byId('person.name').first().waitFor();
     // The list has no search of its own (global search can lag behind new records) and no paging in
@@ -49,8 +61,7 @@ export class PipedrivePeoplePage extends PipedrivePage {
       await this.page.mouse.wheel(0, 600);
       await this.page.waitForTimeout(1000);
     }
-    if (target > seen.size) throw new Error(`The People list shows ${total} people but only ${seen.size} were read; the reader would miss records`);
-    return [...seen.values()];
+    return { total: target, rows: [...seen.values()] };
   }
 
   private async visibleRows(): Promise<PipedrivePerson[]> {

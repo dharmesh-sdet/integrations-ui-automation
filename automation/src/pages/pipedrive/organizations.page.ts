@@ -21,7 +21,19 @@ export class PipedriveOrganizationsPage extends PipedrivePage {
     return (await this.readAll()).map((f) => f.text);
   }
 
+  // Same retry as the People list: an organization saved a moment ago can be in the header count, or
+  // missing from the grid, for a few seconds (Create Organization 2, "Retool" saved but not on the
+  // list, 2026-10-29). An incomplete read is repeated on a fresh page (3 more tries, 5 s apart).
   private async readAll(): Promise<{ id: string; text: string }[]> {
+    for (let attempt = 1; ; attempt++) {
+      const { total, rows } = await this.readOnce();
+      if (rows.length >= Math.min(total, 100)) return rows;
+      if (attempt === 4) throw new Error(`The Organizations list shows ${total} organizations but only ${rows.length} were read; the reader would miss records`);
+      await this.page.waitForTimeout(5_000);
+    }
+  }
+
+  private async readOnce(): Promise<{ total: number; rows: { id: string; text: string }[] }> {
     await this.openList();
     const rows = this.page.locator('a[href*="/organization/"]');
     await rows.first().waitFor();
@@ -36,18 +48,19 @@ export class PipedriveOrganizationsPage extends PipedrivePage {
     const target = Math.min(total, 100);
     const seen = new Map<string, { id: string; text: string }>();
     let stale = 0;
-    for (let step = 0; step < 60 && stale < 6; step++) {
+    // A 1500 px step left no overlap with the 48-row window and skipped rows (99 shown, 97 read,
+    // 2026-10-29, Create a Deal 3), the same as on the People list. Scroll 600 px, as People does.
+    for (let step = 0; step < 150 && stale < 6; step++) {
       const before = seen.size;
       const found = await rows.evaluateAll((as) => as.map((a) => ({ href: a.getAttribute('href'), text: (a as HTMLElement).innerText.trim() })));
       for (const f of found) seen.set(PipedrivePage.idOf(f.href), { id: PipedrivePage.idOf(f.href), text: f.text });
       stale = seen.size === before ? stale + 1 : 0;
       if (seen.size >= target) break;
       await rows.last().scrollIntoViewIfNeeded();
-      await this.page.mouse.wheel(0, 1500);
+      await this.page.mouse.wheel(0, 600);
       await this.page.waitForTimeout(1000);
     }
-    if (target > seen.size) throw new Error(`The Organizations list shows ${total} organizations but only ${seen.size} were read; the reader would miss records`);
-    return [...seen.values()];
+    return { total, rows: [...seen.values()] };
   }
 
   async countByName(name: string): Promise<number> {
@@ -61,7 +74,12 @@ export class PipedriveOrganizationsPage extends PipedrivePage {
     await dialog.getByText('Name', { exact: true }).waitFor();
     await dialog.getByRole('textbox').first().fill(name);
     await this.saveAddDialog();
-    const ids = await this.idsByName(name);
+    let ids = await this.idsByName(name);
+    // The new row can lag behind the save by a few seconds: look again (up to 6 times, 5 s apart).
+    for (let attempt = 1; ids.length === 0 && attempt <= 6; attempt++) {
+      await this.page.waitForTimeout(5_000);
+      ids = await this.idsByName(name);
+    }
     if (ids.length === 0) throw new Error(`Organization "${name}" was saved but is not on the list`);
     return ids[ids.length - 1];
   }

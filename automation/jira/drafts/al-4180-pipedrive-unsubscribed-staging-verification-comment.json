@@ -1,0 +1,12 @@
+{
+  "type": "comment",
+  "ticket": "AL-4180",
+  "body": "**Verification:** Retested on Staging after the fix. Prospect is Unsubscribed in Saleshandy trigger, Create a Deal in Pipedrive activity: when the person already has a deal, the Create Deal step now sends the person, and the new deal is on that person. The existing deal is unchanged.",
+  "waitingFor": "QA to send from npm run jira. Source: Pipedrive Prospect Unsubscribed rerun on 2026-10-29 and the Logs entry of the 3:50 PM run.",
+  "sent": {
+    "key": "AL-4180",
+    "url": "https://saleshandy.atlassian.net/browse/AL-4180",
+    "problems": [],
+    "at": "2026-10-29T10:54:11.607Z"
+  }
+}

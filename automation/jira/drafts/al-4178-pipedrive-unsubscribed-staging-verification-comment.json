@@ -1,0 +1,12 @@
+{
+  "type": "comment",
+  "ticket": "AL-4178",
+  "body": "**Verification:** Retested on Staging after the fix. Prospect is Unsubscribed in Saleshandy trigger, Create a Lead in Pipedrive activity: when the prospect is not in Pipedrive, the person is created with one lead titled with the prospect's email. When the person exists, a new lead is added to that person. Together with Create a Deal and Create a Person, the result is 1 person, 1 lead, 1 deal and 1 activity.",
+  "waitingFor": "QA to send from npm run jira. Source: Pipedrive Prospect Unsubscribed reruns on 2026-10-29.",
+  "sent": {
+    "key": "AL-4178",
+    "url": "https://saleshandy.atlassian.net/browse/AL-4178",
+    "problems": [],
+    "at": "2026-10-29T10:54:09.793Z"
+  }
+}

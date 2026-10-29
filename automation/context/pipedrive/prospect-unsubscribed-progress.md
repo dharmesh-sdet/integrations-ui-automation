@@ -128,3 +128,10 @@ Script fixes: 16 countries added to `countries.ts` (name pool ran out at 12394 l
 Jira: five Verification comments (AL-4177, 4178, 4179, 4180, 4185) written to `jira/drafts/` and sent by QA 2026-10-29. No status change.
 
 Open: QA has not decided whether the spec stops using "Legacy Person" and "Legacy deal N". The Pipedrive page class reuses the Salesforce check, so a dropped Pipedrive connection reads "Saleshandy lost its Salesforce connection".
+
+## Production smoke, 2026-10-29
+
+QA approved `notes/production-testing/14-pipedrive-unsubscribed.md` (10 checks, 10 sends; Create a Lead, Create a Deal and Create a Person are one row; checks 1 and 2 use the real unsubscribe link, the rest Mark as Unsubscribe in the UI; realistic names, no "Legacy"). Tickets covered: AL-4177, AL-4178, AL-4179, AL-4180, AL-4185.
+Written, typecheck clean, NOT run: `tests/pipedrive/unsubscribed-smoke.spec.ts`, `tests/setup/pipedrive-unsubscribed-smoke-sequence.spec.ts`, `scripts/make-pipedrive-unsubscribed-smoke-data.ts`, `scripts/run-pipedrive-unsubscribed-smoke.sh`, `npm run smoke:pipedrive-unsubscribed`, README row 14.
+Run order for QA: `SMOKE_SEQUENCE_ID=new npm run smoke:pipedrive-unsubscribed` (gate, creates the sequence, stops with exit 5); save Sequence Settings > Unsubscribe > "Unsubscribe as Link" on it by hand; then `SMOKE_SEQUENCE_ID=<id> npm run smoke:pipedrive-unsubscribed`. Email Sent and Email Opened must be off on emailopenedprod.
+Open: the UI rows may not fire on production (HubSpot smoke, 2026-10-19). Update a Deal and Delete Deal record the Logs row, they do not assert the node name "Find person's latest deal" because the Logs list shows only the row text.

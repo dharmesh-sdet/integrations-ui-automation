@@ -23,6 +23,7 @@
     "smoke:pipedrive-link-clicked": "bash scripts/run-pipedrive-link-clicked-smoke.sh",
     "smoke:pipedrive-email-bounced": "bash scripts/run-pipedrive-email-bounced-smoke.sh",
     "smoke:pipedrive-email-opened": "bash scripts/run-pipedrive-email-opened-smoke.sh",
+    "smoke:pipedrive-unsubscribed": "bash scripts/run-pipedrive-unsubscribed-smoke.sh",
     "test:unsubscribed": "bash scripts/run-unsubscribed.sh",
     "test:outcome-updated": "bash scripts/run-prospect-outcome-updated.sh",
     "test:reply-all": "bash scripts/run-reply-received-all-activities.sh",

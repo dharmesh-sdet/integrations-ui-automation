@@ -76,3 +76,6 @@ Kartik 5 was disconnected, QA added Kartik 54 and Rachel 10; setup spec now uses
 - Failed, waiting on the bug fixes: Create a Person 1 and 2, Update a Person 1 and 3, Update a Deal 1 and 2, Delete Deal 1, Create Organization 3, Combined actions 1 and 2.
 - Skipped: Create a Person 4 (by design, needs a wrong-type Contact Fields mapping), Create a Lead 3 (a second reply is not possible in the UI).
 - After the fixes, rerun with `REFRESH_USED_ONLY=1 KEEP_OTHER_TRIGGERS=1 TEST_DATA_ONLY=pipedrive/reply-received PD_REPLY_SEQUENCE_ID=197377` and the row pattern. Sender Pipedrive Rudra allows 150 a day.
+
+## Production smoke (2026-10-29)
+QA approved note `notes/production-testing/15-pipedrive-reply-received.md` (9 checks, 9 sends) on 2026-10-29. Spec `tests/pipedrive/reply-received-smoke.spec.ts`, setup spec `tests/setup/pipedrive-reply-received-smoke-sequence.spec.ts`, data script `scripts/make-pipedrive-reply-received-smoke-data.ts`, run script `scripts/run-pipedrive-reply-received-smoke.sh`, command `npm run smoke:pipedrive-reply-received`. Typechecked, not run. The workflow is not on production yet (QA): QA runs it after the deploy with `SMOKE_SEQUENCE_ID=new` (creates the sequence and goes on to the checks). Jira summary draft not written yet.

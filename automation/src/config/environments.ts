@@ -1,7 +1,7 @@
 // Staging URLs, confirmed in context/project.md (section 4 answers).
 import { accounts, type Account } from './accounts.ts';
 
-export type Platform = 'saleshandy' | 'hubspot' | 'salesforce' | 'pipedrive';
+export type Platform = 'saleshandy' | 'hubspot' | 'salesforce' | 'pipedrive' | 'zoho';
 export type Browser = 'chromium' | 'edge';
 
 export const platforms: Record<Platform, { baseURL: string; loginPath: string }> = {
@@ -26,6 +26,13 @@ export const platforms: Record<Platform, { baseURL: string; loginPath: string }>
   pipedrive: {
     baseURL: 'https://saleshandy.pipedrive.com',
     loginPath: '/auth/login',
+  },
+  // Zoho CRM, US data center (.com), login URL given by QA, 2026-10-28. The login page is on
+  // accounts.zoho.com, so loginPath is a full URL; new URL() keeps it as it is. One saved
+  // session per account (npm run login:zoho -- <account>).
+  zoho: {
+    baseURL: 'https://crm.zoho.com',
+    loginPath: 'https://accounts.zoho.com/signin?servicename=ZohoCRM&context=&serviceurl=https%3A%2F%2Fcrm.zoho.com%2Fcrm%2FShowHomePage.do',
   },
 };
 

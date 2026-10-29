@@ -32,6 +32,13 @@ export const accounts = {
   pdemailbounced: { saleshandy: 'dharmesh+pdemailbounced@saleshandy.com' }, // Email is Bounced in Saleshandy, Pipedrive
   pdunsubscribed: { saleshandy: 'dharmesh+pdunsubscribed@saleshandy.com' }, // Prospect is Unsubscribed in Saleshandy, Pipedrive
   pdoutcomeupdated: { saleshandy: 'dharmesh+pdoutcomeupdated@saleshandy.com' }, // Prospect Outcome is updated in Saleshandy, Pipedrive
+  // Zoho CRM (2026-10-28). Own Saleshandy and Zoho sessions (auth/saleshandy-gzoho-chromium.json,
+  // auth/zoho-gzoho-chromium.json). TODO(needs-input): confirm the address QA signs up with.
+  gzoho: { saleshandy: 'dharmesh+gzoho@saleshandy.com' }, // Saleshandy account for Zoho CRM, Email Sent only
+  // Every Zoho workflow except Email Sent, run in parallel with gzoho (QA, 2026-10-29). Own sessions
+  // (auth/saleshandy-notemailsentzoho-chromium.json, auth/zoho-notemailsentzoho-chromium.json).
+  // TODO(needs-input): confirm the address QA signs up with.
+  notemailsentzoho: { saleshandy: 'dharmesh+notemailsentzoho@saleshandy.com' }, // Saleshandy account for Zoho CRM, all workflows except Email Sent
   // Lead / Contact / Account / Opportunity is created in Salesforce (tests/salesforce/*-created.spec.ts).
   // One account for the four Salesforce-side workflows: each spec turns on only its own
   // trigger, and fewer accounts on the shared Salesforce user means fewer token drops.

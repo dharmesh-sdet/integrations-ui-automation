@@ -281,8 +281,13 @@ export class SaleshandySequencePage extends SaleshandyPage {
     await row.first().getByRole('checkbox').check();
     await this.page.locator('button[icon="send"]').click();
     const dialog = this.page.getByRole('dialog').filter({ hasText: 'Add To Sequence' });
+    // The dialog hung here twice on the Zoho sequence (2026-10-29): the sequence list did not open when
+    // clicked at once. Short waits before each click fixed it.
+    await this.page.waitForTimeout(2_000);
     await dialog.getByText('Select Sequence', { exact: true }).click();
+    await this.page.waitForTimeout(1_500);
     await this.page.getByText('(Current Sequence)').click();
+    await this.page.waitForTimeout(2_500);
     // The step list loads after the sequence is picked: a click before that
     // opens nothing (seen 2026-10-13), so click again until the option shows.
     const option = this.page.getByText(new RegExp(`^Step ${step} - Day`)).first();

@@ -36,6 +36,8 @@
     "login:pipedrive": "node scripts/login.ts pipedrive chromium",
     "login:zoho": "node scripts/login.ts zoho chromium",
     "test:zoho-reply-received": "TEST_DATA_ONLY=zoho/reply-received REPORTS_DIR=reports/zoho-reply-received xvfb-run -a playwright test --project=chromium tests/zoho/reply-received.spec.ts --workers=1 --output=test-results-zoho-reply-received",
+    "test:zoho-email-sent": "TEST_DATA_ONLY=zoho/email-sent REPORTS_DIR=reports/zoho-email-sent xvfb-run -a playwright test --project=chromium tests/zoho/email-sent.spec.ts --workers=1 --output=test-results-zoho-email-sent",
+    "data:zoho-email-sent": "node scripts/make-zoho-email-sent-data.ts",
     "not-emailsent-zoho": "KEEP_TEST_DATA=1 SETUP_ACCOUNT=notemailsentzoho playwright test --project=chromium tests/setup/zoho-field-mapping.spec.ts --workers=1",
     "login:salesforce:fresh": "node scripts/login-salesforce-fresh.ts",
     "login:salesforce:auto": "node --env-file-if-exists=.env scripts/login-salesforce-auto.ts",

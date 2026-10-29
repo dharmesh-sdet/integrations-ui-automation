@@ -14,6 +14,7 @@ import { SaleshandySequencePage } from '../pages/saleshandy/sequence.page.ts';
 import { HubSpotIntegrationPage } from '../pages/saleshandy/hubspot-integration.page.ts';
 import { SalesforceIntegrationPage } from '../pages/saleshandy/salesforce-integration.page.ts';
 import { PipedriveIntegrationPage } from '../pages/saleshandy/pipedrive-integration.page.ts';
+import { ZohoIntegrationPage } from '../pages/saleshandy/zoho-integration.page.ts';
 import { PipedriveDealsPage } from '../pages/pipedrive/deals.page.ts';
 import { PipedriveLeadsPage } from '../pages/pipedrive/leads.page.ts';
 import { PipedriveOrganizationsPage } from '../pages/pipedrive/organizations.page.ts';
@@ -46,6 +47,7 @@ type Fixtures = {
   salesforcePage: Page;
   pipedrivePage: Page;
   pipedriveIntegration: PipedriveIntegrationPage;
+  zohoIntegration: ZohoIntegrationPage;
   pipedrivePeople: PipedrivePeoplePage;
   pipedriveDeals: PipedriveDealsPage;
   pipedriveLeads: PipedriveLeadsPage;
@@ -171,6 +173,7 @@ export const test = base.extend<Options & Fixtures, WorkerFixtures>({
   pipedrivePage: async ({ sessionContexts, account }, use, testInfo) =>
     loggedInPage(sessionContexts, 'pipedrive', account, testInfo, use),
   pipedriveIntegration: async ({ saleshandyPage }, use) => use(new PipedriveIntegrationPage(saleshandyPage)),
+  zohoIntegration: async ({ saleshandyPage }, use) => use(new ZohoIntegrationPage(saleshandyPage)),
   pipedrivePeople: async ({ pipedrivePage }, use) => use(new PipedrivePeoplePage(pipedrivePage)),
   pipedriveDeals: async ({ pipedrivePage }, use) => use(new PipedriveDealsPage(pipedrivePage)),
   pipedriveLeads: async ({ pipedrivePage }, use) => use(new PipedriveLeadsPage(pipedrivePage)),

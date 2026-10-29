@@ -1,0 +1,12 @@
+{
+  "type": "comment",
+  "ticket": "AL-4179",
+  "body": "**Verification:** Retested on Production. Prospect is Unsubscribed in Saleshandy trigger, Create a Deal in Pipedrive activity, person exists with no deal, prospect unsubscribes through the link: the deal and a lead are created on the existing person, titled with the prospect's email. The first run failed before this step because Pipedrive had two persons for the prospect (see AL-4177). The rerun with a new prospect passed.",
+  "waitingFor": "QA to send from npm run jira. Source: production smoke run 2026-10-29, account emailopenedprod, sequence 985157, Pipedrive saleshandy.pipedrive.com. QA approved the wording in chat.",
+  "sent": {
+    "key": "AL-4179",
+    "url": "https://saleshandy.atlassian.net/browse/AL-4179",
+    "problems": [],
+    "at": "2026-10-29T12:45:03.144Z"
+  }
+}

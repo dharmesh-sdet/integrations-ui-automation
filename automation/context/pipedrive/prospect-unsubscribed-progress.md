@@ -135,3 +135,20 @@ QA approved `notes/production-testing/14-pipedrive-unsubscribed.md` (10 checks, 
 Written, typecheck clean, NOT run: `tests/pipedrive/unsubscribed-smoke.spec.ts`, `tests/setup/pipedrive-unsubscribed-smoke-sequence.spec.ts`, `scripts/make-pipedrive-unsubscribed-smoke-data.ts`, `scripts/run-pipedrive-unsubscribed-smoke.sh`, `npm run smoke:pipedrive-unsubscribed`, README row 14.
 Run order for QA: `SMOKE_SEQUENCE_ID=new npm run smoke:pipedrive-unsubscribed` (gate, creates the sequence, stops with exit 5); save Sequence Settings > Unsubscribe > "Unsubscribe as Link" on it by hand; then `SMOKE_SEQUENCE_ID=<id> npm run smoke:pipedrive-unsubscribed`. Email Sent and Email Opened must be off on emailopenedprod.
 Open: the UI rows may not fire on production (HubSpot smoke, 2026-10-19). Update a Deal and Delete Deal record the Logs row, they do not assert the node name "Find person's latest deal" because the Logs list shows only the row text.
+
+## Production smoke run, 2026-10-29 (sequence 985157, account emailopenedprod)
+
+Result: all 10 checks passed at least once. Gate passed. First attempt to create the sequence failed (sender `rudra+emailsentprod` greyed out); QA gave sequence 985157.
+- Check 1 (Create a Lead, Create a Deal and Create a Person, prospect not in Pipedrive, link): failed once (person created once, no lead on it after 90 s), passed on rerun with a new prospect.
+- Check 2 (same trigger, person exists with no deal): failed once (2 persons for aisha.abuzaid@mailinator.com, looks like AL-4177), passed on rerun with a new prospect.
+- Update a Person, Delete Deal, Delete Person: stopped by the send cap (58 to 60 of 20), passed after QA raised SEND_CAP to 80 for this run.
+- Delete Organization: setup error `Organization "Zendesk" was saved but is not on the list`, passed on rerun. Not proven to be the script.
+- Passed first time: Create a Lead, Create a Deal and Create a Person (person has 1 deal), Update a Deal, Create Organization, Update Organization.
+Open: the two first-try failures (no lead on the person, two persons) are not explained. Not filed in Jira. The system crashed once mid-run and deleted the first log; the run was rebuilt from files.
+
+## Resume here (end of session, 2026-10-29)
+
+- Smoke done: all 10 checks passed. Rerun command used for unsent or failed rows: `REFRESH_USED_ONLY=1 KEEP_OTHER_TRIGGERS=1 SMOKE_SEQUENCE_ID=985157 SEND_CAP=80 TEST_DATA_ONLY=pipedrive/unsubscribed-smoke npx playwright test tests/pipedrive/unsubscribed-smoke.spec.ts --project=chromium --workers=1 -g "<row title>"`. The default SEND_CAP of 20 is too low on a day with staging runs (59 sends counted by 5 PM); QA approved 80 for this run only.
+- Jira drafts written, wording approved by QA's answers: `jira/drafts/al-4176-pipedrive-unsubscribed-production-smoke-summary.json`, `al-4177-...-production-retest-comment.json`, `al-4178-...`, `al-4179-...-verification-comment.json`, `al-4180-...`, `al-4185-...-verified-comment.json`. Claude sent none. Sending: QA runs `npm run jira`. No new bug: the two first-run failures (no lead on the person after 90 s; two persons for one prospect, like AL-4177) did not repeat.
+- Sheet "Integration wfs", row 33 (Pipedrive, Prospect is Unsubscribed): QA chose Released. Planned D "29 Oct 2026", E "Released", F "29 Oct: Production smoke passed. Live." The Google Sheets connection dropped, so Claude never wrote it. QA said it is done; Claude did not verify the cells.
+- Script note: the first Delete Organization try failed in setup with `Organization "Zendesk" was saved but is not on the list` and passed on a rerun. Not proven to be a script cause.

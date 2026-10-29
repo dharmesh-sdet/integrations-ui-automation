@@ -1,0 +1,12 @@
+{
+  "type": "comment",
+  "ticket": "AL-4177",
+  "body": "**Retested on Production (2026-10-29):** Prospect is Unsubscribed in Saleshandy trigger. Update a Person works: mapped fields updated, one person, one activity. Create a Lead, Create a Deal and Create a Person with an existing person: on the first run, Pipedrive had two persons for the same prospect after the unsubscribe through the link. The rerun with a new prospect had one person. This is the same symptom as this ticket. It was seen once and not reproduced.",
+  "waitingFor": "QA to send from npm run jira. Source: production smoke run 2026-10-29, account emailopenedprod, sequence 985157, Pipedrive saleshandy.pipedrive.com. QA approved the wording in chat.",
+  "sent": {
+    "key": "AL-4177",
+    "url": "https://saleshandy.atlassian.net/browse/AL-4177",
+    "problems": [],
+    "at": "2026-10-29T12:45:00.181Z"
+  }
+}

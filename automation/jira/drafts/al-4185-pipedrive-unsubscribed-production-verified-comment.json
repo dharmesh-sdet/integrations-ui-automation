@@ -1,0 +1,12 @@
+{
+  "type": "comment",
+  "ticket": "AL-4185",
+  "body": "Verified on production after deploy. Retested the scenario from this ticket and it works as expected.",
+  "waitingFor": "QA to send from npm run jira. Source: production smoke run 2026-10-29, account emailopenedprod, sequence 985157, Pipedrive saleshandy.pipedrive.com. QA approved the wording in chat.",
+  "sent": {
+    "key": "AL-4185",
+    "url": "https://saleshandy.atlassian.net/browse/AL-4185",
+    "problems": [],
+    "at": "2026-10-29T12:45:05.622Z"
+  }
+}

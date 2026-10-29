@@ -1,0 +1,12 @@
+{
+  "type": "comment",
+  "ticket": "AL-4176",
+  "body": "**Verification:** Production testing is done. Smoke tested the Prospect is Unsubscribed in Saleshandy (Pipedrive) trigger on Production with the smoke script, all 10 checks:\n\n| # | Activity | What was checked | Status |\n| --- | --- | --- | --- |\n| 1 | Create a Lead, Create a Deal and Create a Person | Prospect not in Pipedrive, unsubscribe through the link. One person with one lead, one deal and one activity (AL-4177, AL-4178). | Pass |\n| 2 | Create a Lead, Create a Deal and Create a Person | Person exists with no deal, unsubscribe through the link. Still one person, new lead and deal added (AL-4178, AL-4179). | Pass |\n| 3 | Create a Lead, Create a Deal and Create a Person | Person with one deal. New deal and lead added, existing deal unchanged (AL-4180). | Pass |\n| 4 | Update a Person | Mapped fields updated, one activity added (AL-4177). | Pass |\n| 5 | Update a Deal | Person with 2 deals. Only the newest deal changes (AL-4185). | Pass |\n| 6 | Delete Deal | Person with 2 deals. Only the newest deal is deleted (AL-4185). | Pass |\n| 7 | Delete Person | Person is deleted. | Pass |\n| 8 | Create Organization | Company with no organization of that name. One organization created with the mapped fields. | Pass |\n| 9 | Update Organization | Organization with the exact company name. Mapped value updated. | Pass |\n| 10 | Delete Organization | Organization with the exact company name is deleted. | Pass |\n\n**Note:** Checks 1 and 2 failed on the first run and passed on a rerun with a new prospect. Check 1 showed no lead on the person after 90 seconds. Check 2 showed two persons for one prospect (the symptom of AL-4177). Neither was reproduced. The cases where Update a Person, Update a Deal or Delete Deal find no person are still open and not covered by this verification.",
+  "waitingFor": "QA to send from npm run jira. Source: production smoke run 2026-10-29, account emailopenedprod, sequence 985157, Pipedrive saleshandy.pipedrive.com. QA approved the wording in chat.",
+  "sent": {
+    "key": "AL-4176",
+    "url": "https://saleshandy.atlassian.net/browse/AL-4176",
+    "problems": [],
+    "at": "2026-10-29T12:47:36.254Z"
+  }
+}

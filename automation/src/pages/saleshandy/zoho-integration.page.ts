@@ -18,4 +18,10 @@ export class ZohoIntegrationPage extends SalesforceIntegrationPage {
     await button.click();
     await this.page.locator('div.d-flex.justify-content-between .default-filed').first().waitFor({ timeout: 60_000 });
   }
+
+  // Turns one trigger off and leaves the others as they are. Zoho workflows run in parallel on one account,
+  // so enableOnly (which turns the others off) is not used to switch a trigger off.
+  async turnOff(name: string): Promise<void> {
+    await this.setTrigger(this.triggerRow(name), false);
+  }
 }

@@ -128,3 +128,18 @@ User: dharmesh+gpipedrive@saleshandy.com; person details after the update: {"Fir
 - Rows that failed in the 2026-10-28 first run (Create a Deal 1 and 2, Update a Deal 2, Trigger behavior 3, Combined actions 2) all passed, with no script change during the run.
 - Spec changes tested in this run (edited the same day): staging open wait of 10 s (`OPEN_AFTER_MS`), a retry when the activity history loads late (`firstActivity`), and Trigger behavior 4 moved to the end of the file. That row turns Email Opened off and saves, and on 2026-10-29 the trigger stopped firing after it, so it must run last. Not proven to be a product issue.
 - No new product issue found.
+
+## 2026-10-30: production smoke run (QA released, AL-4174)
+
+- Account emailopenedprod, Pipedrive saleshandy.pipedrive.com, sequence 987038 (QA made it by hand, subject "Quick question about your outreach"). Run as `SMOKE_SEQUENCE_ID=987038 SMOKE_STEP1_SUBJECT=... npm run smoke:pipedrive-email-opened`, later as the spec alone with new data (`node scripts/make-pipedrive-email-opened-smoke-data.ts`, then `playwright test tests/pipedrive/email-opened-smoke.spec.ts`).
+- Run 1: the setup spec failed, `rudra+emailsentprod@saleshandy.com` not in the sequence's account list. No send. Gate passed 5 of 5.
+- Run 2: checks 1 to 4 failed before any send, "Link is Clicked in Saleshandy" was on. QA turned it off. Stopped by Claude.
+- Run 3: check 1 failed after 2.7 min, sequence 987038 was not active (no email row appeared). Stopped by Claude. QA turned the sequence on.
+- Run 4 (new data): 8 passed, 1 failed in 27.4 min. Check 7 (Create Organization) failed: `Organization "Zendesk" not created (gave up after 90 seconds)`.
+- Check 7 cause: not proven, not a product bug. Org 197 "Zendesk" was created at 11:01 AM by "Dharmesh Pipedrive (API)" (website zendesk.com, Industry Retail), inside the wait window. The trace shows the Pipedrive list API returned both Zendesk orgs (176 from 2026-10-29 and 197) in all 6 polls, but the check read 0 Zendesk rows, also before the send (`Expected: >= 1, Received: 0`). The reader (`organizations.page.ts`) found both Zendesk rows 9 of 9 times when run alone, at 1280x720, 1440x900 and 1920x1080.
+- Run 5 (check 7 only, new data, reader logged header and rows): passed in 2.6 min, header 134 / read 134 before, 135 / 135 after. Not reproduced. The temporary log line was removed again.
+- Result: 9 of 9 checks passed over two runs (8, then check 7 on rerun). QA approved the production release.
+- Pipedrive now holds 3 Zendesk organizations (176, 197 and one from run 5). No cleanup, by QA's rule.
+- Jira: summary comment for AL-4174 (no Note, QA's edit) written to `jira/drafts/al-4174-pipedrive-email-opened-production-smoke-summary.json` and sent by QA 2026-10-30 06:01 UTC.
+- Sheet (Integration wfs, row Pipedrive Email Opened): proposed D "30 Oct 2026", E "Released", F "30 Oct: Production smoke passed. Live." Not written by Claude, waiting for QA's OK or QA pastes it.
+- Gotchas learned: the run script passes an empty `SMOKE_STEP1_SUBJECT` when only `SMOKE_SEQUENCE_ID` is set and the spec's default then does not apply (`??`), so always set both. A hand-made sequence must be active and have a sender account before the run.

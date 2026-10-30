@@ -1,0 +1,12 @@
+{
+  "type": "comment",
+  "ticket": "AL-4174",
+  "body": "**Verification:** Production testing is done. Smoke tested the Email is Opened in Saleshandy (Pipedrive) trigger on Production with the smoke script, all 9 checks:\n\n| # | Activity | What was checked | Status |\n| --- | --- | --- | --- |\n| 1 | Create a Lead, Create a Deal and Create a Person in Pipedrive | New prospect, email opened. One person with one lead and one deal titled with the prospect email, and one done activity. | Pass |\n| 2 | Create a Person in Pipedrive | Existing person, email opened a second time. Still one person, with two done Email activities. | Pass |\n| 3 | Update a Person in Pipedrive | Existing person with an old value in a mapped field. The mapped field is updated and one done activity is added. | Pass |\n| 4 | Update a Deal in Pipedrive | Person with 2 deals. Only the newest deal changes (title is the prospect email, Pipeline / Contact Made). The older deal is unchanged. | Pass |\n| 5 | Delete Deal in Pipedrive | Person with 2 deals. Only the newest deal is deleted. The older deal stays. | Pass |\n| 6 | Delete Person in Pipedrive | Existing person is deleted. | Pass |\n| 7 | Create Organization in Pipedrive | Company with no organization of that name. One organization is created with the mapped Organisation Fields, not linked to any person or deal. | Pass |\n| 8 | Update Organization in Pipedrive | Organization with the exact company name and an old mapped value. Still one organization, mapped value updated. | Pass |\n| 9 | Delete Organization in Pipedrive | Organization with the exact company name is deleted. | Pass |",
+  "waitingFor": "QA to check the wording and send. Source: smoke script run on 2026-10-30, account emailopenedprod, Pipedrive saleshandy.pipedrive.com, sequence 987038. First run: 8 of 9 passed (check 7, Create Organization, failed: the organization was created in Pipedrive but the script did not see it). Rerun of check 7 with new test data: passed.",
+  "sent": {
+    "key": "AL-4174",
+    "url": "https://saleshandy.atlassian.net/browse/AL-4174",
+    "problems": [],
+    "at": "2026-10-30T06:01:19.256Z"
+  }
+}

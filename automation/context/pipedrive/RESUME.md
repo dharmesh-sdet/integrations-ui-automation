@@ -1,18 +1,20 @@
-# Pipedrive: resume (saved 2026-10-23, State section updated 2026-10-28)
+# Pipedrive: resume (saved 2026-10-23, State section updated 2026-10-30)
 
 Staging, workflow version v2. Rules and behaviour: `00-overview.md` and one file per workflow in this folder.
 
-## State (QA, 2026-10-28)
+## State (QA, 2026-10-30): all 7 workflows released to production
 
-Status as QA gave it, except the Link Clicked row, which holds Claude's 2026-10-28 run results and QA's go-ahead for production. The per-workflow progress files and the dated sections below hold older run numbers. If they differ, this table wins.
+All 7 Pipedrive workflows are released. Each has a finished production smoke. This table replaces the 2026-10-28 table. The per-workflow progress files and the dated sections below hold the run details and older numbers. If they differ, this table wins.
 
 | Workflow | Test cases | State |
 |---|---|---|
-| Email Sent | `../../test-cases/pipedrive/email-sent.md` (33 rows) | All 33 rows passed, 1 skipped. The only skip in the spec is Create a Person 4, where a mapped value has the wrong type. It needs a wrong-type Contact Fields mapping on the Configure screen. QA is not sure about this skip. Production smoke (note 09) passed, QA 2026-10-27: 7 of 8 checks passed in the script, and QA ran check 1 by hand and it passed. The workflow is live in production. The slow and doubled runs on automated sends stay open under AL-4177. |
-| Prospect Unsubscribed | `../../test-cases/pipedrive/prospect-unsubscribed.md` (29 rows) | Its tickets are fixed. Production smoke: cases approved by QA 2026-10-29 (`../../notes/production-testing/14-pipedrive-unsubscribed.md`, 10 checks), spec, setup spec, data and run scripts written. Production smoke run 2026-10-29 on sequence 985157: all 10 checks passed at least once (checks 1 and 2 passed only on a rerun after one first-run failure each, not explained). Six Jira drafts in `jira/drafts/al-4176...al-4185-pipedrive-unsubscribed-production-*.json`, not sent when written. See `prospect-unsubscribed-progress.md`, section "Production smoke". |
-| Prospect Outcome Updated | `../../test-cases/pipedrive/prospect-outcome-updated.md` | Done on staging. Production smoke is written, not run, blocked by the Refold deploy issue. |
-| Link Clicked (AL-4175) | `../../test-cases/pipedrive/link-clicked.md` (32 rows) | Done on staging, 2026-10-28. All 32 rows passed: 28 in the full run (48.5 min), 4 on reruns after script fixes. The 4 were script failures: 3 from the People reader skipping rows, 1 because the company already had organizations (Delete Organization 2). Not run as one suite after the fixes. Sequence 197376, `PD_LINK_SEQUENCE_ID=197376`. Known product issues are recorded, not filed (B1, B2, AL-4177). QA, 2026-10-28: ready for production. Production smoke: cases approved by QA 2026-10-28 (`../../notes/production-testing/11-pipedrive-link-clicked.md`, 11 checks, 10 sends), spec, setup spec, data script and run script written, typecheck clean, NOT run. QA runs it: `npm run smoke:pipedrive-link-clicked`. Update 2026-10-28 evening: released to production, QA ran a short manual smoke, checks 1, 5, 11 Pass, summary posted on AL-4175 (comment 79527). Details: `link-clicked-progress.md`. |
-| Reply Received (AL-4172), Email Opened (AL-4174), Email Bounced (AL-4183) | `../../test-cases/pipedrive/<workflow>.md` (33, 27 and 37 rows) | As QA gave it on 2026-10-28: cases approved and scripts generated, not run, sequences not created (Email Bounced has an empty draft). Other sessions have worked on these since. Read their progress files for the current state. |
+| Email Sent | `../../test-cases/pipedrive/email-sent.md` (33 rows) | Released. Staging: 33 rows passed, 1 skipped (Create a Person 4, needs a wrong-type Contact Fields mapping, QA is not sure about this skip). Production smoke (note 09) passed 2026-10-27. |
+| Prospect Unsubscribed | `../../test-cases/pipedrive/prospect-unsubscribed.md` (29 rows) | Released. Production smoke (note 14) 2026-10-29: 10 of 10 passed (2 on rerun). Six Jira drafts (AL-4176, 4177, 4178, 4179, 4180, 4185) written for QA to send. |
+| Prospect Outcome Updated | `../../test-cases/pipedrive/prospect-outcome-updated.md` | Released. Production smoke (note 10) closed by QA 2026-10-30, 9 of 9 passed at least once. Open doubt, not filed: the three-activity save (Create a Lead, Create a Deal and Create a Person) lost one activity in 2 runs. See `prospect-outcome-updated-progress.md`. |
+| Link Clicked (AL-4175) | `../../test-cases/pipedrive/link-clicked.md` (32 rows) | Released. Staging: all 32 rows passed (2026-10-28). Production smoke (note 11) 2026-10-29: 11 of 11 passed. |
+| Reply Received (AL-4172) | `../../test-cases/pipedrive/reply-received.md` | Released. Staging retest 2026-10-29: 30 of 32 passed, Update a Deal 2 removed. Production smoke (note 15) 2026-10-30: 9 of 9 passed on sequence 987027. QA sent the comments on AL-4172, AL-4184, AL-4186, AL-4187, AL-4188. |
+| Email Opened (AL-4174) | `../../test-cases/pipedrive/email-opened.md` (27 rows) | Released. Staging full run 2026-10-29: 26 passed, 1 skipped (Trigger behavior 2, needs a second sequence). Production smoke (note 13) 2026-10-30: 9 of 9 passed over two runs (check 7 failed once, passed on rerun, cause not proven, not a product bug). Summary comment on AL-4174 sent. |
+| Email Bounced (AL-4183) | `../../test-cases/pipedrive/email-bounced.md` (37 rows) | Released. Production smoke (note 12) 2026-10-29: 11 of 11 passed. Summary comment on AL-4183 sent. Staging numbers: see `email-bounced-progress.md`. |
 
 `drafts/gen.py` built the first six drafts. They are history now. The approved cases are in `test-cases/pipedrive/`.
 

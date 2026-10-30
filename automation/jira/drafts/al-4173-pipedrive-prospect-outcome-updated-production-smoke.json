@@ -1,0 +1,12 @@
+{
+  "type": "comment",
+  "ticket": "AL-4173",
+  "body": "**Verification:** Production testing is done. Smoke tested the Prospect Outcome is updated in Saleshandy (Pipedrive) trigger on Production, 9 checks:\n\n| # | Activity | What was checked | Status |\n| --- | --- | --- | --- |\n| 1 | Create a Lead, Create a Deal and Create a Person in Pipedrive | New prospect, outcome Interested. One person with one lead and one deal titled with the prospect email, and one activity. | Pass |\n| 2 | Update a Deal in Pipedrive | Person with 2 deals, outcome Not Now. Only the newest deal changes: the title is the prospect email and the stage is Pipeline / Contact Made. The older deal is unchanged. | Pass |\n| 3 | Update a Person in Pipedrive | Existing person with an old value in a mapped field, outcome Out of Office. The mapped field is updated and one activity is added. | Pass |\n| 4 | Delete Deal in Pipedrive | Person with 2 deals, outcome Do Not Contact. Only the newest deal is deleted and the older deal stays. | Pass |\n| 5 | Delete Person in Pipedrive | Existing person, outcome Not Interested. The person is deleted. | Pass |\n| 6 | Create Organization in Pipedrive | Prospect with a company that has no organization of that name, outcome Interested. One organization named after the company is created, and it is not linked to any person. | Pass |\n| 7 | Update Organization in Pipedrive | An organization with the exact company name exists, outcome Not Interested. No second organization is created. | Pass |\n| 8 | Delete Organization in Pipedrive | An organization with the exact company name exists, outcome Closed. The organization is deleted. | Pass |\n| 9 | Create a Person in Pipedrive (outcome not matching) | Prospect not in Pipedrive, category Interested, outcome changed to Not Interested. No person and no activity is created. | Pass |",
+  "waitingFor": "QA to send from npm run jira. Source: Production smoke of Pipedrive Prospect Outcome is updated on emailopenedprod, 2026-10-30. All 9 checks Pass. Ticket AL-4173 found by Jira search (sub-task of AL-4170), not confirmed by QA. Note removed at QA's request.",
+  "sent": {
+    "key": "AL-4173",
+    "url": "https://saleshandy.atlassian.net/browse/AL-4173",
+    "problems": [],
+    "at": "2026-10-30T05:45:38.764Z"
+  }
+}

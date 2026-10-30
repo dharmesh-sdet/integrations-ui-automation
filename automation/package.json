@@ -25,6 +25,8 @@
     "smoke:pipedrive-email-opened": "bash scripts/run-pipedrive-email-opened-smoke.sh",
     "smoke:pipedrive-unsubscribed": "bash scripts/run-pipedrive-unsubscribed-smoke.sh",
     "smoke:pipedrive-reply-received": "bash scripts/run-pipedrive-reply-received-smoke.sh",
+    "test:pipedrive-email-opened": "bash scripts/run-pipedrive-email-opened.sh",
+    "test:pipedrive-outcome-updated": "bash scripts/run-pipedrive-outcome-updated.sh",
     "test:unsubscribed": "bash scripts/run-unsubscribed.sh",
     "test:outcome-updated": "bash scripts/run-prospect-outcome-updated.sh",
     "test:reply-all": "bash scripts/run-reply-received-all-activities.sh",

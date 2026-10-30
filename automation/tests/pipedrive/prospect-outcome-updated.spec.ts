@@ -69,13 +69,16 @@ const note = (type: string, description: string) => test.info().annotations.push
 // The last trigger configuration saved, so consecutive rows of one section do not save it again.
 let configured = '';
 
-async function useTrigger(fx: Fx, items: OutcomeItem[]): Promise<void> {
+async function useTrigger(fx: Fx, items: OutcomeItem[], readBack = false): Promise<void> {
   const key = JSON.stringify(items);
-  if (configured === key) return;
+  if (configured === key && !readBack) return;
   await test.step(`Set "${TRIGGER}" to: ${items.map((i) => `${i.activity} [${i.category ?? 'Extra Configuration skipped'}${i.stage ? `, ${i.stage}` : ''}]`).join(' + ') || 'no action'}`, async () => {
     await fx.pipedriveIntegration.configureOutcome(items);
     configured = key;
   });
+  // Reload and read the saved categories back: the trigger only runs when the saved category
+  // matches the prospect's outcome, so a stale saved one looks like "the workflow did nothing".
+  if (readBack) await test.step('Reload and read the saved categories back', () => fx.pipedriveIntegration.expectSavedCategories(items));
 }
 
 // Adds the prospect and sends step 1 once; a rerun in a new process skips what is done (setup-state).
@@ -157,9 +160,9 @@ test.describe('Trigger behavior', () => {
     expect(await fx.pipedriveIntegration.selectedActivities(TRIGGER)).toHaveLength(1);
   });
 
-  test('3: Extra Configuration skipped for Create a Person, outcome Not Now', async ({ fx }) => {
+  test('3: Create a Person with category Not Now, outcome Not Now', async ({ fx }) => {
     const p = prospect('Trigger behavior > 3');
-    await useTrigger(fx, [{ activity: PD.createPerson }]);
+    await useTrigger(fx, [{ activity: PD.createPerson, category: 'Not Now' }], true);
     await changeOutcome(fx, p, 'Not Now');
     const id = await expectOnePerson(fx, p);
     await untilInPipedrive(fx, TRIGGER, 'Activity not added', async () => {
@@ -174,7 +177,7 @@ test.describe('Trigger behavior', () => {
       { activity: PD.createLead, category: 'Interested' },
       { activity: PD.createDeal, category: 'Interested', stage: 'Qualified' },
       { activity: PD.createPerson, category: 'Interested' },
-    ]);
+    ], true);
     await changeOutcome(fx, p, 'Interested');
     const id = await expectOnePerson(fx, p);
     await untilInPipedrive(fx, TRIGGER, '1 lead, 1 deal and 1 activity not all on the person', async () => {

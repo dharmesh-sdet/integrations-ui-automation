@@ -23,12 +23,12 @@ Not covered, still open: B1 (Update a Person with no person) and B2 (Update a De
 
 ## Trigger behavior and category gate
 
-Create a Person is the probe action in row 3. Category as written in each row. Run the skipped-configuration row first: a saved category cannot be cleared.
+Create a Person is the probe action in row 3. Category as written in each row. The trigger runs an action only when its saved category matches the prospect's outcome. After a save, reload the page and check the saved categories before the outcome changes.
 
 | # | Scenario | Do | Expected | Ticket |
 |---|---|---|---|---|
 | 1 | Trigger off | Enable "Prospect Outcome is updated in Saleshandy", select Create a Person, set a category, click Save | "Configuration Updated Successfully" | None |
-| 3 | Extra Configuration skipped for Create a Person, new prospect | Change the outcome to Not Now | Person created and one activity | None |
+| 3 | Create a Person with category Not Now, new prospect | Select Create a Person, set the category to Not Now, save, reload and check the category. Change the outcome to Not Now | Person created and one activity. The trigger runs only when the saved category matches the outcome | None |
 | 6 | Create a Lead, Create a Deal and Create a Person selected, category = Interested, prospect not in Pipedrive | Change the outcome to Interested | Exactly 1 person with 1 lead, 1 deal and 1 activity | None |
 
 ## Create a Person

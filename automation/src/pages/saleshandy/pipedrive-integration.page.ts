@@ -50,7 +50,10 @@ export class PipedriveIntegrationPage extends SalesforceIntegrationPage {
         await lists.nth(index).click({ timeout: 10_000 });
         try {
           await option.waitFor({ timeout: 8_000 });
-          break;
+          // Bounded and inside the retry: the list can close as the options arrive, and this click then waited
+          // 12 minutes for an item that was gone (Create a Deal 1, production smoke 2026-10-30).
+          await option.click({ timeout: 5_000 });
+          return;
         } catch (error) {
           if (attempt === 4) throw error;
           // Escape can close the whole dialog; a click on its heading closes only the open list.
@@ -58,7 +61,6 @@ export class PipedriveIntegrationPage extends SalesforceIntegrationPage {
           await this.page.waitForTimeout(1_500);
         }
       }
-      await option.click();
     };
     await pick(0, extra.pipeline ?? PIPEDRIVE_PIPELINE);
     if (extra.stage) await pick(1, extra.stage);
@@ -95,7 +97,10 @@ export class PipedriveIntegrationPage extends SalesforceIntegrationPage {
       await this.removeActivity(this.outcomeTrigger, chips[0]);
     }
     await this.enableOnly(this.outcomeTrigger);
-    for (const item of items) {
+    for (const [i, item] of items.entries()) {
+      // Pause between activities, like a person adding them one by one. Added within seconds, a save of three
+      // activities lost one of them each run (Create a Deal 1, production smoke 2026-10-30, 2 runs).
+      if (i > 0) await this.page.waitForTimeout(5_000);
       await this.selectActivity(this.outcomeTrigger, item.activity);
       const dialog = this.page.getByRole('dialog');
       await dialog.waitFor({ timeout: 15_000 });
@@ -105,9 +110,22 @@ export class PipedriveIntegrationPage extends SalesforceIntegrationPage {
         continue;
       }
       const lists = dialog.locator('.bs-select-box');
+      // Bounded and retried like fillExtraConfiguration: the list can close as its options arrive, and this
+      // click then waited 12 minutes for an item that was gone (Create a Deal 1, production smoke 2026-10-30).
       const pick = async (index: number, choice: string) => {
-        await lists.nth(index).click();
-        await this.page.locator('.transfer-select-box li').filter({ hasText: new RegExp(`^\\s*${choice}\\s*$`) }).click();
+        const option = this.page.locator('.transfer-select-box li').filter({ hasText: new RegExp(`^\\s*${choice}\\s*$`) });
+        for (let attempt = 1; ; attempt++) {
+          await lists.nth(index).click({ timeout: 10_000 });
+          try {
+            await option.click({ timeout: 8_000 });
+            return;
+          } catch (error) {
+            if (attempt === 4) throw error;
+            // A click on the heading closes only the open list; Escape can close the whole dialog.
+            await dialog.getByText('Extra Configuration').first().click({ timeout: 5_000 });
+            await this.page.waitForTimeout(1_500);
+          }
+        }
       };
       if (item.stage) {
         await pick(0, item.pipeline ?? PIPEDRIVE_PIPELINE);
@@ -119,6 +137,24 @@ export class PipedriveIntegrationPage extends SalesforceIntegrationPage {
     }
     await this.save();
     await expect(this.savedToast(), 'save confirmation').toBeVisible({ timeout: 15_000 });
+  }
+
+  // Loads the page again and reads the category each saved activity holds, so a row can tell a stale
+  // saved setting from a workflow that did not run (Trigger behavior 3 and 6, 2026-10-29). Throws
+  // when a saved category differs from the one asked for. Nothing is changed (each dialog is cancelled).
+  async expectSavedCategories(items: OutcomeItem[]): Promise<void> {
+    await this.openTriggers();
+    for (const item of items) {
+      if (item.category === undefined) continue;
+      await this.reopenExtraConfiguration(this.outcomeTrigger, item.activity);
+      const dialog = this.page.getByRole('dialog');
+      await dialog.waitFor({ timeout: 15_000 });
+      const lists = dialog.locator('.bs-select-box');
+      const saved = ((await lists.nth((await lists.count()) - 1).innerText()) ?? '').trim();
+      await dialog.getByRole('button', { name: 'Cancel', exact: true }).click();
+      await dialog.waitFor({ state: 'hidden', timeout: 15_000 });
+      expect(saved, `saved category of "${item.activity}" after a reload`).toBe(item.category);
+    }
   }
 }
 

@@ -27,7 +27,7 @@ export class PipedriveOrganizationsPage extends PipedrivePage {
   private async readAll(): Promise<{ id: string; text: string }[]> {
     for (let attempt = 1; ; attempt++) {
       const { total, rows } = await this.readOnce();
-      if (rows.length >= Math.min(total, 100)) return rows;
+      if (rows.length >= total) return rows;
       if (attempt === 4) throw new Error(`The Organizations list shows ${total} organizations but only ${rows.length} were read; the reader would miss records`);
       await this.page.waitForTimeout(5_000);
     }
@@ -44,8 +44,9 @@ export class PipedriveOrganizationsPage extends PipedrivePage {
     const total = (await label.count()) ? Number((await label.innerText()).replace(/\D/g, '')) : 0;
     // The list is virtual, like People: only about 48 rows are in the page at once (49 and 50 listed,
     // 48 loaded, 2026-10-28), the rest are swapped in as it scrolls. Read what is there, scroll, and merge
-    // by organization id until every organization has been seen. One page holds 100 rows.
-    const target = Math.min(total, 100);
+    // by organization id until every organization has been seen. Scrolling loads past 100 rows, as on People
+    // (a cap of 100 hid "Stripe" at 130 organizations, sorted by Name, production smoke 2026-10-30).
+    const target = total;
     const seen = new Map<string, { id: string; text: string }>();
     let stale = 0;
     // A 1500 px step left no overlap with the 48-row window and skipped rows (99 shown, 97 read,

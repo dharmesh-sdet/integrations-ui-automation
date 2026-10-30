@@ -117,6 +117,16 @@ const COMPANIES: [name: string, industry: string, founded: number][] = [
   ['GitLab', 'Developer Tools', 2011], ['Cloudflare', 'Network Security', 2009], ['Mixpanel', 'Product Analytics', 2009],
   ['Pendo', 'Product Analytics', 2013], ['Freshworks', 'Customer Service Software', 2010], ['ClickUp', 'Project Management Software', 2017],
   ['Retool', 'Developer Tools', 2017],
+  // Added 2026-10-29: the names above all had an organization in Pipedrive after the 2026-10-29 outcome run.
+  ['Snowflake', 'Data Cloud Software', 2012], ['Databricks', 'Data Analytics Software', 2013], ['Elastic', 'Search Software', 2012],
+  ['Confluent', 'Data Streaming Software', 2014], ['Palantir', 'Data Analytics Software', 2003], ['Splunk', 'Observability', 2003],
+  ['New Relic', 'Observability', 2008], ['Sentry', 'Developer Tools', 2012], ['Postman', 'API Software', 2014],
+  ['Segment', 'Customer Data Software', 2011], ['Braze', 'Marketing Automation', 2011], ['Iterable', 'Marketing Automation', 2013],
+  ['Drift', 'Conversational Marketing', 2015], ['Zuora', 'Billing Software', 2007], ['Workday', 'HR Software', 2005],
+  ['ServiceNow', 'Workflow Software', 2004], ['Box', 'File Storage', 2005], ['Zoom', 'Video Communications', 2011],
+  ['Squarespace', 'Website Builder', 2003], ['Wix', 'Website Builder', 2006], ['Ramp', 'Financial Services', 2019],
+  ['Plaid', 'Financial Services', 2013], ['Toast', 'Restaurant Software', 2011], ['Coursera', 'Online Education', 2012],
+  ['Duolingo', 'Online Education', 2011], ['Grammarly', 'Writing Software', 2009],
 ];
 
 // Lowercase ASCII with no spaces, hyphens, apostrophes or dots, for emails and URLs.

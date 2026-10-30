@@ -1,0 +1,12 @@
+{
+  "type": "comment",
+  "ticket": "AL-4188",
+  "body": "**Verification:** Retested on Production after the fix. Reply is Received in Saleshandy trigger, Create Organization in Pipedrive activity: for a prospect whose Industry is not in the Pipedrive Industry list, marking the Step 1 email as replied does not create the organization. Pass.",
+  "waitingFor": "QA to send from npm run jira. Source: Production smoke of Pipedrive Reply Received on emailopenedprod, 2026-10-30, check 7 Pass. Wording approved by QA in chat.",
+  "sent": {
+    "key": "AL-4188",
+    "url": "https://saleshandy.atlassian.net/browse/AL-4188",
+    "problems": [],
+    "at": "2026-10-30T05:55:25.378Z"
+  }
+}

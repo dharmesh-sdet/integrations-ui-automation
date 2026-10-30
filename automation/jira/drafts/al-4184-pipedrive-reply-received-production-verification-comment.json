@@ -1,0 +1,12 @@
+{
+  "type": "comment",
+  "ticket": "AL-4184",
+  "body": "**Verification:** Retested on Production after the fix. Reply is Received in Saleshandy trigger, Update a Deal in Pipedrive activity and Delete Deal in Pipedrive activity: for a person with two deals, marked the Step 1 email as replied.\n\n* Update a Deal: the newest deal is updated (Pipeline / Contact Made) and the older deal is unchanged. Pass.\n* Delete Deal: the newest deal is deleted and the older deal remains. Pass.",
+  "waitingFor": "QA to send from npm run jira. Source: Production smoke of Pipedrive Reply Received on emailopenedprod, 2026-10-30, checks 4 and 5 Pass. Wording approved by QA in chat.",
+  "sent": {
+    "key": "AL-4184",
+    "url": "https://saleshandy.atlassian.net/browse/AL-4184",
+    "problems": [],
+    "at": "2026-10-30T05:55:20.799Z"
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "type": "comment",
+  "ticket": "AL-4186",
+  "body": "**Verification:** Retested on Production after the fix. Reply is Received in Saleshandy trigger, Create a Person in Pipedrive and Update a Person in Pipedrive activities: marked the Step 1 email as replied for a prospect already in Pipedrive. The activity is added to the person in each case, and there is still one person. Pass.",
+  "waitingFor": "QA to send from npm run jira. Source: Production smoke of Pipedrive Reply Received on emailopenedprod, 2026-10-30, checks 2 and 3 Pass. Wording approved by QA in chat.",
+  "sent": {
+    "key": "AL-4186",
+    "url": "https://saleshandy.atlassian.net/browse/AL-4186",
+    "problems": [],
+    "at": "2026-10-30T05:55:22.874Z"
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "type": "comment",
+  "ticket": "AL-4172",
+  "body": "**Verification:** Production testing is done. Smoke tested the Reply is Received in Saleshandy (Pipedrive) trigger on Production, 9 checks:\n\n| # | Activity | What was checked | Status |\n| --- | --- | --- | --- |\n| 1 | Create a Lead, Create a Deal and Create a Person in Pipedrive | New prospect, Mark as replied. One person, with one lead and one deal titled with the prospect name, and one activity (AL-4187). | Pass |\n| 2 | Create a Person in Pipedrive | Existing person. The person is updated, there is still one person, and one Email activity is added (AL-4186). | Pass |\n| 3 | Update a Person in Pipedrive | Existing person. One done Email activity with the subject \"Reply is Received in Saleshandy\" is added, and there is still one person (AL-4186). | Pass |\n| 4 | Update a Deal in Pipedrive | Person with 2 deals. Only the newest deal changes to Pipeline / Contact Made. The older deal is unchanged. | Pass |\n| 5 | Delete Deal in Pipedrive | Person with 2 deals. Only the newest deal is deleted and the older deal stays (AL-4184). | Pass |\n| 6 | Delete Person in Pipedrive | The person is deleted. | Pass |\n| 7 | Create Organization in Pipedrive | Industry is not in the Pipedrive list. No organization is created (AL-4188). | Pass |\n| 8 | Update Organization in Pipedrive | An organization with the exact company name exists. There is still one organization with that name. | Pass |\n| 9 | Delete Organization in Pipedrive | An organization with the exact company name exists. The organization is deleted. | Pass |",
+  "waitingFor": "QA to send from npm run jira. Source: Production smoke of Pipedrive Reply Received on emailopenedprod, 2026-10-30, sequence 987027. All 9 checks Pass. Wording approved by QA in chat, Note removed.",
+  "sent": {
+    "key": "AL-4172",
+    "url": "https://saleshandy.atlassian.net/browse/AL-4172",
+    "problems": [],
+    "at": "2026-10-30T05:55:52.697Z"
+  }
+}

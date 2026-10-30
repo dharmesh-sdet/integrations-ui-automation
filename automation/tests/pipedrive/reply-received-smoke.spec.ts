@@ -49,8 +49,9 @@ const test = base.extend<{ fx: Fx }>({
 test.use({ account: 'emailopenedprod' });
 
 const TRIGGER = 'Reply is Received in Saleshandy';
-// Any other trigger that is on would act on the same send and create records first.
-const SIBLING_TRIGGERS = ['Email Sent from Saleshandy', 'Email is Opened in Saleshandy'];
+// Email Sent on would act on the same send and create records first. Other triggers (Email is Opened, ...)
+// act on other prospects' events, so they may be on while another smoke run shares the account (QA, 2026-10-30).
+const SIBLING_TRIGGERS = ['Email Sent from Saleshandy'];
 const SUBJECT = TRIGGER;
 const SEQUENCE_ID = process.env.SMOKE_SEQUENCE_ID ?? '';
 const CSV = 'pipedrive/reply-received-smoke.csv';

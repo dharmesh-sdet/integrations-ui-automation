@@ -1,0 +1,12 @@
+{
+  "type": "comment",
+  "ticket": "AL-4198",
+  "body": "**Verification:** Retested on Staging after the fix. Email Sent from Saleshandy trigger, Create a Task in Zoho activity: Extra Configuration no longer saves an empty Subject, an empty Due In or Due In as 0, and the empty field is highlighted as an error. Pass.",
+  "waitingFor": "QA to review wording and send via npm run jira.",
+  "sent": {
+    "key": "AL-4198",
+    "url": "https://saleshandy.atlassian.net/browse/AL-4198",
+    "problems": [],
+    "at": "2026-11-02T11:31:17.519Z"
+  }
+}

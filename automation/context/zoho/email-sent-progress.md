@@ -124,3 +124,12 @@ Probe: `tests/setup/zoho-task3-probe.spec.ts` (throwaway, not committed, `ZOHO_E
 - Combined 1 rerun (2026-11-02, prospect Ingvild Haugen, `configureWaiting`): PASSED in 4.0 min. Zoho read again minutes later: 1 contact, 1 lead, 1 deal, 1 task, no late second task. So the duplicate task is intermittent: 2 tasks in the Ragnhild Eide run (03:04 and 03:05 PM), 1 task in the Ingvild Haugen run. QA's rule (2026-11-02): file it only if it repeats. No Jira draft written. QA counted 1 task by hand and 2 accounts (Z-5).
 - Jira 2026-11-02 (all sent by QA): AL-4198 (Task Subject and Due In allow empty and 0), AL-4199 (Deal Pipelines and Stages not selectable, Q3), AL-4218 (Account and Deal create two accounts, with execution ids 6ae8593f00b3b94795f3c87a and 6ae859413e9e05c58a9deeaf). QA on AL-4218: it stays as filed, the developer will handle it, otherwise QA does it manually later. No change to AL-4218 and no comment from Claude. A peer session reported a developer note that this account behavior is known (Z-5); QA did not change the ticket because of it.
 - Still open: one email can start two executions (Logs: 2 executions for Ragnhild Eide at 3:04 PM, 1 for Ingvild Haugen), which fits the double Task and double Deal. Not filed (QA: file only if it repeats). Combined 1 passes with `configureWaiting` in 1 of 2 real runs (the other failed on 2 tasks).
+
+## Production smoke (2026-11-02)
+
+QA "looks good" on the 8 checks. Note: `notes/production-testing/17-zoho-email-sent.md` (README row 17). Written, not run, typechecks (own files): `tests/zoho/email-sent-smoke.spec.ts`, `tests/setup/zoho-email-sent-smoke-sequence.spec.ts`, `scripts/make-zoho-email-sent-smoke-data.ts`, `scripts/run-zoho-email-sent-smoke.sh`, `npm run smoke:zoho-email-sent`.
+- Account `emailopenedprod`, shared with the Zoho Email Opened smoke (note 16). One smoke run at a time.
+- Reuses from the Email Opened session (uncommitted when this was written): `tests/setup/zoho-prod-gate.spec.ts`, and in `src/pages` the accessible `setTrigger` and `triggerRow` that `turnOff` needs. Commit those first.
+- The sequence setup spec keeps one link in the body because the step builder sets the body only when it has a link to read back.
+- Row 8 turns Email Sent off with `turnOff`, saves, reloads and reads it back before the send.
+- QA runs `npm run smoke:zoho-email-sent`. Claude does not run it on production.

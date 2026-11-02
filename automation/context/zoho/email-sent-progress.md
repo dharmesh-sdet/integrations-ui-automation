@@ -93,12 +93,23 @@ Note: Account 1 failed once (no billing city, state or country on the new accoun
 
 Do not run `npm run test:zoho-email-sent` while another run uses `test-results-zoho-email-sent`: a new run deletes the old traces.
 
-## Resume here (2026-10-31, end of session)
+## Resume here (2026-11-02, end of session)
 
-1. Task 3: after `configure` with an empty Subject, reopen the saved Task dialog and read the Subject back. If it still shows "Follow up after step 1", the script did not clear it (shared `src/flows/saleshandy-to-zoho.ts` line 37, owner: Reply Received session, send the change). If it is empty, the product ignores an empty Subject: ask QA, then draft a Jira bug (QA sends).
-2. Combined 1: ask QA if a missing task with five actions on is a bug or known. No draft before the answer.
-3. Commit only my files: `src/pages/zoho/zoho-forms.page.ts`, `src/flows/zoho-email-sent.ts`, `tests/zoho/email-sent.spec.ts`, this file. `PROGRESS.md` and other Zoho files carry edits of other sessions.
-4. Next workflow after Email Sent: Reply Received (34 rows committed in 28e87bb, only Lead 1 run, account `notemailsentzoho`). Run 3 rows at a time (low memory). The other five workflows have no sequence yet. QA has not chosen the order.
+State: committed as aa3562f on rudra-saleshandy (my 4 files and 3 Jira drafts). Staging result: 22 of 24 rows pass (2026-10-31), then on 2026-11-02:
+- Task 3: product keeps the previous saved Subject when it is empty, so the task is made with the old Subject. Filed by QA as AL-4198 (also Due In 0 and empty). Row stays a Fail until the product blocks an empty Subject.
+- Combined 1: the lost Task chip was a script race (no wait after the Deal and Task dialog Save), fixed by `configureWaiting`. Passed in 1 of 2 real runs (Ingvild Haugen). The other (Ragnhild Eide) failed on 2 tasks: Logs showed 2 executions for one email. Not filed (QA: file only if it repeats).
+- Filed by QA: AL-4199 (Deal Pipelines and Stages not selectable, Q3) and AL-4218 (Account and Deal make two accounts; execution ids 6ae8593f00b3b94795f3c87a and 6ae859413e9e05c58a9deeaf). QA: AL-4218 stays, the developer handles it.
+- Logs exception: QA asked for execution ids, so Logs were read for those runs only. See memory zoho-no-logs.
+
+Next:
+1. QA verifies the empty Extra Configuration of the Task by hand on gzoho. Do not run anything on gzoho until QA says. gzoho trigger now: Email Sent with Create a Task only (left by Trigger and setup 2), Subject "Follow up after step 1", Due In 3.
+2. After QA's OK, plan the production run. Needed from QA: production account and Zoho connection, production sequence and sender, which rows (smoke: fixed tickets only), daily send cap.
+3. Open: the double execution (one email, 2 executions, double task or deal). The shared `configure` in `src/flows/saleshandy-to-zoho.ts` has the same race as before. QA decides who edits it.
+
+Other notes:
+- Name pool: 20 countries added to `src/data/countries.ts` (uncommitted, shared with another session's 19). About 2,900 unused name pairs left, about 15 full refreshes. To get more, give each country more first and last names.
+- `tests/setup/zoho-task3-probe.spec.ts` is a throwaway probe, not committed.
+- Peer session local-project-cb (Email Opened) calls `configureWaiting`: keep it exported from `src/flows/zoho-email-sent.ts`, tell it before any rename.
 
 How to run: `npm run test:zoho-email-sent -- -g "<row>|<row>"` in the background, then read the log. The run refreshes the CSV, so each run uses new prospects. A new run deletes the old `test-results-zoho-email-sent` folder. Probe the real Zoho form with a throwaway script and `xvfb-run -a node --experimental-transform-types` on `auth/mcp-zoho-profile` before you change a locator.
 

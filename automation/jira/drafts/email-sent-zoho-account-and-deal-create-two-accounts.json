@@ -1,0 +1,30 @@
+{
+  "type": "bug",
+  "project": "AL",
+  "priority": "Medium",
+  "environment": "Production",
+  "epic": "AL-3982",
+  "assignee": {
+    "name": "Darshan",
+    "accountId": "5af5d8dd244bc90a10605d4f"
+  },
+  "qa": {
+    "name": "Dharmesh Patel",
+    "accountId": "712020:c7dedb58-9cb3-4450-a98f-5b5b56f6556b"
+  },
+  "links": [
+    "AL-4190",
+    "AL-4191",
+    "AL-4198",
+    "AL-4199"
+  ],
+  "attachments": [],
+  "summary": "Email Sent from Saleshandy: Create/Update Account in Zoho and Create/Update a Deal in Zoho activities create two accounts with the same name, and the account linked to the deal is blank",
+  "description": "**Prerequisites:**\n- The Zoho integration is connected to Saleshandy (account gzoho), and the Account Field Mapping is saved.\n- An active sequence in Saleshandy.\n- The prospect is not in Zoho and has a Company, Company Industry and Company Website.\n\n**Steps to Reproduce:**\n1. In Saleshandy, go to API & Integrations > Integrations > Zoho > Triggers & Activity and enable Email Sent from Saleshandy.\n2. Select Create/Update a Contact in Zoho, Create/Update a Lead in Zoho, Create/Update Account in Zoho, Create/Update a Deal in Zoho and Create a Task in Zoho. After each Extra Configuration Save, wait for \"Configuration Updated Successfully\" before you pick the next activity.\n3. Click Save on the Triggers & Activity page.\n4. Add the prospect to the active sequence and click Send now. After the email shows Sent, wait 20 seconds.\n5. In Zoho CRM > Accounts, search for the prospect's company name and open both accounts.\n6. In Integrations > Zoho > Logs, open the executions of the Email Sent from Saleshandy workflow for that email.\n\n**Actual Result:**\n- Two accounts with the same company name are created (example: \"Okta 032972\", prospect Ragnhild Eide, 2 Nov 2026, 3:05 PM).\n- One account has the mapped values (Industry, Website) and is linked to the contact only.\n- The other account is blank except for the name and is linked to the deal only.\n- Zoho Logs show two executions of Email Sent from Saleshandy for this one email, both at 3:04 PM and both with the contact email ragnhild.eide@mailinator.com:\n  - Execution ID 6ae8593f00b3b94795f3c87a (5.6s, Success). It ran \"create deal w/o layout\", \"create/update account\" and \"Account - Link contact to account\".\n  - Execution ID 6ae859413e9e05c58a9deeaf (6.4s, Success). It ran \"Deal - Update latest associated deal\" and \"Account - Update contact's account\".\n\n**Expected Result:**\n- One account is created for the company, and both the contact and the deal are linked to it.\n\n**Note:**\n- Affected Environment - Staging.\n- It does not happen every time. Two accounts were created in 2 of 3 runs I read, and QA saw two accounts in a manual test. In the third run (prospect Ingvild Haugen, company \"Okta 746135\", execution ID 6ae85ff30990ec6c40c0e7fb, one execution) one account was created and it was linked to both the deal and the contact.\n",
+  "sent": {
+    "key": "AL-4218",
+    "url": "https://saleshandy.atlassian.net/browse/AL-4218",
+    "problems": [],
+    "at": "2026-11-02T10:31:24.271Z"
+  }
+}

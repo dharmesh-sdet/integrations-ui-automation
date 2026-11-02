@@ -18,7 +18,7 @@ import { expect, test as base } from '../../src/fixtures/index.ts';
 import { readCsv, type Row } from '../../src/data/csv.ts';
 import { markUsed } from '../../src/data/used.ts';
 import { ZOHO_ACTION, configure, fullName } from '../../src/flows/saleshandy-to-zoho.ts';
-import { NOTE_TITLE, TRIGGER, inDays, noteTitles, sendStep } from '../../src/flows/zoho-email-sent.ts';
+import { NOTE_TITLE, TRIGGER, configureWaiting, inDays, isBlankField, noteTitles, sendStep } from '../../src/flows/zoho-email-sent.ts';
 import { ZohoCrmPage, openZohoProfile } from '../../src/pages/zoho/zoho-crm.page.ts';
 import { ZohoForms } from '../../src/pages/zoho/zoho-forms.page.ts';
 import { untilPasses } from '../../src/utils/wait.ts';
@@ -80,7 +80,7 @@ test.describe('Zoho Email Sent (staging)', () => {
     const found = await crm.waitForRecord('Leads', row['Email']);
     expect(found, `No Zoho lead for ${row['Email']}`).toBeTruthy();
     const text = await crm.recordText('Leads', found!.id);
-    expect(ZohoCrmPage.field(text, 'Company')).toBe('');
+    expect(isBlankField(ZohoCrmPage.field(text, 'Company'))).toBe(true);
     expect(ZohoCrmPage.noteCount(text)).toBe(1);
   });
 
@@ -106,7 +106,7 @@ test.describe('Zoho Email Sent (staging)', () => {
     const found = await crm.waitForRecord('Contacts', row['Email']);
     expect(found, `No Zoho contact for ${row['Email']}`).toBeTruthy();
     const text = await crm.recordText('Contacts', found!.id);
-    expect(ZohoCrmPage.field(text, 'Phone')).toBe('');
+    expect(isBlankField(ZohoCrmPage.field(text, 'Phone'))).toBe(true);
     for (const value of [row['Job Title'], row['Department'], row['Twitter'], row['City'], row['State'], row['Country']]) expect(text).toContain(value);
   });
 
@@ -158,7 +158,7 @@ test.describe('Zoho Email Sent (staging)', () => {
     expect(ZohoCrmPage.field(text, 'Amount')).toContain(Number(row['Deal Value']).toLocaleString('en-US'));
     expect(ZohoCrmPage.field(text, 'Stage')).toBe('Qualification');
     expect(ZohoCrmPage.field(text, 'Closing Date')).not.toMatch(/\d{2}\/\d{2}\/\d{4}/);
-    expect(ZohoCrmPage.field(text, 'Contact Name')).toBe('');
+    expect(isBlankField(ZohoCrmPage.field(text, 'Contact Name'))).toBe(true);
     expect(ZohoCrmPage.noteCount(text)).toBe(1);
     expect((await crm.find('Deals', fullName(row))).length, 'One event must make one deal').toBe(1);
     expect((await crm.find('Contacts', row['Email'])).length, 'The Deal action must not create a contact').toBe(0);
@@ -204,7 +204,7 @@ test.describe('Zoho Email Sent (staging)', () => {
 
   test('Combined: 1 Contact, Lead, Account, Deal and Task, prospect not in Zoho', async ({ zohoIntegration, saleshandyPage, saleshandySequence, crm }) => {
     const row = prospect('Combined > 1');
-    await configure(zohoIntegration, saleshandyPage, TRIGGER, [
+    await configureWaiting(zohoIntegration, saleshandyPage, TRIGGER, [
       { action: ZOHO_ACTION.contact },
       { action: ZOHO_ACTION.lead },
       { action: ZOHO_ACTION.account },
@@ -214,6 +214,9 @@ test.describe('Zoho Email Sent (staging)', () => {
     await sendStep(saleshandySequence, SEQUENCE_ID, row);
     expect(await crm.waitForRecord('Contacts', row['Email']), `No Zoho contact for ${row['Email']}`).toBeTruthy();
     expect((await crm.find('Contacts', row['Email'])).length, 'One event must make one contact').toBe(1);
+    expect(await crm.waitForRecord('Leads', row['Email']), 'The lead').toBeTruthy();
+    expect(await crm.waitForRecord('Deals', fullName(row)), 'The deal').toBeTruthy();
+    expect(await crm.waitForRecord('Tasks', fullName(row)), 'The task').toBeTruthy();
     expect((await crm.find('Leads', row['Email'])).length, 'The lead').toBe(1);
     expect((await crm.find('Deals', fullName(row))).length, 'The deal').toBe(1);
     expect((await crm.find('Tasks', fullName(row))).length, 'The task').toBe(1);

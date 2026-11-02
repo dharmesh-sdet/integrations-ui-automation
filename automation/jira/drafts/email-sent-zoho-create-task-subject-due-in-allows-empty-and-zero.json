@@ -1,0 +1,30 @@
+{
+  "type": "bug",
+  "project": "AL",
+  "priority": "Medium",
+  "environment": "Production",
+  "epic": "AL-3982",
+  "assignee": {
+    "name": "Darshan",
+    "accountId": "5af5d8dd244bc90a10605d4f"
+  },
+  "qa": {
+    "name": "Dharmesh Patel",
+    "accountId": "712020:c7dedb58-9cb3-4450-a98f-5b5b56f6556b"
+  },
+  "links": [
+    "AL-4190",
+    "AL-4191",
+    "AL-4101",
+    "AL-4168"
+  ],
+  "attachments": [],
+  "summary": "Email Sent from Saleshandy: Create a Task in Zoho activity allows Due In to be saved as 0 and the Subject to be saved empty in Extra Configuration",
+  "description": "**Prerequisites:**\n- The Zoho integration is connected to Saleshandy (account gzoho).\n- An active sequence in Saleshandy.\n\n**Steps to Reproduce:**\n\nDue In set to 0\n1. In Saleshandy, go to API & Integrations > Integrations > Zoho > Triggers & Activity, enable Email Sent from Saleshandy, and select the Create a Task in Zoho activity.\n2. In Extra Configuration, set Due In to 0 days and click Save.\n3. Click Save on the Triggers & Activity page.\n4. Reload the page and reopen the Extra Configuration.\n\nSubject and Due In cleared\n1. In Extra Configuration, set Subject \"Follow up after step 1\" and Due In 3, click Save, then click Save on the Triggers & Activity page.\n2. Reopen the Extra Configuration, clear the Subject and the Due In, and click Save.\n3. Click Save on the Triggers & Activity page.\n4. Reload the page and reopen the Extra Configuration.\n5. Add a new prospect to the active sequence and click Send now. After the email shows Sent, open Zoho CRM > Tasks.\n\n**Actual Result:**\n- Extra Configuration is saved with Due In as 0. No error shows.\n- Extra Configuration accepts an empty Subject and an empty Due In. No error shows, no field is highlighted and the dialog closes. After the reload, the previous Subject and Due In show again.\n- The task is created with the previous Subject (\"Follow up after step 1\").\n\n**Expected Result:**\n- The user should be prevented from saving Due In as 0 in Extra Configuration.\n- The user should be prevented from saving an empty Due In or an empty Subject, and the empty field should be highlighted as an error.\n\n**Note:**\n- Affected Environment - Staging.\n",
+  "sent": {
+    "key": "AL-4198",
+    "url": "https://saleshandy.atlassian.net/browse/AL-4198",
+    "problems": [],
+    "at": "2026-11-02T06:40:36.647Z"
+  }
+}

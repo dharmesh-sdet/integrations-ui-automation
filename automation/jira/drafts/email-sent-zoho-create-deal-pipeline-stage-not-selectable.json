@@ -1,0 +1,29 @@
+{
+  "type": "bug",
+  "project": "AL",
+  "priority": "Medium",
+  "environment": "Production",
+  "epic": "AL-3982",
+  "assignee": {
+    "name": "Darshan",
+    "accountId": "5af5d8dd244bc90a10605d4f"
+  },
+  "qa": {
+    "name": "Dharmesh Patel",
+    "accountId": "712020:c7dedb58-9cb3-4450-a98f-5b5b56f6556b"
+  },
+  "links": [
+    "AL-4190",
+    "AL-4191",
+    "AL-4198"
+  ],
+  "attachments": [],
+  "summary": "Email Sent from Saleshandy: Create/Update a Deal in Zoho activity does not allow Pipelines and Stages to be selected in Extra Configuration",
+  "description": "**Prerequisites:**\n- The Zoho integration is connected to Saleshandy (account gzoho).\n\n**Steps to Reproduce:**\n1. In Saleshandy, go to API & Integrations > Integrations > Zoho > Triggers & Activity and enable Email Sent from Saleshandy.\n2. Select the Create/Update a Deal in Zoho activity.\n3. In Extra Configuration, click Select Pipelines.\n4. In Extra Configuration, look at Select Stages.\n\n**Actual Result:**\n- Select Pipelines and Select Stages are greyed out. Clicking Select Pipelines shows no options.\n- The user cannot choose a Pipeline or a Stage. A deal made by the workflow gets the Stage \"Qualification\" without the user choosing it.\n\n**Expected Result:**\n- The user should be able to select a Pipeline and a Stage in Extra Configuration, and the deal should use them.\n\n**Note:**\n- Affected Environment - Staging.\n",
+  "sent": {
+    "key": "AL-4199",
+    "url": "https://saleshandy.atlassian.net/browse/AL-4199",
+    "problems": [],
+    "at": "2026-11-02T08:18:08.108Z"
+  }
+}

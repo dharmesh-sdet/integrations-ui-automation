@@ -4,8 +4,7 @@ import { ZOHO_ORG, type ZohoCrmPage } from './zoho-crm.page.ts';
 // Records an Email Sent row needs in Zoho before the email goes out (QA: made by hand with unique names).
 // Account has `ZohoCrmPage.createAccount`, which another session owns; Contact, Lead and Deal are here.
 // Field ids are the ones the create forms showed on 2026-10-29 (Crm_<Module>_<FIELD>_LInput).
-// TODO(needs-input): the lookup picker (Account Name, Contact Name) and the Stage list were not clicked
-// through yet; their locators are a first guess and the first run of a row that uses them confirms them.
+// The lookup picker, the Stage list and the Lead Company box were confirmed on 2026-10-31.
 export class ZohoForms {
   private readonly page: Page;
   private readonly crm: ZohoCrmPage;
@@ -31,21 +30,26 @@ export class ZohoForms {
     await this.page.locator('#Crm_Leads_FIRSTNAME_LInput').fill(l.first);
     await this.page.locator('#Crm_Leads_LASTNAME_LInput').fill(l.last);
     await this.page.locator('#Crm_Leads_EMAIL_LInput').fill(l.email);
-    // The Company box has the id "inputId" on this form, which is too general, so it is found by its label.
-    await this.page.locator("xpath=(//*[normalize-space(text())='Company']/following::input)[1]").fill(l.company);
+    // The Company box has the id "inputId" on this form (confirmed 2026-10-31, the only visible one).
+    await this.page.locator('input#inputId:visible').first().fill(l.company);
     return this.save('Leads');
   }
 
   // closing is dd/mm/yyyy. The stage list opens from the box that shows the default "Qualification".
-  async createDeal(d: { name: string; closing: string; contact?: string; stage?: string; amount?: string }): Promise<string> {
+  async createDeal(d: { name: string; closing: string; contact?: string; stage?: string; amount?: string; account?: string }): Promise<string> {
+    // Account Name is required on the Deal form ("Account Name cannot be empty", 2026-10-31): make one when the row gives none.
+    const account = d.account ?? `Deal Account ${Date.now()}`;
+    if (!d.account) await this.crm.createAccount(account);
     await this.openForm('Potentials', 'Create Deal', '#Crm_Potentials_POTENTIALNAME_LInput');
     await this.page.locator('#Crm_Potentials_POTENTIALNAME_LInput').fill(d.name);
     await this.page.locator('#Crm_Potentials_CLOSINGDATE_LInput').fill(d.closing);
     if (d.amount) await this.page.locator('#Crm_Potentials_AMOUNT_LInput').fill(d.amount);
+    await this.pickLookup('#Crm_Potentials_ACCOUNTID', account);
     if (d.contact) await this.pickLookup('#Crm_Potentials_CONTACTID', d.contact);
     if (d.stage) {
-      await this.page.locator('div').filter({ hasText: /^Qualification$/ }).last().click();
-      await this.page.getByText(d.stage, { exact: true }).last().click();
+      // Stage is a pick list; its options are <lyte-drop-item role="option"> (confirmed 2026-10-31).
+      await this.page.getByText('Qualification', { exact: true }).first().click();
+      await this.page.locator('lyte-drop-item[role="option"]').filter({ hasText: new RegExp(`^\\s*${d.stage}\\s*$`) }).first().click();
     }
     return this.save('Potentials');
   }
@@ -61,8 +65,10 @@ export class ZohoForms {
 
   // Types the record's name in a lookup box and picks the matching entry of the list that opens.
   private async pickLookup(input: string, text: string): Promise<void> {
-    await this.page.locator(input).fill(text);
-    await this.page.locator('li').filter({ hasText: text }).first().click({ timeout: 20_000 });
+    await this.page.locator(input).click();
+    await this.page.locator(input).pressSequentially(text, { delay: 40 });
+    // Options are <lyte-drop-item role="option"> (confirmed 2026-10-31); the label has a trailing space.
+    await this.page.locator('lyte-drop-item[role="option"]').filter({ hasText: text }).first().click({ timeout: 20_000 });
   }
 
   private async save(tab: string): Promise<string> {

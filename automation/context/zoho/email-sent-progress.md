@@ -75,3 +75,41 @@ The run of the other 14 rows was stopped by Claude Code for low system memory (1
 
 All 24 rows are now in `tests/zoho/email-sent.spec.ts` (24 listed with `--list`, typecheck clean for my files). New: `src/pages/zoho/zoho-forms.page.ts` (`ZohoForms`: `createContact`, `createLead`, `createDeal`, ids from the create forms read on 2026-10-29) and 9 rows that need a record made by hand: Lead 2, Contact 3 and 4, Account 2 and 3, Deal 2, 3 and 5, Task 2. Trigger and setup 2 now reads back the saved Task values.
 Not confirmed (marked `TODO(needs-input)`): the lookup picker (Account Name, Contact Name) and the Stage list in `ZohoForms`, the Company box of the Lead form, and the chip icon that reopens an Extra Configuration. The first run of those rows confirms or fixes them. None of these rows has run; only Lead 1 has.
+
+## Run status (2026-10-31)
+
+22 of 24 rows pass. Full run: 17 passed, 7 failed, 51.3 min. Five of the seven were script failures, fixed and rerun: Lead 2, Account 2, Deal 2, 3 and 5 all pass now.
+
+Script fixes (not committed):
+- `src/flows/zoho-email-sent.ts`: `isBlankField`. Zoho draws an empty field as a dash with CSS, so the page text has no line for it and `ZohoCrmPage.field` returns the next label. Used by Lead 3, Contact 2 and Deal 1.
+- `tests/zoho/email-sent.spec.ts`: Combined 1 waits for the lead, deal and task before it counts them.
+- `src/pages/zoho/zoho-forms.page.ts`: lookup options are `lyte-drop-item[role="option"]` (type the name, then click); the Lead Company box is `input#inputId`; the Stage list opens from the "Qualification" text and uses the same option type; Account Name is required on the Deal form, so `createDeal` makes an account first (`Deal Account <time>`). Confirmed on the real forms on 2026-10-31; no record saved by the probe.
+
+Open (failed in 3 of 3 runs, cause not known):
+- Task 3, Subject left empty: a task is created with the subject "Follow up after step 1" (the previous subject). The overview says an empty Subject skips the task. Either the script leaves the old subject in the dialog (`fill('')` in `saleshandy-to-zoho.ts` line 37, shared file) or the product ignores an empty subject. Next: read the saved Task dialog back after configure. No Jira draft before that.
+- Combined 1, all five actions: the contact, lead and deal exist, the task never appears (waited up to 5 min). Looks like a product issue. Not yet asked to QA.
+
+Note: Account 1 failed once (no billing city, state or country on the new account) and passed in the full run. Intermittent, not filed.
+
+Do not run `npm run test:zoho-email-sent` while another run uses `test-results-zoho-email-sent`: a new run deletes the old traces.
+
+## Resume here (2026-10-31, end of session)
+
+1. Task 3: after `configure` with an empty Subject, reopen the saved Task dialog and read the Subject back. If it still shows "Follow up after step 1", the script did not clear it (shared `src/flows/saleshandy-to-zoho.ts` line 37, owner: Reply Received session, send the change). If it is empty, the product ignores an empty Subject: ask QA, then draft a Jira bug (QA sends).
+2. Combined 1: ask QA if a missing task with five actions on is a bug or known. No draft before the answer.
+3. Commit only my files: `src/pages/zoho/zoho-forms.page.ts`, `src/flows/zoho-email-sent.ts`, `tests/zoho/email-sent.spec.ts`, this file. `PROGRESS.md` and other Zoho files carry edits of other sessions.
+4. Next workflow after Email Sent: Reply Received (34 rows committed in 28e87bb, only Lead 1 run, account `notemailsentzoho`). Run 3 rows at a time (low memory). The other five workflows have no sequence yet. QA has not chosen the order.
+
+How to run: `npm run test:zoho-email-sent -- -g "<row>|<row>"` in the background, then read the log. The run refreshes the CSV, so each run uses new prospects. A new run deletes the old `test-results-zoho-email-sent` folder. Probe the real Zoho form with a throwaway script and `xvfb-run -a node --experimental-transform-types` on `auth/mcp-zoho-profile` before you change a locator.
+
+## Exploration of Task 3 and Combined 1 (2026-11-02)
+
+Probe: `tests/setup/zoho-task3-probe.spec.ts` (throwaway, not committed, `ZOHO_EXPLORE=1`). No email sent. gzoho is back on Email Sent with Create/Update a Contact only.
+
+- Task 3, cause found: the product keeps the previous saved Subject when the Subject is empty. The script clears the box (screenshot before Save). Save "Probe A", then empty: reload shows "Probe A". Save "Probe B" with Due In 5, then empty with Due In 3: reload shows Subject "Probe B" and Due In 3. No required-field error, the dialog closes. So the task is created with the old Subject. The overview says an empty Subject creates no task. Open for QA: bug or known?
+- Combined 1, CORRECTED 2026-11-02 (the first reading was wrong): the five chips were lost because the script did not wait for the "Configuration Updated" message after the Deal and Task dialog Save (about 4 s each). With the wait, all 5 chips persist after a reload (probe P10). This is a script problem, not a product bug. QA's manual test made 1 lead, 1 deal, 1 contact, 2 accounts (one linked to the contact, one to the deal, Z-5) and 1 task. Fix: `configureWaiting` in `src/flows/zoho-email-sent.ts`, used by Combined 1. The shared `configure` in `saleshandy-to-zoho.ts` (another session owns it) has the same race for any row that saves a Deal or Task dialog and then picks another action.
+- Combined 1 real run after the fix (prospect Ragnhild Eide): contact 1, lead 1, deal 1 pass. Fails on the last count: 2 tasks (03:04 PM and 03:05 PM, same Subject, Due 05/11/2026, same contact). This is the duplicate Task seen on 2026-10-29 for a new prospect. Open for QA: bug or known? Also seen: two deals from one event in 2 of 3 probe runs on 2026-11-02.
+- Blocker: `npm run test:zoho-email-sent` stops in global setup with "Could not find a fresh name after 600 tries; add names to NATIONALITIES in src/data/generate.ts". Shared file, not edited.
+- Combined 1 rerun (2026-11-02, prospect Ingvild Haugen, `configureWaiting`): PASSED in 4.0 min. Zoho read again minutes later: 1 contact, 1 lead, 1 deal, 1 task, no late second task. So the duplicate task is intermittent: 2 tasks in the Ragnhild Eide run (03:04 and 03:05 PM), 1 task in the Ingvild Haugen run. QA's rule (2026-11-02): file it only if it repeats. No Jira draft written. QA counted 1 task by hand and 2 accounts (Z-5).
+- Jira 2026-11-02 (all sent by QA): AL-4198 (Task Subject and Due In allow empty and 0), AL-4199 (Deal Pipelines and Stages not selectable, Q3), AL-4218 (Account and Deal create two accounts, with execution ids 6ae8593f00b3b94795f3c87a and 6ae859413e9e05c58a9deeaf). QA on AL-4218: it stays as filed, the developer will handle it, otherwise QA does it manually later. No change to AL-4218 and no comment from Claude. A peer session reported a developer note that this account behavior is known (Z-5); QA did not change the ticket because of it.
+- Still open: one email can start two executions (Logs: 2 executions for Ragnhild Eide at 3:04 PM, 1 for Ingvild Haugen), which fits the double Task and double Deal. Not filed (QA: file only if it repeats). Combined 1 passes with `configureWaiting` in 1 of 2 real runs (the other failed on 2 tasks).

@@ -1,5 +1,5 @@
 // Builds test-data/zoho/email-bounced.csv: one new prospect for each row of test-cases/zoho/email-bounced.md that
-// bounces an email (22; "Trigger and setup > 2" bounces nothing). The Scenario column is what the spec looks rows
+// bounces an email (21; "Trigger and setup > 2" bounces nothing). The Scenario column is what the spec looks rows
 // up by, written "<section> > <#>". Columns are copied from the Reply Received CSV (Deal Value 5500 on the Deal
 // and Combined rows), then every person is replaced by a new one (src/data/generate.ts, all @mailinator.com).
 // Writes only email-bounced.csv. A row that needs a blank field (no Company) is blanked in the spec; the one
@@ -23,7 +23,6 @@ const ROWS: Array<[string, string]> = [
   ['Contact > 1', 'Contact > 1'],
   ['Contact > 2', 'Contact > 1'],
   ['Contact > 3', 'Contact > 1'],
-  ['Contact > 4', 'Contact > 1'],
   ['Lead > 1', 'Lead > 1'],
   ['Lead > 2', 'Lead > 1'],
   ['Lead > 3', 'Lead > 1'],

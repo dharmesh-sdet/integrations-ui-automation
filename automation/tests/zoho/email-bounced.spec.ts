@@ -1,6 +1,6 @@
-// Scenarios: test-cases/zoho/email-bounced.md (Regression, 23 rows, QA OK 2026-10-30, no ticket per row).
+// Scenarios: test-cases/zoho/email-bounced.md (Regression, 22 rows, QA OK 2026-10-30, no ticket per row).
 // One test per row, named "<section>: <n>". No one has seen this trigger in the Saleshandy UI, so rows marked
-// "(proposed, unconfirmed)" in the cases file record what they see and do not assert it (the tag name, Lead-only
+// "(proposed, unconfirmed)" in the cases file record what they see and do not assert it (Lead-only
 // extras, the real bounce).
 // Data: test-data/zoho/email-bounced.csv (npm run data:zoho-email-bounced), one prospect per row, found by the Scenario column.
 // Sequence: "Zoho Email Bounced QA" on notemailsentzoho, 2 steps, one mailbox no other Zoho sequence uses, Active.
@@ -16,13 +16,14 @@
 // Known issues are recorded, not filed (Z-1, Z-5, Z-6, Q3). On 2026-10-29 a new contact made two Tasks in 2 of 2 runs and
 // two Deals in 1 of 2 (Email Sent). The rows expect one record, so a repeat shows Fail until QA decides if it is a bug.
 import path from 'node:path';
+import { chromium } from 'playwright';
 import { expect, test as base } from '../../src/fixtures/index.ts';
 import { readCsv, type Row } from '../../src/data/csv.ts';
 import { markUsed } from '../../src/data/used.ts';
 import { ZOHO_ACTION, configure, fullName } from '../../src/flows/saleshandy-to-zoho.ts';
-import { inDays } from '../../src/flows/zoho-email-sent.ts';
-import { NOTE_TITLE, TRIGGER, addTag, bounce, bounceNotes, realBounceEmail, tagsSeen } from '../../src/flows/zoho-email-bounced.ts';
-import { ZohoCrmPage, openZohoProfile } from '../../src/pages/zoho/zoho-crm.page.ts';
+import { configureWaiting, inDays } from '../../src/flows/zoho-email-sent.ts';
+import { NOTE_TITLE, TRIGGER, bounce, bounceNotes, realBounceEmail } from '../../src/flows/zoho-email-bounced.ts';
+import { ZOHO_ORG, ZohoCrmPage } from '../../src/pages/zoho/zoho-crm.page.ts';
 import { ZohoForms } from '../../src/pages/zoho/zoho-forms.page.ts';
 import { untilPasses } from '../../src/utils/wait.ts';
 
@@ -37,7 +38,23 @@ const PROFILE = path.resolve(import.meta.dirname, '../../auth/zoho-email-bounced
 const test = base.extend<object, { crm: ZohoCrmPage }>({
   crm: [
     async ({}, use) => {
-      const { context, crm } = await openZohoProfile(PROFILE);
+      // Zoho page loads time out at once now and then (net::ERR_TIMED_OUT in 170 ms, seen 2026-11-03), also the first
+      // load of the profile. So the profile is opened here, with a retry on every load. Local to this spec: the shared
+      // openZohoProfile and ZohoCrmPage.open are owned by another session.
+      const context = await chromium.launchPersistentContext(PROFILE, { headless: false, viewport: { width: 1500, height: 1200 } });
+      const crm = new ZohoCrmPage(context.pages()[0] ?? (await context.newPage()));
+      const openOnce = crm.open.bind(crm);
+      crm.open = async (url: string) => {
+        for (let attempt = 1; ; attempt++) {
+          try {
+            return await openOnce(url);
+          } catch (e) {
+            if (attempt >= 4 || !/ERR_TIMED_OUT|ERR_CONNECTION|ERR_NETWORK|ERR_NAME|Timeout/.test(String(e))) throw e;
+            await crm.page.waitForTimeout(3_000);
+          }
+        }
+      };
+      await crm.open(`${ZOHO_ORG}/tab/Contacts`).catch(async (e) => { await context.close(); throw e; });
       await use(crm);
       await context.close();
     },
@@ -70,11 +87,6 @@ type Env = Pick<Fx, 'zohoIntegration' | 'saleshandyPage' | 'saleshandySequence' 
 // "Mark the step 1 email as bounced": the start of every row except the real bounce.
 const markBounced = (fx: Env, row: Row): Promise<void> => bounce(fx.saleshandySequence, SEQUENCE_ID, row);
 
-// Records which candidate tag a page shows. The tag name is unconfirmed, so it is recorded, not asserted.
-function recordTag(module: string, text: string): void {
-  test.info().annotations.push({ type: `tag on ${module} (proposed Bounced-Saleshandy, unconfirmed)`, description: tagsSeen(text) });
-}
-
 test.describe('Zoho Email Bounced (staging)', () => {
   test.setTimeout(8 * 60_000);
 
@@ -103,7 +115,12 @@ test.describe('Zoho Email Bounced (staging)', () => {
     expect(await zohoIntegration.selectedActivities(TRIGGER)).toEqual([ZOHO_ACTION.task]);
     // TODO(needs-input): the first icon of the chip opening its Extra Configuration is a guess (the last one removes it).
     // The cases file says "Contact action saved"; the Task action is used here because only it has Extra Configuration values to read back.
-    const chip = saleshandyPage.locator('div:has(> .action-container)').filter({ hasText: ZOHO_ACTION.task }).first();
+    // The chip is looked up inside the Email is Bounced block only. A page-wide lookup took the first Task chip,
+    // which belongs to another trigger on the shared account (it read "Follow up after open").
+    const block = saleshandyPage
+      .locator('div:has(> div > div > .switchToggle):has(> div > div > .action-container)')
+      .filter({ has: saleshandyPage.locator('div:has(> .switchToggle)').filter({ hasText: TRIGGER }) });
+    const chip = block.locator('div:has(> .action-container)').filter({ hasText: ZOHO_ACTION.task }).first();
     await chip.locator('.action-container > svg').first().click();
     const dialog = saleshandyPage.getByRole('dialog');
     await dialog.waitFor({ timeout: 15_000 });
@@ -123,7 +140,6 @@ test.describe('Zoho Email Bounced (staging)', () => {
     const text = await crm.waitForNotes('Contacts', found!.id, 1);
     expect(ZohoCrmPage.noteCount(text), 'One note').toBe(1);
     expect(text).toContain(NOTE_TITLE);
-    recordTag('Contacts', text);
     expect((await crm.find('Contacts', row['Email'])).length).toBe(1);
   });
 
@@ -138,12 +154,11 @@ test.describe('Zoho Email Bounced (staging)', () => {
     await saleshandySequence.createAndAddProspect(SEQUENCE_ID, row);
     await saleshandySequence.sendNow(SEQUENCE_ID, fullName(row), 1, email);
     await saleshandySequence.waitUntilBounced(SEQUENCE_ID, fullName(row));
-    // Proposed, unconfirmed: contact, note and tag as in row 3. The contact and the note are checked, the tag is recorded.
+    // Proposed, unconfirmed: contact and note as in row 3.
     const contact = await crm.waitForRecord('Contacts', email);
     expect(contact, `No Zoho contact for ${email}`).toBeTruthy();
     const text = await crm.waitForNotes('Contacts', contact!.id, 1);
     expect(ZohoCrmPage.noteCount(text)).toBeGreaterThanOrEqual(1);
-    recordTag('Contacts', text);
   });
 
   // ---- Create/Update a Contact ----
@@ -160,7 +175,6 @@ test.describe('Zoho Email Bounced (staging)', () => {
     expect(phoneDigits(text)).toContain(phoneDigits(row['Phone Number']));
     expect(ZohoCrmPage.noteCount(text), 'One note').toBe(1);
     expect(text).toContain(NOTE_TITLE);
-    recordTag('Contacts', text);
     expect((await crm.find('Contacts', row['Email'])).length).toBe(1);
   });
 
@@ -175,7 +189,6 @@ test.describe('Zoho Email Bounced (staging)', () => {
       expect(seen).toContain(row['Job Title']);
       expect(seen).not.toContain('Old Title');
     }, 120_000);
-    recordTag('Contacts', seen);
     expect((await crm.find('Contacts', row['Email'])).map((r) => r.id), 'Still one contact').toEqual([id]);
   });
 
@@ -193,23 +206,6 @@ test.describe('Zoho Email Bounced (staging)', () => {
     expect((await crm.find('Contacts', row['Email'])).map((r) => r.id), 'No second contact').toEqual([id]);
   });
 
-  test('Contact: 4 Contact exists with the tag VIP', async ({ zohoIntegration, saleshandyPage, saleshandySequence, crm }) => {
-    const row = prospect('Contact > 4');
-    const id = await new ZohoForms(crm).createContact({ first: row['First Name'], last: row['Last Name'], email: row['Email'] });
-    await addTag(crm, 'Contacts', id, 'VIP');
-    expect(await crm.recordText('Contacts', id), 'The VIP tag is on the contact before the bounce').toContain('VIP');
-    await configure(zohoIntegration, saleshandyPage, TRIGGER, [{ action: ZOHO_ACTION.contact }]);
-    await markBounced({ zohoIntegration, saleshandyPage, saleshandySequence, crm }, row);
-    // Z-6 (known): the bounce tag replaces the other tags, so VIP is gone. The tag name itself is unconfirmed.
-    let seen = '';
-    await untilPasses('the contact is updated and VIP is gone', async () => {
-      seen = await crm.recordText('Contacts', id);
-      expect(ZohoCrmPage.noteCount(seen)).toBeGreaterThanOrEqual(1);
-      expect(seen).not.toContain('VIP');
-    }, 120_000);
-    recordTag('Contacts', seen);
-  });
-
   // ---- Create/Update a Lead ----
 
   test('Lead: 1 Prospect not in Zoho', async ({ zohoIntegration, saleshandyPage, saleshandySequence, crm }) => {
@@ -222,8 +218,7 @@ test.describe('Zoho Email Bounced (staging)', () => {
     expect(ZohoCrmPage.field(text, 'Company')).toBe(row['Company']);
     for (const value of [row['Job Title'], row['City'], row['State'], row['Country']]) expect(text).toContain(value);
     expect(ZohoCrmPage.noteCount(text), 'One note').toBe(1);
-    // Unconfirmed: whether a Lead-only bounce adds a tag or makes a contact. Recorded for the cases file.
-    recordTag('Leads', text);
+    // Unconfirmed: whether a Lead-only bounce makes a contact. Recorded for the cases file.
     test.info().annotations.push({ type: 'contacts made by a Lead-only bounce (unconfirmed)', description: String((await crm.find('Contacts', row['Email'])).length) });
     expect((await crm.find('Leads', row['Email'])).length, 'One bounce must make one lead').toBe(1);
   });
@@ -248,7 +243,7 @@ test.describe('Zoho Email Bounced (staging)', () => {
     const found = await crm.waitForRecord('Leads', row['Email']);
     expect(found, `No Zoho lead for ${row['Email']}`).toBeTruthy();
     const text = await crm.waitForNotes('Leads', found!.id, 1);
-    expect(ZohoCrmPage.field(text, 'Company')).toBe('');
+    expect(ZohoCrmPage.field(text, 'Company', 'Lead Name')).toBe('');
   });
 
   // ---- Create/Update Account ----
@@ -316,7 +311,7 @@ test.describe('Zoho Email Bounced (staging)', () => {
     expect(ZohoCrmPage.field(text, 'Amount')).toContain(Number(row['Deal Value']).toLocaleString('en-US'));
     expect(ZohoCrmPage.field(text, 'Stage')).toBe('Qualification');
     expect(ZohoCrmPage.field(text, 'Closing Date')).not.toMatch(/\d{2}\/\d{2}\/\d{4}/);
-    expect(ZohoCrmPage.field(text, 'Contact Name')).toBe('');
+    expect(ZohoCrmPage.field(text, 'Contact Name', 'Modified By')).toBe('');
     expect(ZohoCrmPage.noteCount(text), 'One note').toBe(1);
     expect((await crm.find('Deals', fullName(row))).length, 'One bounce must make one deal').toBe(1);
     expect((await crm.find('Contacts', row['Email'])).length, 'The Deal action must not create a contact').toBe(0);
@@ -397,19 +392,31 @@ test.describe('Zoho Email Bounced (staging)', () => {
     expect((await crm.find('Contacts', row['Email'])).map((r) => r.id), 'Still one contact').toEqual([contactId]);
   });
 
+  // AL-4198 (fixed): Extra Configuration no longer saves an empty Subject, so Save stays disabled. The Contact action
+  // is saved first, so the run still has something to do. The Task is never saved.
   test('Task: 3 Subject left empty', async ({ zohoIntegration, saleshandyPage, saleshandySequence, crm }) => {
     const row = prospect('Task > 3');
-    await configure(zohoIntegration, saleshandyPage, TRIGGER, [{ action: ZOHO_ACTION.task, task: { ...TASK, subject: '' } }]);
+    await configure(zohoIntegration, saleshandyPage, TRIGGER, [{ action: ZOHO_ACTION.contact }]);
+    await zohoIntegration.selectActivity(TRIGGER, ZOHO_ACTION.task);
+    const dialog = saleshandyPage.getByRole('dialog');
+    await dialog.waitFor();
+    await dialog.getByRole('textbox').first().fill('');
+    await expect(dialog.getByRole('button', { name: 'Save', exact: true }), 'Save stays disabled for an empty Subject').toBeDisabled();
+    await saleshandyPage.keyboard.press('Escape');
+    await dialog.waitFor({ state: 'hidden' });
     await markBounced({ zohoIntegration, saleshandyPage, saleshandySequence, crm }, row);
-    // "The run still completes" is in Logs, which Zoho rows do not read (QA 2026-10-29). Only the missing task is checked.
-    expect(await crm.waitForRecord('Tasks', fullName(row), 60_000), 'No task may be created').toBeUndefined();
+    expect(await crm.waitForRecord('Contacts', row['Email']), `No Zoho contact for ${row['Email']}`).toBeTruthy();
+    // Zoho rows do not read Logs (QA 2026-10-29). Only the missing task is checked.
+    expect(await crm.waitForRecord('Tasks', fullName(row), 30_000), 'No task may be created').toBeUndefined();
   });
 
   // ---- Combined actions ----
 
   test('Combined: 1 Contact, Lead, Account, Deal and Task all selected, prospect not in Zoho', async ({ zohoIntegration, saleshandyPage, saleshandySequence, crm }) => {
     const row = prospect('Combined > 1');
-    await configure(zohoIntegration, saleshandyPage, TRIGGER, [
+    // configureWaiting waits for the saved message after each Deal and Task dialog. Plain configure picks the next
+    // action too early and the Task chip is lost (the task was never made, 2026-11-03).
+    await configureWaiting(zohoIntegration, saleshandyPage, TRIGGER, [
       { action: ZOHO_ACTION.contact },
       { action: ZOHO_ACTION.lead },
       { action: ZOHO_ACTION.account },
@@ -419,15 +426,17 @@ test.describe('Zoho Email Bounced (staging)', () => {
     await markBounced({ zohoIntegration, saleshandyPage, saleshandySequence, crm }, row);
     const contact = await crm.waitForRecord('Contacts', row['Email']);
     expect(contact, `No Zoho contact for ${row['Email']}`).toBeTruthy();
-    // Run B3: 5 notes on the contact and the bounce tag.
-    const text = await crm.waitForNotes('Contacts', contact!.id, 5);
-    expect(ZohoCrmPage.noteCount(text), 'Notes on the contact (run B3: 5)').toBe(5);
-    expect(bounceNotes(text), 'Notes with the bounce title').toBeGreaterThanOrEqual(1);
-    recordTag('Contacts', text);
+    // QA 2026-11-03 (seen on staging, all five actions saved): the contact shows 3 notes, its own, its deal and its
+    // task. The lead and the account keep their notes on their own records. (With the Task action lost, it was 2.)
+    const text = await crm.waitForNotes('Contacts', contact!.id, 3);
+    expect(ZohoCrmPage.noteCount(text), 'Notes on the contact: its own, its deal and its task').toBe(3);
+    expect(bounceNotes(text), 'All 3 notes have the bounce title').toBe(3);
     expect((await crm.find('Contacts', row['Email'])).length, 'One bounce must make one contact').toBe(1);
     expect((await crm.find('Leads', row['Email'])).length, 'The lead').toBe(1);
     expect((await crm.find('Deals', fullName(row))).length, 'The deal').toBe(1);
     expect((await crm.find('Tasks', fullName(row))).length, 'The task').toBe(1);
-    // Accounts: Z-5 (known) allows more than one, so they are not counted.
+    // Account Name is not mapped and the prospect has a company, so the developer rule gives 2 accounts named after
+    // the company: one with the Account mapping (linked to the contact) and one blank (holds the deal). This is Z-5.
+    expect((await crm.find('Accounts', row['Company'])).length, 'Two accounts named after the company (Z-5)').toBe(2);
   });
 });

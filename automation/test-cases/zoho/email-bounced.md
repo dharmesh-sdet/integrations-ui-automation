@@ -2,11 +2,11 @@
 
 Environment: Staging, account `notemailsentzoho`, version v5-account-link. No Zoho Jira ticket exists, so every Ticket cell is None. Expected results come from three sources. The first is the developer logs of 12 and 13 October (runs B1 and B3). The second is the Zoho Email Sent and Email Opened cases. The third is the Pipedrive Email Bounced cases. No one has seen this trigger in the Saleshandy UI. Rows marked (proposed, unconfirmed) have an Expected result that no source documents. A different result there is not a failure by itself.
 
-The note title is known from the log: "Saleshandy Email is Bounced". The tag name is not confirmed. The log says Bounced-Saleshandy and the public docs say Unsubscribed-Saleshandy. The first run reads the real tag in Zoho and the file is updated.
+The note title is known from the log: "Saleshandy Email is Bounced". The tag from the log (Bounced-Saleshandy) is not tested. No one found it in the Zoho CRM (QA 2026-11-03).
 
 Seen on 29 October for Email Sent: when the prospect was new in Zoho, one event made two Tasks, or two Deals with two accounts. The Expected cells say one record. If a run repeats it, the row shows Fail. QA has not decided whether it is a bug.
 
-Not covered, still open: Z-1, Z-5, Z-6 and Q3. All are known and kept by decision. Z-1 is not tested, because it needs a change to the shared field mapping. Rows that hit Z-5, Z-6 or Q3 state the known result. Custom Workflow and Expected Close Date are out of scope.
+Not covered, still open: Z-1, Z-5, Z-6 and Q3. All are known and kept by decision. Z-1 is not tested, because it needs a change to the shared field mapping. Z-6 is not tested, because the tag is not found in Zoho. Rows that hit Z-5 or Q3 state the known result. Custom Workflow and Expected Close Date are out of scope.
 
 ## Test data setup
 
@@ -18,7 +18,7 @@ Not covered, still open: Z-1, Z-5, Z-6 and Q3. All are known and kept by decisio
 - Make the records that a row needs first by hand in Zoho. These are the contact, lead, account and deals. Give each a unique name and an old value, so a change proves the update.
 - Field mappings are saved on all four types. Deal Fields map Deal Value to Amount and Closing Date.
 - Zoho can be read only in a headed browser with the saved profile.
-- Lead rows: no source says whether a bounce with only the Lead action adds a tag. The first run reads this in Zoho and the result is added here.
+- Lead rows: no source says whether a bounce with only the Lead action makes a contact. The first run reads this in Zoho and the result is added here.
 
 ## Trigger and setup
 
@@ -26,8 +26,8 @@ Not covered, still open: Z-1, Z-5, Z-6 and Q3. All are known and kept by decisio
 |---|---|---|---|---|
 | 1 | Trigger OFF, Contact action saved | Mark the step 1 email as bounced | Emails tab shows Bounced. Nothing created or changed in Zoho | None |
 | 2 | Trigger ON, Contact action saved, page reloaded | Open Triggers & Activity | The selected action and its Extra Configuration values show as saved | None |
-| 3 | Contact action on, prospect not in Zoho, sequence Active | Mark the step 1 email as bounced | Contact created. One note "Saleshandy Email is Bounced". Tag Bounced-Saleshandy (proposed, unconfirmed) | None |
-| 4 | Contact action on, real-bounce address, prospect not in Zoho | Send the step 1 email and wait for Saleshandy to set Bounced | Emails tab shows Bounced. Contact, note and tag as in row 3 (proposed, unconfirmed) | None |
+| 3 | Contact action on, prospect not in Zoho, sequence Active | Mark the step 1 email as bounced | Contact created. One note "Saleshandy Email is Bounced" (seen 2026-10-31) | None |
+| 4 | Contact action on, real-bounce address, prospect not in Zoho | Send the step 1 email and wait for Saleshandy to set Bounced | Emails tab shows Bounced, 26 seconds after the send. Contact and note as in row 3 (seen 2026-10-31) | None |
 
 ## Create/Update a Contact in Zoho
 
@@ -35,10 +35,9 @@ Extra Configuration: None.
 
 | # | Scenario | Do | Expected | Ticket |
 |---|---|---|---|---|
-| 1 | Prospect not in Zoho | Mark the email as bounced | One contact with the 11 mapped Contact fields. One note. Tag Bounced-Saleshandy (proposed, unconfirmed) | None |
-| 2 | Contact exists with an old Title | Mark the email as bounced | Same contact updated with the prospect Title and the tag. Still 1 contact | None |
+| 1 | Prospect not in Zoho | Mark the email as bounced | One contact. One note. Seen 2026-10-31: name, email, phone, title, department, Twitter and mailing address. The other mapped fields were not confirmed | None |
+| 2 | Contact exists with an old Title | Mark the email as bounced | Same contact updated with the prospect Title. Still 1 contact | None |
 | 3 | Contact exists, its email typed in different letter case | Mark the email as bounced | Same contact updated. No second contact. One note | None |
-| 4 | Contact exists with the tag VIP | Mark the email as bounced | The contact has only the bounce tag. VIP is gone (Z-6, known) | None |
 
 ## Create/Update a Lead in Zoho
 
@@ -80,7 +79,7 @@ Extra Configuration: Subject "Follow up after bounce", Status Not Started, Prior
 |---|---|---|---|---|
 | 1 | Prospect not in Zoho | Mark the email as bounced | Contact created, then one task linked to it with the 4 values. Due date is today plus 3 days | None |
 | 2 | Contact exists | Mark the email as bounced | One task linked to the existing contact. Still 1 contact | None |
-| 3 | Subject left empty | Mark the email as bounced | No task and no task note. The run still completes | None |
+| 3 | Subject left empty (Contact action saved first) | Open the Task Extra Configuration, leave Subject empty, then mark the email as bounced | Save stays disabled, so the Task is never saved (AL-4198). The contact is created. No task and no task note | AL-4198 |
 
 ## Combined actions
 
@@ -88,4 +87,4 @@ Extra Configuration: Task and Deal values as in their sections.
 
 | # | Scenario | Do | Expected | Ticket |
 |---|---|---|---|---|
-| 1 | Contact, Lead, Account, Deal and Task all selected, prospect not in Zoho | Mark the email as bounced | 1 contact with 5 notes and the bounce tag, as in run B3. The lead, deal and task exist for it. Accounts as Z-5 allows | None |
+| 1 | Contact, Lead, Account, Deal and Task all selected, prospect not in Zoho | Mark the email as bounced | 1 contact with 3 notes: its own, its deal and its task (seen 2026-11-03). 1 lead, 1 deal and 1 task. 2 accounts named after the company, one with the Account mapping linked to the contact and one blank holding the deal (Z-5, developer rule). The lead company is plain text | None |

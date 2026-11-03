@@ -9,6 +9,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { generateFrom } from '../src/data/generate.ts';
 import { readCsv } from '../src/data/csv.ts';
+import { REAL_MADRID_PLAYERS } from '../src/data/real-madrid-players.ts';
 
 const dir = path.resolve(import.meta.dirname, '../test-data/zoho');
 const OUT = 'zoho/conversation-category-updated.csv';
@@ -58,4 +59,26 @@ try {
 } finally {
   fs.rmSync(tmp, { force: true });
 }
-console.log(`Wrote test-data/${OUT} with ${readCsv(OUT).length} rows.`);
+// QA 2026-11-03: each prospect is a Real Madrid player (2000 to 2026). A player whose email is in any Zoho file
+// (CSV or used list) is skipped, so a rerun never meets a record an earlier run made.
+// Run 2026-11-03: gzoho already had iker.casillas@mailinator.com as a prospect, so each email also gets a 3-digit number.
+const seen = fs.readdirSync(dir).map((f) => fs.readFileSync(path.join(dir, f), 'utf8').toLowerCase()).join('\n');
+const slug = (v: string) => v.toLowerCase().replace(/[^a-z]/g, '');
+const free = REAL_MADRID_PLAYERS.filter(([f, l]) => !seen.includes(`${slug(f)}.${slug(l)}`));
+const rows = readCsv(OUT);
+if (free.length < rows.length) throw new Error(`Only ${free.length} unused players left for ${rows.length} rows`);
+const out = rows.map((row, i) => {
+  const [first, last] = free[i];
+  const [of, ol] = [row['First Name'], row['Last Name']];
+  const swap = (v: string) =>
+    v.split(`${slug(of)}.${slug(ol)}`).join(`${slug(first)}.${slug(last)}`)
+      .split(`${slug(of)}${slug(ol)}`).join(`${slug(first)}${slug(last)}`);
+  const next: Record<string, string> = {};
+  for (const h of header) next[h] = swap(row[h] ?? '');
+  next['First Name'] = first;
+  next['Last Name'] = last;
+  next['Email'] = `${slug(first)}.${slug(last)}${100 + Math.floor(Math.random() * 900)}@mailinator.com`;
+  return header.map((h) => cell(next[h])).join(',');
+});
+fs.writeFileSync(path.join(dir, 'conversation-category-updated.csv'), `${[header.join(','), ...out].join('\n')}\n`);
+console.log(`Wrote test-data/${OUT} with ${rows.length} rows.`);

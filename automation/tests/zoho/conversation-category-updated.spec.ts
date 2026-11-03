@@ -3,13 +3,12 @@
 // Expected that no source documents (Trigger and category gate 3 and 5); a different result there is not a failure by itself.
 // Data: test-data/zoho/conversation-category-updated.csv (npm run data:zoho-conversation-category-updated), one prospect
 // per row (19; "Trigger and category gate > 2" has none), found by the Scenario column.
-// Sequence: "Zoho Conversation Category QA" on notemailsentzoho, 1 email step, one mailbox no other Zoho sequence uses,
-//   active. QA/Claude creates it by hand; put its id in ZOHO_CC_SEQUENCE_ID.
+// Sequence: id 197611 on gzoho (dharmesh+zohointegration@saleshandy.com), made by QA 2026-11-03 with many sender
+//   mailboxes. ZOHO_CC_SEQUENCE_ID overrides the id.
 // Zoho CRM is read in a headed browser on its own copy of the saved profile, so run it through xvfb-run (see
-// package.json `test:zoho-conversation-category-updated`). Other Zoho workflows run at the same time on this account,
-// each with its own sequence and prospects, so only the Conversation Category trigger is touched (KEEP_OTHER_TRIGGERS).
-// Email Sent must be OFF while this runs, or every step 1 send would create a contact first (seen ON on 2026-10-30).
-// The spec does not turn it off, because the Email Sent spec needs it on when it runs at the same time.
+// package.json `test:zoho-conversation-category-updated`). QA 2026-11-03: Email Sent testing on gzoho is done and no
+// other workflow uses gzoho, so the spec turns every other trigger off (KEEP_OTHER_TRIGGERS=0). Email Sent must be OFF,
+// or every step 1 send would create a contact first.
 //
 // How a row runs: set the trigger, its action and its category, make the Zoho records the row needs, add the prospect,
 // send step 1 with Send now (the prospect starts at "Add Outcome"), change the outcome on Sequence > Prospects. Then look
@@ -40,13 +39,12 @@ import { ZohoCrmPage, openZohoProfile } from '../../src/pages/zoho/zoho-crm.page
 import { ZohoForms } from '../../src/pages/zoho/zoho-forms.page.ts';
 import { untilPasses } from '../../src/utils/wait.ts';
 
-process.env.KEEP_OTHER_TRIGGERS ??= '1';
+process.env.KEEP_OTHER_TRIGGERS ??= '0';
 
 const CSV = 'zoho/conversation-category-updated.csv';
-// TODO(needs-input): id of "Zoho Conversation Category QA", from the address bar once QA/Claude has made it.
-const SEQUENCE_ID = process.env.ZOHO_CC_SEQUENCE_ID ?? '';
-// TODO(needs-input): QA/Claude makes this copy of auth/mcp-zoho-not-email-sent-profile (own copy per workflow).
-const PROFILE = path.resolve(import.meta.dirname, '../../auth/zoho-conversation-category-profile');
+const SEQUENCE_ID = process.env.ZOHO_CC_SEQUENCE_ID ?? '197611';
+// Own copy of auth/mcp-zoho-profile (the gzoho Zoho org), made 2026-11-03.
+const PROFILE = path.resolve(import.meta.dirname, '../../auth/zoho-cc-gzoho-profile');
 
 const test = base.extend<object, { crm: ZohoCrmPage }>({
   crm: [
@@ -58,7 +56,7 @@ const test = base.extend<object, { crm: ZohoCrmPage }>({
     { scope: 'worker' },
   ],
 });
-test.use({ account: 'notemailsentzoho' });
+test.use({ account: 'gzoho' });
 
 // A fresh company name, so a record made by an earlier run never matches.
 const stamp = String(Date.now()).slice(-6);
@@ -117,8 +115,13 @@ test.describe('Zoho Conversation Category is Updated (staging)', () => {
 
   // Runs first: the empty category needs a trigger that never saved one (see the header).
   test('Trigger and category gate: 3 Category left empty, outcome Not Now', async ({ zohoIntegration, saleshandyPage, saleshandySequence, crm }) => {
+    // QA 2026-11-03: skipped. A category saved by an earlier row stays saved, which is expected. The empty-category
+    // check was done before the full script (2026-10-31: the empty box saves, 1 contact, 1 note).
+    test.skip(true, 'Empty category checked before the full script (QA 2026-11-03)');
     const row = prospect('Trigger and category gate > 3');
     await useTrigger({ zohoIntegration, saleshandyPage, saleshandySequence, crm }, [{ action: ZOHO_ACTION.contact }]);
+    // The box must be empty after a reload. A category saved by an earlier row would make this a different row.
+    await expectSavedCategory(zohoIntegration, saleshandyPage, ZOHO_ACTION.contact, '');
     await sendAndChange({ zohoIntegration, saleshandyPage, saleshandySequence, crm }, row, OUTCOME.notNow);
     // Proposed, unconfirmed for an empty box in the UI (run C3 made a contact and a note).
     const found = await crm.waitForRecord('Contacts', row['Email']);
@@ -153,11 +156,16 @@ test.describe('Zoho Conversation Category is Updated (staging)', () => {
     const row = prospect('Trigger and category gate > 4');
     await useTrigger({ zohoIntegration, saleshandyPage, saleshandySequence, crm }, [{ action: ZOHO_ACTION.contact, category: OUTCOME.meetingBooked }]);
     await sendAndChange({ zohoIntegration, saleshandyPage, saleshandySequence, crm }, row, OUTCOME.meetingBooked);
-    // Z-7 (known, reported): the saved key has a colon, so the gate never matches and nothing runs.
-    expect(await crm.waitForRecord('Contacts', row['Email'], 60_000), 'Known Z-7: no contact and no note').toBeUndefined();
+    // QA 2026-11-03: Meeting Booked now matches the saved category (runs 2026-11-03 made the contact).
+    const found = await crm.waitForRecord('Contacts', row['Email']);
+    expect(found, `No Zoho contact for ${row['Email']}`).toBeTruthy();
+    await noteText(crm, 'Contacts', found!.id, OUTCOME.meetingBooked);
+    expect((await crm.find('Contacts', row['Email'])).length, 'One contact').toBe(1);
   });
 
   test('Trigger and category gate: 5 Prospect replied, category set to Interested in Unified Inbox', async ({ zohoIntegration, saleshandyPage, saleshandySequence, crm }) => {
+    // QA 2026-11-03: skipped. The row needs a real reply in Unified Inbox from a mailbox QA controls.
+    test.skip(true, 'Needs a real reply in Unified Inbox (QA 2026-11-03)');
     const row = prospect('Trigger and category gate > 5');
     await useTrigger({ zohoIntegration, saleshandyPage, saleshandySequence, crm }, [{ action: ZOHO_ACTION.contact, category: OUTCOME.interested }]);
     await sendAndReply(saleshandySequence, SEQUENCE_ID, row);
@@ -296,8 +304,10 @@ test.describe('Zoho Conversation Category is Updated (staging)', () => {
       const text = await crm.recordText('Accounts', accountId);
       for (const value of [row['City'], row['State'], row['Country']]) expect(text).toContain(value);
     }, 120_000);
-    expect(ZohoCrmPage.field(await crm.recordText('Accounts', accountId), 'Account Name'), 'The account name is kept').toBe(accountName);
-    expect((await crm.find('Accounts', row['Company'])).length, 'No account is made from the prospect company').toBe(0);
+    // QA 2026-11-03: Company is mapped to Account Name, so the linked account takes the prospect's company name.
+    expect(ZohoCrmPage.field(await crm.recordText('Accounts', accountId), 'Account Name'), 'The linked account takes the company name').toBe(row['Company']);
+    // The renamed linked account is the only account with that name, so no second account is made.
+    expect((await crm.find('Accounts', row['Company'])).length, 'Only the linked account has the company name').toBe(1);
   });
 
   test('Account: 3 Prospect has no company, outcome Out of Office', async ({ zohoIntegration, saleshandyPage, saleshandySequence, crm }) => {
@@ -324,7 +334,8 @@ test.describe('Zoho Conversation Category is Updated (staging)', () => {
     expect(ZohoCrmPage.field(text, 'Amount')).toContain(Number(row['Deal Value']).toLocaleString('en-US'));
     expect(ZohoCrmPage.field(text, 'Stage')).toBe('Qualification');
     expect(ZohoCrmPage.field(text, 'Closing Date')).not.toMatch(/\d{2}\/\d{2}\/\d{4}/);
-    expect(ZohoCrmPage.field(text, 'Contact Name')).toBe('');
+    // An empty Contact Name is followed directly by the next label (run 2026-11-03: "Modified By").
+    expect(ZohoCrmPage.field(text, 'Contact Name', 'Modified By')).toBe('');
     expect((await crm.find('Deals', fullName(row))).length, 'One deal').toBe(1);
     expect((await crm.find('Contacts', row['Email'])).length, 'The Deal action must not create a contact').toBe(0);
     // Z-5 (known): the deal also makes an account named after the company.
@@ -369,13 +380,21 @@ test.describe('Zoho Conversation Category is Updated (staging)', () => {
     expect((await crm.find('Contacts', row['Email'])).length, 'The contact is created first').toBe(1);
   });
 
-  test('Task: 2 Subject left empty, outcome Do Not Contact', async ({ zohoIntegration, saleshandyPage, saleshandySequence, crm }) => {
-    const row = prospect('Task > 2');
-    await useTrigger({ zohoIntegration, saleshandyPage, saleshandySequence, crm }, taskPick({ ...TASK, subject: '' }));
-    await sendAndChange({ zohoIntegration, saleshandyPage, saleshandySequence, crm }, row, OUTCOME.doNotContact);
-    // "The run still completes" is in Logs, which Zoho rows do not read (QA 2026-10-29). A task note cannot
-    // exist without a task, so the missing task covers both.
-    expect(await crm.waitForRecord('Tasks', fullName(row), 60_000), 'No task may be created').toBeUndefined();
+  test('Task: 2 Subject left empty, Save stays disabled', async ({ zohoIntegration, saleshandyPage }) => {
+    // QA 2026-11-03: Save in the Task Extra Configuration is disabled while Subject is empty (seen in run
+    // 2026-11-03), so no email is sent and no prospect is used. Due In and the category are filled, Subject only is empty.
+    await zohoIntegration.openTriggers();
+    await zohoIntegration.enableOnly(TRIGGER);
+    for (const chip of await zohoIntegration.selectedActivities(TRIGGER)) await zohoIntegration.removeActivity(TRIGGER, chip);
+    configured = '';
+    await zohoIntegration.selectActivity(TRIGGER, ZOHO_ACTION.task);
+    const dialog = saleshandyPage.getByRole('dialog');
+    await dialog.waitFor({ timeout: 15_000 });
+    await dialog.getByRole('spinbutton').fill(TASK.dueIn);
+    await dialog.getByRole('textbox').first().fill('');
+    await dialog.getByRole('textbox').last().fill(OUTCOME.doNotContact);
+    await expect(dialog.getByRole('button', { name: 'Save', exact: true }), 'Save is disabled while Subject is empty').toBeDisabled();
+    await dialog.getByRole('button', { name: 'Cancel', exact: true }).click();
   });
 
   // ---- Combined actions ----

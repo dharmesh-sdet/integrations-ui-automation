@@ -29,9 +29,9 @@ Probe action: Create/Update a Contact in Zoho, category Interested, unless the r
 |---|---|---|---|---|
 | 1 | Trigger OFF, Contact action and category saved earlier | Change the outcome to Interested | Nothing created or changed in Zoho | None |
 | 2 | Trigger ON, Contact action, category Interested, saved, page reloaded | Open Triggers & Activity | The action and the category Interested show as saved | None |
-| 3 | Category left empty, prospect not in Zoho | Change the outcome to Not Now | One contact and one note with "New Outcome Updated: Not Now", as in run C3 (proposed, unconfirmed for an empty box in the UI) | None |
-| 4 | Category Meeting Booked, prospect not in Zoho | Change the outcome to Meeting Booked | No contact and no note (known Z-7, not filed again) | None |
-| 5 | Prospect replied, category Interested, prospect not in Zoho | In Unified Inbox, set the conversation category to Interested | One contact and one note with "New Outcome Updated: Interested" (proposed, unconfirmed) | None |
+| 3 | Category left empty, prospect not in Zoho | Change the outcome to Not Now | One contact and one note with "New Outcome Updated: Not Now", as in run C3 (seen 2026-10-31: the empty category box saves, 1 contact, 0 leads, 1 note) | None |
+| 4 | Category Meeting Booked, prospect not in Zoho | Change the outcome to Meeting Booked | One contact and one note with "New Outcome Updated: Meeting Booked" (QA 2026-11-03) | None |
+| 5 | Prospect replied, category Interested, prospect not in Zoho | In Unified Inbox, set the conversation category to Interested | One contact and one note with "New Outcome Updated: Interested" (proposed, unconfirmed). Needs a real reply in Unified Inbox: a prospect marked as replied by hand creates no inbox thread (seen 2026-10-31, Unified Inbox showed 0 threads) | None |
 
 ## Create/Update a Contact in Zoho
 
@@ -61,7 +61,7 @@ Extra Configuration: category Out of Office.
 | # | Scenario | Do | Expected | Ticket |
 |---|---|---|---|---|
 | 1 | Prospect has a company, no contact, no account | Change the outcome to Out of Office | Account named after the company, with the Account Fields values. Not linked to a contact. One note | None |
-| 2 | Contact exists and is linked to an account with an old Website | Change the outcome to Out of Office | The linked account is updated with the mapped fields. Its name is kept | None |
+| 2 | Contact exists and is linked to an account with an old Website | Change the outcome to Out of Office | The linked account is updated with the mapped fields, and its name changes to the prospect's company (Company is mapped to Account Name, QA 2026-11-03). No second account | None |
 | 3 | Prospect has no company | Change the outcome to Out of Office | No account and no contact created | None |
 
 ## Create/Update a Deal in Zoho
@@ -80,7 +80,7 @@ Extra Configuration: category Do Not Contact. Subject "Follow up after outcome c
 | # | Scenario | Do | Expected | Ticket |
 |---|---|---|---|---|
 | 1 | Prospect not in Zoho | Change the outcome to Do Not Contact | Contact created, then one task linked to it with the 4 values. Due date is today plus 3 days | None |
-| 2 | Subject left empty | Change the outcome to Do Not Contact | No task and no task note. The run still completes | None |
+| 2 | Subject left empty | Fill Due In and the category, leave Subject empty | Save in Extra Configuration is disabled (QA 2026-11-03) | None |
 
 ## Combined actions
 

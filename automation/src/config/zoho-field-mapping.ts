@@ -41,6 +41,7 @@ export const ZOHO_FIELD_MAPPING: Record<ZohoMappingCard, Record<string, string>>
     'Company HQ Location': 'Address - Zip / Postal Code',
   },
   'Account Fields': {
+    Company: 'Account Name', // QA 2026-11-03
     Website: 'Website',
     City: 'Billing Address - City',
     State: 'Billing Address - State / Province',

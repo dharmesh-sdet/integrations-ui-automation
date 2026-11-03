@@ -55,7 +55,7 @@
     "data:zoho-prospect-unsubscribed": "node scripts/make-zoho-prospect-unsubscribed-data.ts",
     "test:zoho-prospect-unsubscribed": "KEEP_OTHER_TRIGGERS=1 TEST_DATA_ONLY=zoho/prospect-unsubscribed REPORTS_DIR=reports/zoho-prospect-unsubscribed xvfb-run -a playwright test --project=chromium tests/zoho/prospect-unsubscribed.spec.ts --workers=1 --output=test-results-zoho-prospect-unsubscribed",
     "data:zoho-conversation-category-updated": "node scripts/make-zoho-conversation-category-updated-data.ts",
-    "test:zoho-conversation-category-updated": "KEEP_OTHER_TRIGGERS=1 TEST_DATA_ONLY=zoho/conversation-category-updated REPORTS_DIR=reports/zoho-conversation-category-updated xvfb-run -a playwright test --project=chromium tests/zoho/conversation-category-updated.spec.ts --workers=1 --output=test-results-zoho-conversation-category-updated",
+    "test:zoho-conversation-category-updated": "KEEP_OTHER_TRIGGERS=0 TEST_DATA_ONLY=zoho/conversation-category-updated REPORTS_DIR=reports/zoho-conversation-category-updated xvfb-run -a playwright test --project=chromium tests/zoho/conversation-category-updated.spec.ts --workers=1 --output=test-results-zoho-conversation-category-updated",
     "not-emailsent-zoho": "KEEP_TEST_DATA=1 SETUP_ACCOUNT=notemailsentzoho playwright test --project=chromium tests/setup/zoho-field-mapping.spec.ts --workers=1",
     "login:salesforce:fresh": "node scripts/login-salesforce-fresh.ts",
     "login:salesforce:auto": "node --env-file-if-exists=.env scripts/login-salesforce-auto.ts",

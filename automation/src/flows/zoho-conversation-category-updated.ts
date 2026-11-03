@@ -6,7 +6,8 @@ import { ZOHO_ACTION, type ZohoAction } from './saleshandy-to-zoho.ts';
 // Steps only the Zoho Conversation Category spec needs. The steps shared with the other Zoho workflows stay in
 // saleshandy-to-zoho.ts, which another session owns (QA 2026-10-29), so nothing is added there.
 export const TRIGGER = 'Conversation Category is Updated in Saleshandy';
-export const SEQUENCE_NAME = 'Zoho Conversation Category QA';
+// Sequence 197611 on gzoho (QA 2026-11-03).
+export const SEQUENCE_NAME = 'Conversation Category is Updated in Saleshandy';
 // The note text carries "New Outcome Updated: <outcome>" (dev runs C1 to C5). The note title is not recorded yet.
 export const NOTE_PREFIX = 'New Outcome Updated:';
 
@@ -22,8 +23,8 @@ export const OUTCOME = {
   notNow: 'Not Now',
 } as const;
 
-// One action under the trigger. `category` undefined: the dialog is closed with Cancel (Extra Configuration
-// skipped and not saved), which is how the gate is left empty (run C3).
+// One action under the trigger. `category` undefined: the dialog is saved with the box empty, which is how
+// the gate is left empty (run C3).
 export type CategoryAction = ZohoAction & { category?: string };
 
 // Number of notes the outcome events made on a record page.
@@ -45,8 +46,14 @@ export async function configureCategory(zoho: ZohoIntegrationPage, page: Page, a
     await zoho.selectActivity(TRIGGER, a.action);
     const dialog = page.getByRole('dialog');
     await dialog.waitFor({ timeout: 15_000 });
+    // Seen 2026-10-31 (Contact) and 2026-11-03 run (Deal, Task): the category is a plain text box, the last
+    // textbox of the dialog. Task's Status and Priority are the only lists.
+    const categoryBox = dialog.getByRole('textbox').last();
     if (a.category === undefined) {
-      await dialog.getByRole('button', { name: 'Cancel', exact: true }).click();
+      // Seen 2026-10-31: the empty box saves (gate 3). Cancel would leave the trigger without the action.
+      // Run 2026-11-03: the box kept "Meeting Booked" from an earlier save, so clear it first.
+      await categoryBox.fill('');
+      await dialog.getByRole('button', { name: 'Save', exact: true }).click();
       await dialog.waitFor({ state: 'hidden', timeout: 15_000 });
       continue;
     }
@@ -74,7 +81,7 @@ export async function configureCategory(zoho: ZohoIntegrationPage, page: Page, a
       if (t.status) await pick(0, t.status);
       if (t.priority) await pick(1, t.priority);
     }
-    await pick((await lists.count()) - 1, a.category);
+    await categoryBox.fill(a.category);
     await dialog.getByRole('button', { name: 'Save', exact: true }).click();
     await dialog.waitFor({ state: 'hidden', timeout: 15_000 });
   }
@@ -90,8 +97,8 @@ export async function expectSavedCategory(zoho: ZohoIntegrationPage, page: Page,
   await zoho.reopenExtraConfiguration(TRIGGER, action);
   const dialog = page.getByRole('dialog');
   await dialog.waitFor({ timeout: 15_000 });
-  const lists = dialog.locator('.bs-select-box');
-  const saved = ((await lists.nth((await lists.count()) - 1).innerText()) ?? '').trim();
+  // The category is the last plain text box in every dialog (seen 2026-10-31 and 2026-11-03).
+  const saved = (await dialog.getByRole('textbox').last().inputValue()).trim();
   await dialog.getByRole('button', { name: 'Cancel', exact: true }).click();
   await dialog.waitFor({ state: 'hidden', timeout: 15_000 });
   expect(saved, `saved category of "${action}" after a reload`).toBe(category);
@@ -101,7 +108,7 @@ export async function expectSavedCategory(zoho: ZohoIntegrationPage, page: Page,
 // TODO(needs-input): nothing here was seen on staging. The route, the search box, the conversation list and the
 // category control are guesses; the first run of Trigger and category gate 5 confirms or corrects them.
 export async function setInboxCategory(page: Page, row: Row, category: string): Promise<void> {
-  await page.goto(`${new URL(page.url()).origin}/unified-inbox`);
+  await page.goto(`${new URL(page.url()).origin}/conversations`); // route seen 2026-10-31 (sidebar link); the screen has the search box "Search Conversations..."
   await page.getByPlaceholder(/search/i).first().fill(row['Email']);
   await page.getByText(row['Email'].slice(0, 14)).first().click({ timeout: 30_000 });
   await page.getByRole('button', { name: /categor|outcome/i }).first().click({ timeout: 15_000 });

@@ -1,0 +1,12 @@
+{
+  "type": "comment",
+  "ticket": "AL-4195",
+  "body": "**Verification:** Production testing is done. Smoke tested the Email is Bounced in Saleshandy trigger (Zoho) on Production, all 5 activities:\n\n| # | Activity | What was checked | Status |\n| --- | --- | --- | --- |\n| 1 | Create/Update a Contact in Zoho | Prospect not in Zoho: one contact created with the mapped Contact Fields and one note \"Saleshandy Email is Bounced\". Existing contact with an old Title: the same contact is updated and no second contact is made. A real bounce (Send now to a real-bounce address) shows Bounced in Saleshandy and creates one contact with one note. | Pass |\n| 2 | Create/Update a Lead in Zoho | Prospect not in Zoho: one lead created with the mapped Lead Fields and the prospect company, and one note. | Pass |\n| 3 | Create/Update Account in Zoho | Prospect with a company and no contact: account created with the company name and the mapped Account Fields, not linked to a contact. | Pass |\n| 4 | Create/Update a Deal in Zoho | Contact with 2 deals: only the newest deal is updated and the older deal is unchanged. Prospect not in Zoho, Closing date 0: one deal created with the Deal Value as Amount, Stage Qualification and an empty Closing Date. No contact is created. | Pass |\n| 5 | Create a Task in Zoho | Contact created, then one task linked to it with the configured Subject, Status, Priority and the due date set 3 days ahead. | Pass |",
+  "waitingFor": "QA to send via npm run jira.",
+  "sent": {
+    "key": "AL-4195",
+    "url": "https://saleshandy.atlassian.net/browse/AL-4195",
+    "problems": [],
+    "at": "2026-11-03T08:46:26.781Z"
+  }
+}

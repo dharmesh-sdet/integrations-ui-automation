@@ -26,6 +26,7 @@
     "smoke:pipedrive-unsubscribed": "bash scripts/run-pipedrive-unsubscribed-smoke.sh",
     "smoke:pipedrive-reply-received": "bash scripts/run-pipedrive-reply-received-smoke.sh",
     "smoke:zoho-email-opened": "bash scripts/run-zoho-email-opened-smoke.sh",
+    "smoke:zoho-email-bounced": "bash scripts/run-zoho-email-bounced-smoke.sh",
     "test:pipedrive-email-opened": "bash scripts/run-pipedrive-email-opened.sh",
     "test:pipedrive-outcome-updated": "bash scripts/run-pipedrive-outcome-updated.sh",
     "test:unsubscribed": "bash scripts/run-unsubscribed.sh",

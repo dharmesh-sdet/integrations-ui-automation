@@ -54,3 +54,23 @@ Date: 2026-10-30. Mode: regression (staging). Platform rule: hand-written spec (
 ## Staging approved (QA, 2026-11-03)
 
 QA approved Link Clicked on staging. Result 23 of 23 rows. Combined 1 stays as it is. Other live sessions were told by message on 2026-11-03. Next: commit the fixes. Production smoke starts only when QA asks.
+
+## Production smoke (2026-11-03)
+
+QA approved the checklist `notes/production-testing/17-zoho-link-clicked.md` (8 checks, 8 sends, AL-4194). AL-4198 is not repeated: Done in Jira and verified on production through Email Sent. Note 16 was updated the same way. The workflow is not deployed on production yet, so nothing was run.
+
+Written, typechecks, not committed, not run: `tests/zoho/link-clicked-smoke.spec.ts`, `tests/setup/zoho-link-clicked-smoke-sequence.spec.ts`, `scripts/make-zoho-link-clicked-smoke-data.ts` (CSV made, 8 rows), `scripts/run-zoho-link-clicked-smoke.sh`, `npm run smoke:zoho-link-clicked`, README row 17. Reused as is: `tests/setup/zoho-prod-gate.spec.ts`.
+
+Resume after the deploy: QA runs `npm run login:saleshandy -- emailopenedprod`, makes sure Email Sent and Email is Opened triggers are off on emailopenedprod, and checks the sender list on the Email Accounts page (the setup spec uses the two accounts read on 2026-10-22). Then QA runs `npm run smoke:zoho-link-clicked`. Then draft the summary from `jira/templates/comments/04-production-smoke-summary.md` into `jira/drafts` for AL-4194.
+
+## Production smoke result (2026-11-03, afternoon)
+
+8 of 8 passed in 37.6 min (run 4, sequence 988717 "Zoho Email Sent Smoke 2026-11-02" on emailopenedprod, QA set it to 2 steps with 2 links each). Times: 3.4, 8.5, 3.4, 3.5, 3.8, 4.6, 5.5, 4.5 min.
+- Run 1: stopped before the send (`Email is Opened in Saleshandy` was on). QA turned it off. Run 2 of the sequence setup also failed earlier: sender `rudra+emailsentprod@saleshandy.com` not on production, so QA gave 988717.
+- Run 3: 8 of 8 failed. Cause: `src/pages/saleshandy/sequence.page.ts` (uncommitted edit of another session) matched only `[role="row"]` or `.tanstack-table--tr`. Production draws plain `<tr>` with no role (probe: 0 rows before, 1 after). Fixed by adding `tr`, `th`, `td` to the selectors (shared file, tell the other session). The run left 8 prospects with an unclicked step 1 on 988717 and a contact and an account from check 7 setup in Zoho.
+- Spec changes: Zoho profile open retries 4 times; check 7 retries the deal creation (Account lookup lag).
+- Jira: AL-4194 summary shown to QA, not written. Not committed: smoke files, sequence.page.ts, README row 17.
+
+## LIVE on production (QA, 2026-11-03)
+
+QA 2026-11-03: Zoho Link Clicked is live on production. Smoke 8 of 8 passed (sequence 988717). Sheet "Integration wfs" row 25 written (D "3 Nov 2026", E "Released", F "3 Nov: Production smoke passed. Live."). AL-4194 summary comment sent by QA. Nothing left to run. Smoke files committed in this session; `src/pages/saleshandy/sequence.page.ts` was left out of the commit (another session's uncommitted staging edit, plus the `tr`, `th`, `td` additions that production needs for that edit; the committed version works on production as it is).

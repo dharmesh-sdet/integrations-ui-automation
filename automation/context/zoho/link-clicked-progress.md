@@ -40,3 +40,17 @@ Date: 2026-10-30. Mode: regression (staging). Platform rule: hand-written spec (
 3. Check `src/pages/mailinator.page.ts` for a click helper (another session changed it, uncommitted). Read it before adding anything.
 4. Hand-write `tests/zoho/link-clicked.spec.ts`, `test-data/zoho/link-clicked.csv`, data script and `npm run` scripts. Reuse `src/pages/zoho/zoho-crm.page.ts` and `src/flows/saleshandy-to-zoho.ts`. The Reply Received session owns those shared files. Send changes to it.
 5. Run once to learn errors, then rerun only failed or unrun rows with `KEEP_TEST_DATA=1`. QA runs the full script.
+
+## Run 2026-11-03 (staging, sequence 197479, account notemailsentzoho)
+
+- Result: 23 of 23 passed over 5 runs. Run 1: 15 pass, 7 fail, 1 skip. Reruns with a new prospect each: Lead 3, Account 3, Account 4, Deal 1, Deal 3, Combined 1 passed; Task 3 passed after the AL-4198 rework; Combined 2 passed with `ZOHO_LC_WITH_OPENED=1` (3.5 min).
+- Causes found and fixed in `tests/zoho/link-clicked.spec.ts`: Zoho page-load timeout (retry of 4 loads, local to the spec); an empty Zoho field read as the next label (Lead 3 Company, Deal 1 Contact Name, `emptyField`); Combined 1 lost the Task chip (now `configureWaiting`); Task 3 waited 10 min on a disabled Save (now checks Save is disabled, AL-4198 fixed). `OPENED_TRIGGER` text is now "Email is Opened in Saleshandy". The Combined 2 cleanup now waits for the save toast.
+- A rerun of a row needs a new prospect: the same prospect fails in "Create & Add Prospect" (the Done button never shows). Make new data with `ZOHO_LC_SOURCE=zoho/email-sent.csv node scripts/make-zoho-link-clicked-data.ts --force` (the Reply Received CSV was missing for a while on 2026-11-03 and exists again, so the default source works; the script only copies column templates from the source).
+- Not explained: the Clicked count did not rise within 90 s once on Deal 3 and once on Task 3 (both passed on a new prospect).
+- Staging page loads timed out several times on 2026-11-03 (curl to pyxis timed out for a few minutes). Combined 2 run 1 hit the 10 min limit and left the Email Opened trigger and Track email opens on. Both were turned off by hand and checked.
+- Developer note (Email Bounced session, 2026-11-03): with Create Account and Create Deal and no Account Name mapped, staging gives 2 accounts named after the company (Z-5), the deal sits on the blank one, the contact links to the mapped one. Combined 1 Expected ("Accounts as Z-5 allows") still holds. QA: all 5 actions is not realistic. QA decision 2026-11-03: Combined 1 stays as it is (all 5 actions). What to expect and not expect is in `00-overview.md`, section "Combined 1: all five actions on one trigger".
+- Sequence state now: Track email opens off, Track link clicks on, Email Opened trigger off. Not committed: spec, flow, data script, case file.
+
+## Staging approved (QA, 2026-11-03)
+
+QA approved Link Clicked on staging. Result 23 of 23 rows. Combined 1 stays as it is. Other live sessions were told by message on 2026-11-03. Next: commit the fixes. Production smoke starts only when QA asks.

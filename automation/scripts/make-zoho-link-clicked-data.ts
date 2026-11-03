@@ -12,7 +12,8 @@ import { readCsv } from '../src/data/csv.ts';
 const dir = path.resolve(import.meta.dirname, '../test-data/zoho');
 const OUT = 'zoho/link-clicked.csv';
 const TMP = 'zoho/link-clicked.source.tmp.csv';
-const SOURCE = 'zoho/reply-received.csv';
+// ZOHO_LC_SOURCE picks another Zoho CSV with the five template rows (Contact, Lead, Account, Deal, Task > 1).
+const SOURCE = process.env.ZOHO_LC_SOURCE ?? 'zoho/reply-received.csv';
 
 // [Link Clicked row, Reply Received row to copy the columns from]
 const ROWS: Array<[string, string]> = [

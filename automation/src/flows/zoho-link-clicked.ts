@@ -8,7 +8,7 @@ import { fullName } from './saleshandy-to-zoho.ts';
 // Steps only the Zoho Link Clicked spec needs. The steps shared with the other Zoho workflows stay in
 // saleshandy-to-zoho.ts, which another session owns (QA 2026-10-29), so nothing is added there.
 export const TRIGGER = 'Link is Clicked in Saleshandy';
-export const OPENED_TRIGGER = 'Sequence Email is Opened in Saleshandy';
+export const OPENED_TRIGGER = 'Email is Opened in Saleshandy';
 // Subjects of the two steps, from tests/setup/zoho-link-clicked-sequence.spec.ts.
 export const STEP_1_SUBJECT = 'Quick question about your outreach';
 export const STEP_2_SUBJECT = 'Following up on my last note';

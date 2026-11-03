@@ -19,7 +19,7 @@ import { expect, test as base } from '../../src/fixtures/index.ts';
 import { readCsv, type Row } from '../../src/data/csv.ts';
 import { markUsed } from '../../src/data/used.ts';
 import { ZOHO_ACTION, configure, fullName } from '../../src/flows/saleshandy-to-zoho.ts';
-import { inDays, sendStep } from '../../src/flows/zoho-email-sent.ts';
+import { configureWaiting, inDays, sendStep } from '../../src/flows/zoho-email-sent.ts';
 import { OPENED_TRIGGER, STEP_1_SUBJECT, TRIGGER, clickLink, clickNotes } from '../../src/flows/zoho-link-clicked.ts';
 import { ZohoCrmPage, openZohoProfile } from '../../src/pages/zoho/zoho-crm.page.ts';
 import { ZohoForms } from '../../src/pages/zoho/zoho-forms.page.ts';
@@ -36,6 +36,19 @@ const test = base.extend<object, { crm: ZohoCrmPage }>({
   crm: [
     async ({}, use) => {
       const { context, crm } = await openZohoProfile(PROFILE);
+      // Zoho page loads time out now and then (net::ERR_TIMED_OUT, seen 2026-11-03). Retry a load up to 4 times.
+      // Local to this spec: ZohoCrmPage.open is shared and owned by another session.
+      const openOnce = crm.open.bind(crm);
+      crm.open = async (url: string) => {
+        for (let attempt = 1; ; attempt++) {
+          try {
+            return await openOnce(url);
+          } catch (e) {
+            if (attempt >= 4 || !/ERR_TIMED_OUT|ERR_CONNECTION|ERR_NETWORK|ERR_NAME|Timeout/.test(String(e))) throw e;
+            await crm.page.waitForTimeout(3_000);
+          }
+        }
+      };
       await use(crm);
       await context.close();
     },
@@ -58,6 +71,12 @@ function prospect(scenario: string, override: Record<string, string> = {}): Row 
   markUsed(CSV, row['Email']);
   return row;
 }
+
+// ZohoCrmPage.field returns the next label when a field is empty, so an empty field is '' or that label.
+const emptyField = (text: string, label: string, nextLabel: string): boolean => {
+  const value = ZohoCrmPage.field(text, label);
+  return value === '' || value === nextLabel;
+};
 
 const phoneDigits = (s: string): string => s.replace(/\D/g, '');
 const TASK = { subject: 'Follow up after click', status: 'Not Started', priority: 'Normal', dueIn: '3' };
@@ -223,7 +242,7 @@ test.describe('Zoho Link Clicked (staging)', () => {
     const found = await crm.waitForRecord('Leads', row['Email']);
     expect(found, `No Zoho lead for ${row['Email']}`).toBeTruthy();
     const text = await crm.recordText('Leads', found!.id);
-    expect(ZohoCrmPage.field(text, 'Company')).toBe('');
+    expect(emptyField(text, 'Company', 'Lead Name'), 'Company is empty').toBe(true);
     expect(ZohoCrmPage.noteCount(text)).toBeGreaterThanOrEqual(1);
   });
 
@@ -292,7 +311,7 @@ test.describe('Zoho Link Clicked (staging)', () => {
     expect(ZohoCrmPage.field(text, 'Amount')).toContain(Number(row['Deal Value']).toLocaleString('en-US'));
     expect(ZohoCrmPage.field(text, 'Stage')).toBe('Qualification');
     expect(ZohoCrmPage.field(text, 'Closing Date')).not.toMatch(/\d{2}\/\d{2}\/\d{4}/);
-    expect(ZohoCrmPage.field(text, 'Contact Name')).toBe('');
+    expect(emptyField(text, 'Contact Name', 'Modified By'), 'Contact Name is empty').toBe(true);
     expect(ZohoCrmPage.noteCount(text)).toBeGreaterThanOrEqual(1);
     expect((await crm.find('Deals', fullName(row))).length, 'One click must make one deal').toBe(1);
     expect((await crm.find('Contacts', row['Email'])).length, 'The Deal action must not create a contact').toBe(0);
@@ -374,19 +393,28 @@ test.describe('Zoho Link Clicked (staging)', () => {
     expect((await crm.find('Contacts', row['Email'])).map((r) => r.id), 'Still one contact').toEqual([contactId]);
   });
 
+  // AL-4198 (fixed): Extra Configuration no longer saves an empty Subject, so Save stays disabled. The Contact action
+  // is saved first, so the run still has something to do. The Task is never saved.
   test('Task: 3 Subject left empty', async ({ zohoIntegration, saleshandyPage, saleshandySequence, mailinator, crm }) => {
     const row = prospect('Task > 3');
-    await configure(zohoIntegration, saleshandyPage, TRIGGER, [{ action: ZOHO_ACTION.task, task: { ...TASK, subject: '' } }]);
+    await configure(zohoIntegration, saleshandyPage, TRIGGER, [{ action: ZOHO_ACTION.contact }]);
+    await zohoIntegration.selectActivity(TRIGGER, ZOHO_ACTION.task);
+    const dialog = saleshandyPage.getByRole('dialog');
+    await dialog.waitFor();
+    await dialog.getByRole('textbox').first().fill('');
+    await expect(dialog.getByRole('button', { name: 'Save', exact: true }), 'Save stays disabled for an empty Subject').toBeDisabled();
+    await saleshandyPage.keyboard.press('Escape');
+    await dialog.waitFor({ state: 'hidden' });
     await sendAndClick({ zohoIntegration, saleshandyPage, saleshandySequence, mailinator, crm }, row);
-    // The run's own end state (Success or Error) is in Logs, which Zoho rows do not read (QA 2026-10-29).
-    expect(await crm.waitForRecord('Tasks', fullName(row), 60_000), 'No task may be created').toBeUndefined();
+    expect(await crm.waitForRecord('Contacts', row['Email']), `No Zoho contact for ${row['Email']}`).toBeTruthy();
+    expect(await crm.waitForRecord('Tasks', fullName(row), 30_000), 'No task may be created').toBeUndefined();
   });
 
   // ---- Combined actions ----
 
   test('Combined: 1 Contact, Lead, Account, Deal and Task, prospect not in Zoho', async ({ zohoIntegration, saleshandyPage, saleshandySequence, mailinator, crm }) => {
     const row = prospect('Combined > 1');
-    await configure(zohoIntegration, saleshandyPage, TRIGGER, [
+    await configureWaiting(zohoIntegration, saleshandyPage, TRIGGER, [
       { action: ZOHO_ACTION.contact },
       { action: ZOHO_ACTION.lead },
       { action: ZOHO_ACTION.account },
@@ -426,6 +454,7 @@ test.describe('Zoho Link Clicked (staging)', () => {
       await zohoIntegration.openTriggers();
       await zohoIntegration.turnOff(OPENED_TRIGGER);
       await zohoIntegration.save();
+      await zohoIntegration.savedToast().waitFor({ timeout: 20_000 });
     }
   });
 });

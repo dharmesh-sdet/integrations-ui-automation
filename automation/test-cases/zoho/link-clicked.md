@@ -85,7 +85,7 @@ Extra Configuration: Subject "Follow up after click", Status Not Started, Priori
 |---|---|---|---|---|
 | 1 | Prospect not in Zoho | Click the first link | Contact created, then one task linked to it with the 4 values. Due date is today plus 3 days | None |
 | 2 | Contact exists | Click the first link | One task linked to the existing contact. Still 1 contact | None |
-| 3 | Subject left empty | Click the first link | No task and no task note. The run still completes | None |
+| 3 | Subject left empty | Save a Contact action. Try to add a Task action with an empty Subject. Click the first link | Save stays disabled for the Task. The contact is made. No task and no task note | AL-4198 |
 
 ## Combined actions
 

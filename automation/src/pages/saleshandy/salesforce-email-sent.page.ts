@@ -85,3 +85,26 @@ export class SalesforceEmailSentPage extends SalesforceIntegrationPage {
     await expect(this.savedToast(), 'save confirmation').toBeVisible({ timeout: 15_000 });
   }
 }
+
+  // Types 0 in the Closing date field of a Create / Update a Opportunity dialog, reads whether the field is
+  // marked invalid and whether Save is disabled, and closes the dialog without saving (AL-4168, QA 2026-10-22:
+  // the field turns red and Save is disabled). Escape closes the whole dialog, so nothing is kept.
+  async zeroClosingDateState(trigger: string, activity: string): Promise<{ saveDisabled: boolean; invalid: string }> {
+    await this.openTriggers();
+    await this.enableOnly(trigger);
+    await this.selectActivity(trigger, activity);
+    const dialog = this.extraConfigDialog();
+    await dialog.waitFor({ state: 'visible', timeout: 20_000 });
+    const days = dialog.getByRole('spinbutton');
+    await days.fill('0');
+    await days.blur();
+    await this.page.waitForTimeout(500);
+    const saveDisabled = await dialog.getByRole('button', { name: 'Save', exact: true }).isDisabled();
+    const invalid = await days.evaluate((el) => {
+      const box = el.closest('div');
+      return `aria-invalid=${el.getAttribute('aria-invalid')}; class=${el.className}; parent class=${box?.className ?? ''}; colour=${getComputedStyle(el).borderColor}`;
+    });
+    await this.page.keyboard.press('Escape');
+    await dialog.waitFor({ state: 'hidden', timeout: 15_000 });
+    return { saveDisabled, invalid };
+  }

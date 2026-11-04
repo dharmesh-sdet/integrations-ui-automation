@@ -1,0 +1,28 @@
+{
+  "type": "bug",
+  "project": "AL",
+  "priority": "Medium",
+  "environment": "Production",
+  "epic": "AL-3982",
+  "assignee": {
+    "name": "Darshan",
+    "accountId": "5af5d8dd244bc90a10605d4f"
+  },
+  "qa": {
+    "name": "Dharmesh Patel",
+    "accountId": "712020:c7dedb58-9cb3-4450-a98f-5b5b56f6556b"
+  },
+  "links": [
+    "AL-4192"
+  ],
+  "attachments": [],
+  "summary": "Reply is Received in Saleshandy: no workflow run starts and nothing is created in Zoho when a prospect reply is received",
+  "description": "**Prerequisites:**\n- Zoho is connected to Saleshandy and the Contact Fields mapping is saved.\n- The \"Reply is Received in Saleshandy\" trigger is enabled with an activity selected and saved.\n- A sequence with a sender and two steps exists.\n- The prospect is not in Zoho.\n\n**Steps to Reproduce:**\n1. Open Settings > Integrations > Zoho > Triggers & Activity.\n2. Turn on \"Reply is Received in Saleshandy\", select an activity and click Save. \"Configuration Updated Successfully\" shows.\n3. Open the sequence > Prospects > Search & Add > Create New Prospect and add a new prospect.\n4. Send step 1 to the prospect and wait until the email shows Sent.\n5. On the sequence > Prospects page, select the prospect and mark the prospect as replied.\n6. Open Zoho CRM and search for the prospect's email.\n\n**Actual Result:**\n- The prospect is marked as replied, but the Reply is Received workflow does not trigger.\n- No record is created in Zoho.\n- I also tried a real email reply from Gmail, and the workflow did not trigger either.\n- I also turned the Reply is Received trigger off and on again, and the workflow still did not trigger.\n\n**Expected Result:**\n- When a prospect reply is received or the prospect is marked as replied, the Reply is Received workflow starts and the selected activity runs in Zoho.\n\n**Note:**\n- Affected Environment - Staging.",
+  "waitingFor": "QA to review wording and send via npm run jira.",
+  "sent": {
+    "key": "AL-4219",
+    "url": "https://saleshandy.atlassian.net/browse/AL-4219",
+    "problems": [],
+    "at": "2026-11-03T04:57:48.728Z"
+  }
+}

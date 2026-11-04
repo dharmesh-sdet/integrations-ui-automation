@@ -83,21 +83,32 @@ export class SaleshandySequencePage extends SaleshandyPage {
     // finished, so wait for that instead. Creating the prospect can take
     // longer than the default 5 s.
     const doneButton = this.page.getByRole('button', { name: 'Done', exact: true });
+    // The click on "Create & Add to sequence" was lost once on staging (2026-11-03, 2 rows): the form stayed open and
+    // "Done" never showed. If it is not there after 30 s and the form is still open, click once more. A second click
+    // on a prospect that was already created only shows a validation message, it makes no second prospect.
+    const showed = await doneButton.waitFor({ state: 'visible', timeout: 30_000 }).then(() => true, () => false);
+    if (!showed && (await form.isVisible())) {
+      await form.getByRole('button', { name: 'Create & Add to sequence', exact: true }).click().catch(() => undefined);
+    }
     await expect(doneButton).toBeVisible({ timeout: 30_000 });
     await doneButton.click();
   }
 
-  // The prospect's row for one step on the Emails tab (a real table). Pass the
-  // email when two prospects can share a name; the row shows it cut off after
-  // the "@", so only the part before it is matched.
+  // The prospect's row for one step on the Emails tab. Pass the email when two
+  // prospects can share a name; the row shows it cut off after the "@", so only
+  // the part before it is matched.
+  // 2026-11-02: staging changed the Emails table to a TanStack table of plain
+  // divs (.tanstack-table--tr / --th / --td) with no table, row, columnheader or
+  // cell roles, so every role-based locator found nothing (14 of 15 Zoho Reply
+  // Received rows timed out in sendNow). Both markups are accepted.
   private emailRow(fullName: string, step: number, email?: string): Locator {
-    const row = this.page.getByRole('row').filter({ hasText: fullName }).filter({ hasText: `Step ${step}` });
+    const row = this.page.locator('[role="row"], .tanstack-table--tr, tr').filter({ hasText: fullName }).filter({ hasText: `Step ${step}` });
     return email ? row.filter({ hasText: email.split('@')[0] }) : row;
   }
 
   async openEmails(sequenceId: string): Promise<void> {
     await this.goto(`/sequence/${sequenceId}/emails`);
-    await this.page.getByRole('columnheader', { name: 'Clicked' }).waitFor();
+    await this.page.locator('[role="columnheader"], .tanstack-table--th, th').filter({ hasText: 'Clicked' }).first().waitFor();
   }
 
   // The Emails list loads 25 rows a page. A sequence with many rows (86 on
@@ -192,6 +203,20 @@ export class SaleshandySequencePage extends SaleshandyPage {
     }
   }
 
+  // Prospects tab > tick the prospect > toolbar icon "Mark as Replied" (icon "round-corner-arrow-back", tooltip
+  // read 2026-11-03). Zoho Reply Received starts its workflow from here (QA 2026-11-03); the Emails tab three-dot
+  // menu stays for the other platforms (open bug AL-4217: QA does not see that button). The Emails tab Replied
+  // cell is the signal, as in markAsReplied. Not clicked in a real run yet; a confirm dialog, if one shows, is not handled.
+  async markAsRepliedFromProspects(sequenceId: string, fullName: string, email: string, step = 1): Promise<void> {
+    await this.toolbarAction(sequenceId, email, 'round-corner-arrow-back');
+    await expect(async () => {
+      await this.openEmails(sequenceId);
+      const row = this.emailRow(fullName, step, email);
+      await expect(row).toBeVisible({ timeout: 10_000 });
+      expect((await (await this.cell(row, 'Replied')).innerText()).trim()).not.toBe('-');
+    }).toPass({ timeout: 60_000, intervals: [3_000] });
+  }
+
   // Waits for a real reply: the Replied cell of the prospect's row stops reading "-". The list does not refresh
   // itself, so it is reopened on each try (Zoho Reply Received, Real reply).
   async waitForReplied(sequenceId: string, fullName: string, step: number, email: string, timeoutMs: number): Promise<void> {
@@ -276,7 +301,7 @@ export class SaleshandySequencePage extends SaleshandyPage {
     await this.openProspects(sequenceId);
     await this.searchProspect(email);
     // The row shows the email cut after about 20 characters; its first 14 are always there.
-    const row = this.page.getByRole('row').filter({ hasText: email.slice(0, 14) });
+    const row = this.prospectRow(email);
     await expect(row.first(), `prospect ${email} on the Prospects tab`).toBeVisible({ timeout: 30_000 });
     await row.first().getByRole('checkbox').check();
     await this.page.locator('button[icon="send"]').click();
@@ -314,7 +339,8 @@ export class SaleshandySequencePage extends SaleshandyPage {
 
   // The row shows the email cut to about 14 characters, so it is found by that start.
   private prospectRow(email: string): Locator {
-    return this.page.getByRole('row').filter({ hasText: email.slice(0, 14) });
+    // 2026-11-02: staging draws tables as plain divs (.tanstack-table--tr), so both markups are accepted.
+    return this.page.locator('[role="row"], .tanstack-table--tr, tr').filter({ hasText: email.slice(0, 14) });
   }
 
   async openProspects(sequenceId: string): Promise<void> {
@@ -325,7 +351,7 @@ export class SaleshandySequencePage extends SaleshandyPage {
   // Searches for a prospect by email on the Prospects tab so that it is
   // visible even when the list is paged (71+ prospects, seen 2026-10-16).
   private async searchProspect(email: string): Promise<void> {
-    await this.page.getByRole('columnheader', { name: 'Name' }).waitFor({ timeout: 30_000 });
+    await this.page.locator('[role="columnheader"], .tanstack-table--th, th').filter({ hasText: /^\s*Name\s*$/ }).first().waitFor({ timeout: 30_000 });
     await this.page.locator('.sequence-prospect-search-bar-and-filter input').fill(email);
     await this.page.keyboard.press('Enter');
   }
@@ -419,7 +445,7 @@ export class SaleshandySequencePage extends SaleshandyPage {
   }
 
   private async cell(row: Locator, header: string): Promise<Locator> {
-    const headers = (await this.page.getByRole('columnheader').allInnerTexts()).map((h) => h.trim());
-    return row.getByRole('cell').nth(headers.indexOf(header));
+    const headers = (await this.page.locator('[role="columnheader"], .tanstack-table--th, th').allInnerTexts()).map((h) => h.trim());
+    return row.locator('[role="cell"], .tanstack-table--td, td').nth(headers.indexOf(header));
   }
 }

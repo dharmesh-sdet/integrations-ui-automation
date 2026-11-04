@@ -20,13 +20,15 @@ Workflow version in scope: `v5-account-link` for all 7 workflows (developer runs
 
 | # | Workflow (trigger name) | Note title in Zoho | Context file |
 |---|---|---|---|
-| 1 | Email Sent from Saleshandy | not recorded | `email-sent.md` |
-| 2 | Reply is Received in Saleshandy | not recorded | `reply-received.md` |
-| 3 | Link is Clicked in Saleshandy | not recorded | `link-clicked.md` |
-| 4 | Sequence Email is Opened in Saleshandy | not recorded | `email-opened.md` |
-| 5 | Email is Bounced in Saleshandy | "Saleshandy Email is Bounced" | `email-bounced.md` |
-| 6 | Prospect is Unsubscribed in Saleshandy | not recorded | `prospect-unsubscribed.md` |
-| 7 | Conversation Category (Prospect Outcome) is updated in Saleshandy | not recorded | `conversation-category-updated.md` |
+| 1 | Email Sent from Saleshandy (AL-4191) | not recorded | `email-sent.md` |
+| 2 | Reply is Received in Saleshandy (AL-4192) | not recorded | `reply-received.md` |
+| 3 | Link is Clicked in Saleshandy (AL-4194) | not recorded | `link-clicked.md` |
+| 4 | Sequence Email is Opened in Saleshandy (AL-4193) | not recorded | `email-opened.md` |
+| 5 | Email is Bounced in Saleshandy (AL-4195) | "Saleshandy Email is Bounced" | `email-bounced.md` |
+| 6 | Prospect is Unsubscribed in Saleshandy (AL-4196) | not recorded | `prospect-unsubscribed.md` |
+| 7 | Conversation Category (Prospect Outcome) is updated in Saleshandy (AL-4197) | not recorded | `conversation-category-updated.md` |
+
+Tracking tickets: parent AL-4190 "[Zoho] Triggers and Activities", one sub-task per workflow (the keys above).
 
 `[public docs]` also lists a "When a Prospect is Finished" trigger. The developer logs have no workflow for it. Same gap as Pipedrive.
 
@@ -54,9 +56,12 @@ Actions the webui offers: `create-account`, `create- contact` (with a space), `c
 - **Contact (shared step).** When you select Contact or Task, one shared step upserts the contact with the Contact Fields mapping. Contact, Task and Deal all use this one contact. Task alone also upserts the contact. `[dev kit]`
 - **Lead.** Upsert with the Lead Fields mapping. Company comes from the prospect company. When the prospect has no company, the workflow leaves Company out. It does not send a blank. A second event updates the same lead and does not create a duplicate. `[dev kit]`
 - **Account.** When the contact has an account, the workflow updates that account with the mapped fields and keeps its name. When it has none, the workflow upserts the account and links it to the contact. With no contact, it upserts only. `[dev kit]`
+  - **Account Name mapped (value X), added 2026-11-02 from the developer.** The contact's existing account is renamed to X. With no existing account, the account is created with the name X (not the company) and linked to the contact. This holds with or without a prospect company. The saved Account Name mapping is empty today (`field-mapping.md`), so these rows need the mapping set first. `[dev, 2026-11-02]`
+  - **No company, Account Name not mapped.** A contact with an account: the account is updated and the name stays. No account: the step likely fails and nothing is created. `[dev, 2026-11-02]`
+  - **Account and Deal together.** Company yes, name not mapped: 2 accounts named after the company (one with the mapping, one blank that holds the deal), and the contact is on the mapped one. Company yes, name mapped X: 2 accounts, "X" and a blank one named after the company, and a contact's existing account is renamed to X. Company no, name not mapped: no account, or the contact's account is updated but the deal is not linked to it. Company no, name mapped X: 1 account X, linked to the contact, and the deal has no account. Same in old production, except that production never updates an existing account, so it always makes new ones. `[dev, 2026-11-02]`
 - **Deal.** The workflow finds the contact by email, then the contact's newest linked deal. When a deal exists, the workflow updates it by id. It sends the mapped fields, Closing Date, Pipeline and Stage, and drops empty values. Stage that a user changed by hand is kept. When none exists, the workflow creates a deal linked to the contact. With no Zoho contact, the deal is created unlinked, and a later event links it. `[dev kit]`
 - **Closing Date.** The "Deal Closing date" setting is a number of days from today. Empty means no closing date and no error. `[dev kit]`
-- **Task.** Fields: Subject, Status, Priority, Due In (days). The task is linked to the shared contact. Empty Subject skips the task and its note, and the run still completes. `[dev kit]`
+- **Task.** Fields: Subject, Status, Priority, Due In (days). The task is linked to the shared contact. Empty Subject skips the task and its note, and the run still completes. `[dev kit]` Since the AL-4198 fix, Save stays disabled for an empty Subject. It also stays disabled for an empty Due In and for Due In 0. `[AL-4198, verified on staging 2026-11-02]`
 - **Notes.** One note per record, with one label per line. The workflow skips a note when it did not create the parent record. `[dev kit]`
 - **Tags (Bounced and Unsubscribed only).** The contact gets a tag (see Known issues, Z-6). `[dev kit]`
 - **Phone.** The fixed Phone value is empty, so an existing Zoho phone is never cleared. Phone comes from the mapping only. For Bounced the dev log says Phone is the real phone. `[dev kit]`
@@ -82,6 +87,33 @@ Most "nothing happened" reports come from a missed step.
 - A click also counts as an open. With Opened on, a Link Clicked test also runs Opened.
 - A reply also fires the Conversation Category workflow. The category gate decides whether anything runs.
 - Two workflows that run on one prospect upsert the same contact. Use one prospect per scenario.
+
+## Combined 1: all five actions on one trigger
+
+QA decision, 2026-11-03: the row stays as it is in every workflow that has it. QA says a customer rarely selects all five actions. The row is a stress check for the number and order of actions, not a customer setup. `[QA, 2026-11-03]`
+
+Scenario. One trigger has Contact, Lead, Account, Deal and Task selected. The prospect has a company and is not in Zoho. One event fires.
+
+Steps.
+1. Select the five actions in that order. Wait for the "Configuration Updated" message after each action, then select the next one. Without the wait, the Task chip is lost. `[run, 2026-11-02]`
+2. Add the prospect, send step 1 and fire the event of the workflow.
+3. Read Zoho 15 seconds later, then every 10 seconds.
+
+What to expect.
+- One contact for the prospect, with a note.
+- One lead for the prospect, with a note. The lead keeps the company as plain text and has no link to an account. `[developer note, 2026-11-03]`
+- Two accounts, both named after the company. This is the known item Z-5. One account has the mapping and holds the contact. The other account is blank and holds the deal. `[developer note, 2026-11-03]`
+- One deal and one task, each with a note. The task is linked to the contact.
+
+What not to expect.
+- Exactly one account. The spec does not count accounts.
+- The deal on the same account as the contact.
+- Any change to an account from the Deal action.
+- A run that stops on the second account. Z-5 is kept by decision.
+
+What can happen and is not decided. On 2026-10-29 a new contact made two tasks in 2 of 2 runs and two deals in 1 of 2 (Email Sent). If a run repeats a task or a deal, QA decides if it is a bug. Until then, the row shows Fail. `[run, 2026-10-29]`
+
+If the prospect has no company and Account Name is not mapped, no account is made and the Account step likely fails. This is a different row and not Combined 1. `[developer note, 2026-11-03]`
 
 ## Known issues (decided or reported, do not file again) `[dev kit]`
 

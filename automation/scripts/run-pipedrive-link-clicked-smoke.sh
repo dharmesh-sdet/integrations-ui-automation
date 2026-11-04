@@ -18,7 +18,10 @@
 # integration of emailopenedprod. A row stops before its send when it finds one of them on.
 # Do not run it at the same time as another smoke run on emailopenedprod (same account).
 #
-# SMOKE_SEQUENCE_ID=... skips step 2 and uses that sequence (SMOKE_STEP1_SUBJECT is its step 1 subject).
+# Default sequence: 985157 "New Sequence - Wed 28th Oct" (QA 2026-10-29: step 1 has links, used in the
+# manual smoke). The step 1 subject is read from each prospect's Mailinator inbox, so any sequence works.
+# SMOKE_SEQUENCE_ID=... uses another sequence. SMOKE_SEQUENCE_ID=new creates the day's sequence (step 2).
+# 985157 is also the Email Bounced sequence: do not run this while the Email Bounced smoke runs.
 # SEND_CAP=<n> overrides the daily send cap (default 20, QA 2026-10-27; the run sends 10).
 # SMOKE_EMAIL_ACCOUNTS=a@x.com,b@y.com overrides the email accounts added to the sequence.
 # Exit code: 0 all checks passed, 1 a check failed, 2 Pipedrive needs Re-connect,
@@ -60,16 +63,14 @@ case "$gate" in
     exit 3 ;;
 esac
 
-seq_id="${SMOKE_SEQUENCE_ID:-}"
-step1_subject="${SMOKE_STEP1_SUBJECT:-}"
-if [ -z "$seq_id" ]; then
+seq_id="${SMOKE_SEQUENCE_ID:-985157}"
+if [ "$seq_id" = "new" ]; then
   echo "=== Production sequence: create, add email accounts, activate ==="
   log="$(mktemp)"
   SETUP_SMOKE_SEQUENCE=1 KEEP_TEST_DATA=1 REPORTS_DIR=reports/pipedrive-link-clicked-smoke-setup REPORT_OPEN=never \
     npx playwright test tests/setup/pipedrive-link-clicked-smoke-sequence.spec.ts --project=chromium \
     --workers=1 --reporter=list --output=test-results-pipedrive-link-clicked-smoke-setup | tee "$log"
   seq_id="$(grep -o 'SEQUENCE_ID=[0-9]*' "$log" | tail -1 | cut -d= -f2)"
-  step1_subject="$(grep -o 'STEP_1_SUBJECT=.*' "$log" | tail -1 | cut -d= -f2-)"
   rm -f "$log"
   if [ -z "$seq_id" ]; then
     echo "Could not get the sequence id; stopping."
@@ -82,7 +83,7 @@ echo "Sequence id: $seq_id"
 echo "=== Smoke checks 1 to 11 ==="
 node scripts/make-pipedrive-link-clicked-smoke-data.ts
 status=0
-SMOKE_SEQUENCE_ID="$seq_id" SMOKE_STEP1_SUBJECT="$step1_subject" SEND_CAP="${SEND_CAP:-20}" \
+SMOKE_SEQUENCE_ID="$seq_id" SEND_CAP="${SEND_CAP:-20}" \
   TEST_DATA_ONLY=pipedrive/link-clicked-smoke REPORTS_DIR=reports/pipedrive-link-clicked-smoke REPORT_OPEN=never \
   npx playwright test tests/pipedrive/link-clicked-smoke.spec.ts --project=chromium \
   --workers=1 --reporter=list --output=test-results-pipedrive-link-clicked-smoke || status=1

@@ -138,6 +138,28 @@ is `gpipedrive`; Pipedrive company is saleshandy.pipedrive.com.
 Filed Pipedrive bugs: AL-4177 (Prospect is Unsubscribed: Create a Person runs
 twice for one unsubscribe and creates two persons).
 
+## Zoho workflow tracking tickets
+
+The parent is AL-4190 ("[Zoho] Triggers and Activities", Task, parent
+AL-3982, Epic Link AL-3982, assignee Dharmesh Patel), with one sub-task per
+workflow, titled with the workflow name. Each sub-task has assignee and QA
+Dharmesh Patel. Created 2026-11-02 with QA's answers. Exploration parent:
+AL-3990.
+
+Zoho bugs link AL-4190 first, then the sub-task of the trigger they were
+found on, as for Salesforce and Pipedrive. In a draft file:
+`"links": ["AL-4190", "AL-4196"]`. Add siblings after them.
+
+| Sub-task | Trigger |
+|---|---|
+| AL-4191 | Email Sent from Saleshandy |
+| AL-4192 | Reply is Received in Saleshandy |
+| AL-4193 | Sequence Email is Opened in Saleshandy |
+| AL-4194 | Link is Clicked in Saleshandy |
+| AL-4195 | Email is Bounced in Saleshandy |
+| AL-4196 | Prospect is Unsubscribed in Saleshandy |
+| AL-4197 | Conversation Category (Prospect Outcome) is updated in Saleshandy |
+
 ## `createJiraIssue` payload
 
 ```json

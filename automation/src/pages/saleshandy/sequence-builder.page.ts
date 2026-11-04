@@ -275,6 +275,21 @@ export class SequenceBuilderPage extends SaleshandyPage {
     await this.enableLinkTracking();
   }
 
+  // Sets one Safety Settings switch (for example "Track email opens") and checks it stuck.
+  // TODO(needs-input): turning Track email opens off or on may ask for a confirmation like Track link
+  // clicks does. The dialog was not seen yet; the first run of the setup spec confirms the button name.
+  async setSafetySetting(label: string, on: boolean): Promise<void> {
+    await this.page.getByRole('tab', { name: 'Settings' }).click();
+    await this.page.waitForURL(/\/settings/);
+    await this.page.getByRole('button', { name: 'Safety Settings' }).click();
+    if ((await this.safetySettingChecked(label)) === on) return;
+    await this.page.getByRole('button', { name: label }).click();
+    const confirm = this.page.getByRole('dialog').getByRole('button', { name: /^(Enable Anyway|Disable|Confirm|Yes)/ }).first();
+    if (await confirm.isVisible({ timeout: 3_000 }).catch(() => false)) await confirm.click();
+    await this.page.getByRole('alert').filter({ hasText: 'Sequence settings updated successfully' }).waitFor();
+    await expect.poll(() => this.safetySettingChecked(label)).toBe(on);
+  }
+
   // State of one Safety Settings switch, by its label text.
   async safetySettingChecked(label: string): Promise<boolean> {
     return this.page.locator('label', { hasText: label }).first().locator('xpath=..').locator('input').first().isChecked();

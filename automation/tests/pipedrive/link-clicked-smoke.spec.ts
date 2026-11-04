@@ -5,7 +5,8 @@
 // on the same assertions. Differences from staging:
 //  - the account `emailopenedprod` points at production (src/config/environments.ts); the Pipedrive
 //    company is the same one (saleshandy.pipedrive.com);
-//  - the sequence comes from SMOKE_SEQUENCE_ID, nothing production is hard-coded;
+//  - the sequence comes from SMOKE_SEQUENCE_ID and the email subject is read from the Mailinator inbox,
+//    so any sequence whose step 1 has 2 links and Track link clicks on works;
 //  - the Pipedrive session is auth/pipedrive-emailopenedprod-chromium.json;
 //  - Create a Lead, Create a Deal and Create a Person are one row;
 //  - production counts a first click only 90 s after the send and a second click 180 s after it
@@ -56,8 +57,6 @@ const TRIGGER = 'Link is Clicked in Saleshandy';
 const SIBLING_TRIGGERS = ['Email Sent from Saleshandy', 'Email is Opened in Saleshandy'];
 const SUBJECT = 'Link is clicked in Saleshandy';
 const SEQUENCE_ID = process.env.SMOKE_SEQUENCE_ID ?? '';
-// Printed by the setup spec; the same text is the subject of step 1.
-const STEP_1_SUBJECT = process.env.SMOKE_STEP1_SUBJECT ?? 'Quick question about your outreach';
 const CSV = 'pipedrive/link-clicked-smoke.csv';
 
 const CONTACT_MADE = { pipeline: PIPEDRIVE_PIPELINE, stage: 'Contact Made' };
@@ -79,14 +78,15 @@ const NEWER_DEAL = 'Onboarding package';
 // Both columns are set because the Organisation Fields card maps both to the same Pipedrive field.
 const PICKLIST_INDUSTRY = { Industry: 'Retail', 'Company Industry': 'Retail' };
 
-type Prospect = { row: Row; email: string; name: string; sentAt: number };
+// `subject` is read from the prospect's Mailinator inbox after the send, so any sequence works.
+type Prospect = { row: Row; email: string; name: string; sentAt: number; subject: string };
 
 // The Scenario column holds the name of the staging row the smoke row is built from.
 function prospect(scenario: string, override: Record<string, string> = {}): Prospect {
   const found = readCsv(CSV).find((r) => r['Scenario'] === scenario);
   if (!found) throw new Error(`No row "${scenario}" in test-data/${CSV}. Run scripts/make-pipedrive-link-clicked-smoke-data.ts.`);
   const row = { ...found, ...override };
-  return { row, email: row['Email'], name: fullName(row), sentAt: 0 };
+  return { row, email: row['Email'], name: fullName(row), sentAt: 0, subject: '' };
 }
 
 // Saves the trigger with the row's activities, reloads the page and reads the saved activities back.
@@ -108,6 +108,7 @@ async function send(fx: Fx, p: Prospect): Promise<void> {
   if (!SEQUENCE_ID) throw new Error('SMOKE_SEQUENCE_ID is not set. Use scripts/run-pipedrive-link-clicked-smoke.sh.');
   await sendEmail(fx, { sequenceId: SEQUENCE_ID, row: p.row, csv: CSV, step: 1 });
   p.sentAt = Date.now();
+  p.subject = await test.step(`Read the subject of the step 1 email in the Mailinator inbox of ${p.email}`, () => fx.mailinator.latestSubject(p.email));
 }
 
 // Clicks link `link` (0 = first) of the step 1 email once production counts it, then waits until the
@@ -119,7 +120,7 @@ async function click(fx: Fx, p: Prospect, link = 0): Promise<number> {
   const clicked = () => fx.saleshandySequence.clickedCount(SEQUENCE_ID, p.name, 1, p.email);
   const before = await clicked();
   await test.step(`Click link ${link + 1} of the step 1 email in the Mailinator inbox of ${p.email}`, () =>
-    fx.mailinator.clickFirstLink(p.email, STEP_1_SUBJECT, link),
+    fx.mailinator.clickFirstLink(p.email, p.subject, link),
   );
   let count = before;
   await test.step(`Wait until the Clicked count is above ${before}`, () =>
@@ -151,6 +152,18 @@ async function twoDeals(fx: Fx, personId: string): Promise<void> {
     await fx.deals.createOnPerson(personId, { title: OLDER_DEAL, value: 1800 });
     await fx.deals.createOnPerson(personId, { title: NEWER_DEAL, value: 2400 });
   });
+}
+
+// Ids of the person's 2 deals, oldest first. The Deals block can show after the page loads (production,
+// 2026-10-29: only one tile was read, so the newest id was empty and the script opened /deal/undefined).
+async function twoDealIds(fx: Fx, personId: string): Promise<[string, string]> {
+  let ids: string[] = [];
+  await untilPasses('The person page does not show both deals', async () => {
+    await fx.people.open(personId);
+    ids = await fx.people.dealIds();
+    expect(ids).toHaveLength(2);
+  }, 90_000);
+  return [ids[0], ids[1]];
 }
 
 async function orgFirst(fx: Fx, p: Prospect, name: string): Promise<void> {
@@ -237,8 +250,7 @@ test.describe('Link is Clicked in Saleshandy, Pipedrive (production smoke)', () 
     const p = prospect('Update a Deal > 1');
     const id = await personFirst(fx, p);
     await twoDeals(fx, id);
-    await fx.people.open(id);
-    const [older, newest] = await fx.people.dealIds();
+    const [older, newest] = await twoDealIds(fx, id);
     await useTrigger(fx, [{ activity: PD.updateDeal, extra: CONTACT_MADE }]);
     await sendAndClick(fx, p);
     await untilInPipedrive(fx, TRIGGER, 'Newest deal not updated', async () => {
@@ -265,8 +277,7 @@ test.describe('Link is Clicked in Saleshandy, Pipedrive (production smoke)', () 
     const p = prospect('Delete Deal > 1');
     const id = await personFirst(fx, p);
     await twoDeals(fx, id);
-    await fx.people.open(id);
-    const [older] = await fx.people.dealIds();
+    const [older] = await twoDealIds(fx, id);
     await useTrigger(fx, [PD.deleteDeal]);
     await sendAndClick(fx, p);
     await untilInPipedrive(fx, TRIGGER, 'Newest deal not deleted', async () => {
@@ -333,7 +344,7 @@ test.describe('Link is Clicked in Saleshandy, Pipedrive (production smoke)', () 
     const p = prospect('Trigger behavior > 6');
     await useTrigger(fx, [PD.createPerson]);
     await send(fx, p);
-    await test.step(`Open the step 1 email in the Mailinator inbox of ${p.email}`, () => fx.mailinator.openEmail(p.email, STEP_1_SUBJECT));
+    await test.step(`Open the step 1 email in the Mailinator inbox of ${p.email}`, () => fx.mailinator.openEmail(p.email, p.subject));
     await fx.saleshandySequence.page.waitForTimeout(NO_CLICK_WAIT);
     await expectNoPerson(fx, p);
     expect(await fx.saleshandySequence.clickedCount(SEQUENCE_ID, p.name, 1, p.email), 'Clicked count').toBe(0);

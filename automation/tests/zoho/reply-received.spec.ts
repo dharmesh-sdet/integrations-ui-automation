@@ -1,35 +1,56 @@
-// Scenarios: test-cases/zoho/reply-received.md (Regression, 34 rows, QA "looks good" 2026-10-29, no ticket per row).
-// One test per row, named "<section>: <n>". Written so far: the rows whose prospect is not in Zoho first
-// (no records made by hand). Rows that need a Zoho record first, second reply, empty mapping, trigger off
-// and the real reply are still to write.
-// Data: test-data/zoho/reply-received.csv, one prospect per row, found by the Scenario column.
-// Sequence: "Zoho Reply Received QA" on notemailsentzoho, 2 steps, sender Rachel 10 (id 197387, ZOHO_REPLY_SEQUENCE_ID).
-// Zoho CRM is read in a headed browser on the saved profile, so run it through xvfb-run (see package.json
-// `test:zoho-reply-received`). Close any MCP Zoho window first, the profile cannot be open twice.
+// Scenarios: test-cases/zoho/reply-received.md (Regression, 24 rows, QA "looks good" 2026-11-03, no ticket per row).
+// One test per row, named "<section>: <n>". Rewritten from scratch on 2026-11-03.
+// Known bug AL-4219: the workflow does not start for a reply (Mark as replied or a real Gmail reply). Until it is
+// fixed, rows that expect a Zoho record fail on the first check. That is the product result, not a script fault.
+// Data: test-data/zoho/reply-received.csv (npm run data:zoho-reply-received), one prospect per row, found by the
+// Scenario column. "Trigger behavior > 1" sends nothing. "Real reply > 1" uses ZOHO_REPLY_GMAIL.
+// Sequence: "Zoho Reply Received QA" on notemailsentzoho, 2 steps (id 197387, ZOHO_REPLY_SEQUENCE_ID).
+// Zoho CRM is read in a headed browser on its own copy of the saved profile (auth/zoho-reply-received-profile), so run
+// it through xvfb-run (see package.json `test:zoho-reply-received`). Other Zoho workflows run at the same time on this
+// account, each with its own sequence and prospects, so only the Reply trigger is touched (KEEP_OTHER_TRIGGERS).
 //
-// How a row runs: set the trigger (only "Reply is Received in Saleshandy" on) and its actions, add the prospect,
-// send step 1, Mark as Replied. Then look in Zoho 15 s later, every 10 s after that (QA). Logs are not used for
-// Zoho (QA 2026-10-29). Rows do not delete what they create. Known issues are recorded, not filed (Z-1, Z-5).
+// How a row runs: set the trigger and its actions, make the Zoho records the row needs, add the prospect, send step 1
+// with Send now, mark it as replied. Then look in Zoho 15 s later, every 10 s after that (QA). Logs are not used for
+// Zoho rows (QA 2026-10-29). Rows do not delete what they create. Known issues are recorded, not filed (Z-1, Z-5, Q3).
+// Real reply: set ZOHO_REPLY_GMAIL to a Gmail address. The test sends step 1 to it, then waits up to 20 minutes for
+// QA to reply from that inbox. Use the address once per sequence, a prospect cannot be added twice.
 import path from 'node:path';
 import { expect, test as base } from '../../src/fixtures/index.ts';
-import { ZOHO_FIELD_MAPPING } from '../../src/config/zoho-field-mapping.ts';
 import { readCsv, type Row } from '../../src/data/csv.ts';
 import { markUsed } from '../../src/data/used.ts';
-import { ZOHO_ACTION, configure, fullName, replyAgain, sendAndReply, type TaskConfig } from '../../src/flows/saleshandy-to-zoho.ts';
+import { ZOHO_ACTION, configure, fullName, replyAgainFromProspects as replyAgain, sendAndReplyFromProspects as sendAndReply } from '../../src/flows/saleshandy-to-zoho.ts';
+import { configureWaiting, inDays, sendStep } from '../../src/flows/zoho-email-sent.ts';
 import { ZohoCrmPage, openZohoProfile } from '../../src/pages/zoho/zoho-crm.page.ts';
+import { ZohoForms } from '../../src/pages/zoho/zoho-forms.page.ts';
+import { untilPasses } from '../../src/utils/wait.ts';
+
+process.env.KEEP_OTHER_TRIGGERS ??= '1';
 
 const CSV = 'zoho/reply-received.csv';
 const TRIGGER = 'Reply is Received in Saleshandy';
 const SEQUENCE_ID = process.env.ZOHO_REPLY_SEQUENCE_ID ?? '197387';
-const PROFILE = path.resolve(import.meta.dirname, '../../auth/mcp-zoho-not-email-sent-profile');
-const TASK_SUBJECT = 'Follow up after reply';
+const PROFILE = path.resolve(import.meta.dirname, '../../auth/zoho-reply-received-profile');
 const GMAIL = process.env.ZOHO_REPLY_GMAIL;
 const NOTE_TITLE = 'Saleshandy Reply Received On Sequence Email';
+const TASK = { subject: 'Follow up after reply', status: 'Not Started', priority: 'Normal', dueIn: '3' };
 
 const test = base.extend<object, { crm: ZohoCrmPage }>({
   crm: [
     async ({}, use) => {
       const { context, crm } = await openZohoProfile(PROFILE);
+      // Zoho page loads time out now and then (net::ERR_TIMED_OUT, seen 2026-11-02 and 2026-11-03). Retry a load up
+      // to 4 times. Local to this spec: ZohoCrmPage.open is shared.
+      const openOnce = crm.open.bind(crm);
+      crm.open = async (url: string) => {
+        for (let attempt = 1; ; attempt++) {
+          try {
+            return await openOnce(url);
+          } catch (e) {
+            if (attempt >= 4 || !/ERR_TIMED_OUT|ERR_CONNECTION|ERR_NETWORK|ERR_NAME|Timeout/.test(String(e))) throw e;
+            await crm.page.waitForTimeout(3_000);
+          }
+        }
+      };
       await use(crm);
       await context.close();
     },
@@ -53,13 +74,47 @@ function prospect(scenario: string, override: Record<string, string> = {}): Row 
 }
 
 const phoneDigits = (s: string): string => s.replace(/\D/g, '');
+// An empty field shows no value in the record text, so ZohoCrmPage.field returns the label on the next line
+// (seen 2026-11-02). A field is empty when it reads '' or that next label.
+const emptyField = (text: string, label: string, nextLabel: string): boolean => {
+  const value = ZohoCrmPage.field(text, label);
+  return value === '' || value === nextLabel;
+};
+const contactOnly = [{ action: ZOHO_ACTION.contact }];
 
 test.describe('Zoho Reply Received (staging)', () => {
-  test.setTimeout(8 * 60_000);
+  test.setTimeout(15 * 60_000);
+
+  // ---- Trigger behavior ----
+
+  test('Trigger behavior: 1 Trigger on with the Contact action', async ({ zohoIntegration, saleshandyPage }) => {
+    // configure() waits for "Configuration Updated Successfully" and throws without it.
+    await configure(zohoIntegration, saleshandyPage, TRIGGER, contactOnly);
+    await saleshandyPage.reload();
+    await zohoIntegration.openTriggers();
+    expect(await zohoIntegration.isTriggerOn(TRIGGER)).toBe(true);
+    expect(await zohoIntegration.selectedActivities(TRIGGER)).toEqual([ZOHO_ACTION.contact]);
+  });
+
+  test('Trigger behavior: 2 Trigger off', async ({ zohoIntegration, saleshandyPage, saleshandySequence, crm }) => {
+    const row = prospect('Trigger behavior > 2');
+    await configure(zohoIntegration, saleshandyPage, TRIGGER, contactOnly);
+    // Only this trigger goes off. The action stays saved on it.
+    await zohoIntegration.openTriggers();
+    await zohoIntegration.turnOff(TRIGGER);
+    await zohoIntegration.save();
+    await zohoIntegration.savedToast().waitFor({ timeout: 20_000 });
+    await sendAndReply(saleshandySequence, SEQUENCE_ID, row);
+    expect(await crm.waitForRecord('Contacts', row['Email'], 60_000), 'Nothing may be created with the trigger off').toBeUndefined();
+    // Leave the trigger on, the way the other rows expect it.
+    await configure(zohoIntegration, saleshandyPage, TRIGGER, contactOnly);
+  });
+
+  // ---- Create/Update a Contact in Zoho ----
 
   test('Contact: 1 Prospect not in Zoho', async ({ zohoIntegration, saleshandyPage, saleshandySequence, crm }) => {
     const row = prospect('Contact > 1');
-    await configure(zohoIntegration, saleshandyPage, TRIGGER, [{ action: ZOHO_ACTION.contact }]);
+    await configure(zohoIntegration, saleshandyPage, TRIGGER, contactOnly);
     await sendAndReply(saleshandySequence, SEQUENCE_ID, row);
     const found = await crm.waitForRecord('Contacts', row['Email']);
     expect(found, `No Zoho contact for ${row['Email']}`).toBeTruthy();
@@ -67,18 +122,74 @@ test.describe('Zoho Reply Received (staging)', () => {
     expect(ZohoCrmPage.field(text, 'Contact Name')).toBe(fullName(row));
     for (const value of [row['Job Title'], row['Department'], row['Twitter'], row['City'], row['State'], row['Country']]) expect(text).toContain(value);
     expect(phoneDigits(text)).toContain(phoneDigits(row['Phone Number']));
-    expect(ZohoCrmPage.noteCount(text)).toBe(1);
+    expect(ZohoCrmPage.noteCount(text), 'One note').toBe(1);
     expect(text).toContain(NOTE_TITLE);
     expect((await crm.find('Contacts', row['Email'])).length).toBe(1);
   });
 
+  test('Contact: 2 Contact with the same email exists, different Title', async ({ zohoIntegration, saleshandyPage, saleshandySequence, crm }) => {
+    const row = prospect('Contact > 2');
+    const id = await new ZohoForms(crm).createContact({ first: row['First Name'], last: row['Last Name'], email: row['Email'], title: 'Old Title' });
+    await configure(zohoIntegration, saleshandyPage, TRIGGER, contactOnly);
+    await sendAndReply(saleshandySequence, SEQUENCE_ID, row);
+    await untilPasses('the contact is updated', async () => {
+      const text = await crm.recordText('Contacts', id);
+      expect(text).toContain(row['Job Title']);
+      expect(text).not.toContain('Old Title');
+    }, 120_000);
+    expect((await crm.find('Contacts', row['Email'])).map((r) => r.id), 'Still one contact').toEqual([id]);
+    // Unconfirmed: whether an update adds a note. Recorded, not asserted.
+    test.info().annotations.push({ type: 'Notes on the updated contact', description: String(ZohoCrmPage.noteCount(await crm.recordText('Contacts', id))) });
+  });
+
+  test('Contact: 3 Second reply from the same prospect', async ({ zohoIntegration, saleshandyPage, saleshandySequence, crm }) => {
+    const row = prospect('Contact > 3');
+    await configure(zohoIntegration, saleshandyPage, TRIGGER, contactOnly);
+    await sendAndReply(saleshandySequence, SEQUENCE_ID, row);
+    const first = await crm.waitForRecord('Contacts', row['Email']);
+    expect(first, `No Zoho contact for ${row['Email']}`).toBeTruthy();
+    await untilPasses('the first note', async () => {
+      expect(ZohoCrmPage.noteCount(await crm.recordText('Contacts', first!.id))).toBe(1);
+    }, 120_000);
+    await replyAgain(saleshandySequence, SEQUENCE_ID, row);
+    await untilPasses('the second note', async () => {
+      expect(ZohoCrmPage.noteCount(await crm.recordText('Contacts', first!.id))).toBe(2);
+    }, 180_000);
+    expect((await crm.find('Contacts', row['Email'])).map((r) => r.id), 'Still one contact').toEqual([first!.id]);
+  });
+
+  test('Contact: 4 Prospect has no phone, Zoho contact has one', async ({ zohoIntegration, saleshandyPage, saleshandySequence, crm }) => {
+    const row = prospect('Contact > 4', { 'Phone Number': '' });
+    const id = await new ZohoForms(crm).createContact({ first: row['First Name'], last: row['Last Name'], email: row['Email'], phone: '5550142' });
+    await configure(zohoIntegration, saleshandyPage, TRIGGER, contactOnly);
+    await sendAndReply(saleshandySequence, SEQUENCE_ID, row);
+    await untilPasses('the contact is updated', async () => {
+      expect(await crm.recordText('Contacts', id)).toContain(row['Department']);
+    }, 120_000);
+    expect(phoneDigits(await crm.recordText('Contacts', id)), 'The Zoho phone is kept').toContain('5550142');
+  });
+
   test('Contact: 5 Prospect has no last name', async ({ zohoIntegration, saleshandyPage, saleshandySequence, crm }) => {
     const row = prospect('Contact > 5', { 'Last Name': '' });
-    await configure(zohoIntegration, saleshandyPage, TRIGGER, [{ action: ZOHO_ACTION.contact }]);
+    await configure(zohoIntegration, saleshandyPage, TRIGGER, contactOnly);
     await sendAndReply(saleshandySequence, SEQUENCE_ID, row);
     // Zoho needs a Last Name, so no contact appears (QA 2026-10-29).
-    expect(await crm.waitForRecord('Contacts', row['Email'], 60_000)).toBeUndefined();
+    expect(await crm.waitForRecord('Contacts', row['Email'], 60_000), 'No contact may be created').toBeUndefined();
   });
+
+  test('Contact: 6 Zoho contact has the email in different letter case', async ({ zohoIntegration, saleshandyPage, saleshandySequence, crm }) => {
+    const row = prospect('Contact > 6');
+    const typed = `${row['Email'].split('@')[0].toUpperCase()}@Mailinator.com`;
+    const id = await new ZohoForms(crm).createContact({ first: row['First Name'], last: row['Last Name'], email: typed });
+    await configure(zohoIntegration, saleshandyPage, TRIGGER, contactOnly);
+    await sendAndReply(saleshandySequence, SEQUENCE_ID, row);
+    await untilPasses('the contact is updated', async () => {
+      expect(await crm.recordText('Contacts', id)).toContain(row['Department']);
+    }, 120_000);
+    expect((await crm.find('Contacts', row['Email'])).map((r) => r.id), 'No second contact').toEqual([id]);
+  });
+
+  // ---- Create/Update a Lead in Zoho ----
 
   test('Lead: 1 Prospect not in Zoho, has a company', async ({ zohoIntegration, saleshandyPage, saleshandySequence, crm }) => {
     const row = prospect('Lead > 1');
@@ -89,28 +200,35 @@ test.describe('Zoho Reply Received (staging)', () => {
     const text = await crm.recordText('Leads', found!.id);
     expect(ZohoCrmPage.field(text, 'Company')).toBe(row['Company']);
     for (const value of [row['Job Title'], row['City'], row['State'], row['Country']]) expect(text).toContain(value);
-    expect(ZohoCrmPage.noteCount(text)).toBe(1);
+    expect(ZohoCrmPage.noteCount(text), 'One note').toBe(1);
+    expect((await crm.find('Leads', row['Email'])).length).toBe(1);
   });
 
-  test('Lead: 4 Prospect has no company', async ({ zohoIntegration, saleshandyPage, saleshandySequence, crm }) => {
-    const row = prospect('Lead > 4', { Company: '' });
+  test('Lead: 2 Lead with the same email exists', async ({ zohoIntegration, saleshandyPage, saleshandySequence, crm }) => {
+    const row = prospect('Lead > 2');
+    const id = await new ZohoForms(crm).createLead({ first: row['First Name'], last: row['Last Name'], email: row['Email'], company: `Old Company ${stamp}` });
+    await configure(zohoIntegration, saleshandyPage, TRIGGER, [{ action: ZOHO_ACTION.lead }]);
+    await sendAndReply(saleshandySequence, SEQUENCE_ID, row);
+    await untilPasses('the lead is updated', async () => {
+      expect(ZohoCrmPage.field(await crm.recordText('Leads', id), 'Company')).toBe(row['Company']);
+    }, 120_000);
+    expect((await crm.find('Leads', row['Email'])).map((r) => r.id), 'Still one lead').toEqual([id]);
+    // Unconfirmed: whether an update adds a note. Recorded, not asserted.
+    test.info().annotations.push({ type: 'Notes on the updated lead', description: String(ZohoCrmPage.noteCount(await crm.recordText('Leads', id))) });
+  });
+
+  test('Lead: 3 Prospect has no company', async ({ zohoIntegration, saleshandyPage, saleshandySequence, crm }) => {
+    const row = prospect('Lead > 3', { Company: '' });
     await configure(zohoIntegration, saleshandyPage, TRIGGER, [{ action: ZOHO_ACTION.lead }]);
     await sendAndReply(saleshandySequence, SEQUENCE_ID, row);
     const found = await crm.waitForRecord('Leads', row['Email']);
     expect(found, `No Zoho lead for ${row['Email']}`).toBeTruthy();
     const text = await crm.recordText('Leads', found!.id);
-    expect(ZohoCrmPage.field(text, 'Company')).toBe('');
-    expect(ZohoCrmPage.noteCount(text)).toBe(1);
+    expect(emptyField(text, 'Company', 'Lead Name'), 'Company is left out').toBe(true);
+    expect(ZohoCrmPage.noteCount(text), 'One note').toBe(1);
   });
 
-  test('Lead: 5 Company Size "11-50" mapped to No. of Employees (Z-1)', async ({ zohoIntegration, saleshandyPage, saleshandySequence, crm }) => {
-    const row = prospect('Lead > 5');
-    expect(row['Company Size']).toBe('11-50');
-    await configure(zohoIntegration, saleshandyPage, TRIGGER, [{ action: ZOHO_ACTION.lead }]);
-    await sendAndReply(saleshandySequence, SEQUENCE_ID, row);
-    // Z-1: Zoho rejects the whole record. Recorded, not filed.
-    expect(await crm.waitForRecord('Leads', row['Email'], 60_000)).toBeUndefined();
-  });
+  // ---- Create/Update Account in Zoho ----
 
   test('Account: 1 Prospect not in Zoho, no contact, has a company', async ({ zohoIntegration, saleshandyPage, saleshandySequence, crm }) => {
     const row = prospect('Account > 1');
@@ -120,402 +238,222 @@ test.describe('Zoho Reply Received (staging)', () => {
     expect(found, `No Zoho account named ${row['Company']}`).toBeTruthy();
     const text = await crm.recordText('Accounts', found!.id);
     expect(ZohoCrmPage.field(text, 'Account Name')).toBe(row['Company']);
-    expect(ZohoCrmPage.noteCount(text)).toBe(1);
+    for (const value of [row['City'], row['State'], row['Country']]) expect(text).toContain(value);
+    expect(ZohoCrmPage.noteCount(text), 'One note').toBe(1);
     expect((await crm.find('Accounts', row['Company'])).length).toBe(1);
+    expect((await crm.find('Contacts', row['Email'])).length, 'The Account action must not create a contact').toBe(0);
   });
-
-  const task = (over: Partial<TaskConfig> = {}): TaskConfig => ({ subject: TASK_SUBJECT, status: 'Not Started', priority: 'Normal', dueIn: '3', ...over });
-  const split = (row: Row) => ({ first: row['First Name'], last: row['Last Name'], email: row['Email'] });
-
-  // ---- Trigger behavior ----
-
-  test('Trigger behavior: 1 Trigger on', async ({ zohoIntegration, saleshandyPage }) => {
-    // configure() waits for "Configuration Updated Successfully" after Save.
-    await configure(zohoIntegration, saleshandyPage, TRIGGER, [{ action: ZOHO_ACTION.contact }]);
-  });
-
-  test('Trigger behavior: 2 Trigger off', async ({ zohoIntegration, saleshandyPage, saleshandySequence, crm }) => {
-    const row = prospect('Trigger behavior > 2');
-    await configure(zohoIntegration, saleshandyPage, TRIGGER, [{ action: ZOHO_ACTION.contact }]);
-    await zohoIntegration.disable(TRIGGER);
-    await zohoIntegration.save();
-    await zohoIntegration.savedToast().waitFor({ timeout: 20_000 });
-    await sendAndReply(saleshandySequence, SEQUENCE_ID, row);
-    expect(await crm.waitForRecord('Contacts', row['Email'], 60_000)).toBeUndefined();
-  });
-
-  // ---- Create/Update a Contact ----
-
-  test('Contact: 2 Contact with the same email exists, different Title', async ({ zohoIntegration, saleshandyPage, saleshandySequence, crm }) => {
-    const row = prospect('Contact > 2');
-    const id = await crm.createContact({ ...split(row), title: 'Old Title' });
-    await configure(zohoIntegration, saleshandyPage, TRIGGER, [{ action: ZOHO_ACTION.contact }]);
-    await sendAndReply(saleshandySequence, SEQUENCE_ID, row);
-    const text = await crm.waitForNotes('Contacts', id, 1);
-    expect(ZohoCrmPage.noteCount(text)).toBe(1);
-    // Proposed, unconfirmed: the update replaces the Title with the prospect's value.
-    expect(ZohoCrmPage.field(text, 'Title')).toBe(row['Job Title']);
-    expect((await crm.find('Contacts', row['Email'])).length).toBe(1);
-  });
-
-  test('Contact: 3 Second reply from the same prospect', async ({ zohoIntegration, saleshandyPage, saleshandySequence, crm }) => {
-    const row = prospect('Contact > 3');
-    await configure(zohoIntegration, saleshandyPage, TRIGGER, [{ action: ZOHO_ACTION.contact }]);
-    await sendAndReply(saleshandySequence, SEQUENCE_ID, row);
-    const found = await crm.waitForRecord('Contacts', row['Email']);
-    expect(found, `No Zoho contact for ${row['Email']}`).toBeTruthy();
-    await replyAgain(saleshandySequence, SEQUENCE_ID, row);
-    const text = await crm.waitForNotes('Contacts', found!.id, 2);
-    expect(ZohoCrmPage.noteCount(text)).toBe(2);
-    expect((await crm.find('Contacts', row['Email'])).length).toBe(1);
-  });
-
-  test('Contact: 4 Prospect has no phone, Zoho contact has one', async ({ zohoIntegration, saleshandyPage, saleshandySequence, crm }) => {
-    const row = prospect('Contact > 4', { 'Phone Number': '' });
-    const zohoPhone = '+1 555-0100-4444';
-    const id = await crm.createContact({ ...split(row), phone: zohoPhone });
-    await configure(zohoIntegration, saleshandyPage, TRIGGER, [{ action: ZOHO_ACTION.contact }]);
-    await sendAndReply(saleshandySequence, SEQUENCE_ID, row);
-    const text = await crm.waitForNotes('Contacts', id, 1);
-    // Proposed, unconfirmed: an empty prospect phone does not clear the Zoho phone.
-    expect(phoneDigits(text)).toContain(phoneDigits(zohoPhone));
-  });
-
-  test('Contact: 6 Zoho contact has the email in other letter case', async ({ zohoIntegration, saleshandyPage, saleshandySequence, crm }) => {
-    const row = prospect('Contact > 6');
-    const id = await crm.createContact({ ...split(row), email: row['Email'].toUpperCase() });
-    await configure(zohoIntegration, saleshandyPage, TRIGGER, [{ action: ZOHO_ACTION.contact }]);
-    await sendAndReply(saleshandySequence, SEQUENCE_ID, row);
-    const text = await crm.waitForNotes('Contacts', id, 1);
-    // Proposed, unconfirmed: the contact is updated, not duplicated.
-    expect(ZohoCrmPage.noteCount(text)).toBe(1);
-    expect((await crm.find('Contacts', row['Email'])).length).toBe(1);
-  });
-
-  // ---- Create/Update a Lead ----
-
-  test('Lead: 2 Lead with the same email exists', async ({ zohoIntegration, saleshandyPage, saleshandySequence, crm }) => {
-    const row = prospect('Lead > 2');
-    const id = await crm.createLead({ ...split(row), company: row['Company'] || 'Hand Made Co' });
-    await configure(zohoIntegration, saleshandyPage, TRIGGER, [{ action: ZOHO_ACTION.lead }]);
-    await sendAndReply(saleshandySequence, SEQUENCE_ID, row);
-    const text = await crm.waitForNotes('Leads', id, 1);
-    expect(ZohoCrmPage.noteCount(text)).toBe(1);
-    expect((await crm.find('Leads', row['Email'])).length).toBe(1);
-  });
-
-  test('Lead: 3 Second reply from the same prospect', async ({ zohoIntegration, saleshandyPage, saleshandySequence, crm }) => {
-    const row = prospect('Lead > 3');
-    await configure(zohoIntegration, saleshandyPage, TRIGGER, [{ action: ZOHO_ACTION.lead }]);
-    await sendAndReply(saleshandySequence, SEQUENCE_ID, row);
-    const found = await crm.waitForRecord('Leads', row['Email']);
-    expect(found, `No Zoho lead for ${row['Email']}`).toBeTruthy();
-    await replyAgain(saleshandySequence, SEQUENCE_ID, row);
-    expect(ZohoCrmPage.noteCount(await crm.waitForNotes('Leads', found!.id, 2))).toBe(2);
-    expect((await crm.find('Leads', row['Email'])).length).toBe(1);
-  });
-
-  // ---- Create/Update Account ----
 
   test('Account: 2 Contact has the account "Orion Freight", prospect company is "Orion Freight Ltd"', async ({ zohoIntegration, saleshandyPage, saleshandySequence, crm }) => {
-    const base = `Orion Freight ${stamp}`;
-    const row = prospect('Account > 2', { Company: `${base} Ltd` });
-    const accountId = await crm.createAccount(base);
-    await crm.createContact({ ...split(row), account: base });
+    const accountName = `Orion Freight ${stamp}`;
+    const row = prospect('Account > 2', { Company: `${accountName} Ltd` });
+    const accountId = await crm.createAccount(accountName);
+    await new ZohoForms(crm).createContact({ first: row['First Name'], last: row['Last Name'], email: row['Email'], account: accountName });
     await configure(zohoIntegration, saleshandyPage, TRIGGER, [{ action: ZOHO_ACTION.account }]);
     await sendAndReply(saleshandySequence, SEQUENCE_ID, row);
-    const text = await crm.waitForNotes('Accounts', accountId, 1);
-    expect(ZohoCrmPage.field(text, 'Account Name')).toBe(base);
-    expect(ZohoCrmPage.noteCount(text)).toBe(1);
-    expect((await crm.find('Accounts', row['Company'])).length).toBe(0);
-    expect((await crm.find('Accounts', base)).length).toBe(1);
+    await untilPasses('the linked account is updated', async () => {
+      const text = await crm.recordText('Accounts', accountId);
+      for (const value of [row['City'], row['State'], row['Country']]) expect(text).toContain(value);
+    }, 120_000);
+    expect(ZohoCrmPage.field(await crm.recordText('Accounts', accountId), 'Account Name'), 'The account name is kept').toBe(accountName);
+    expect((await crm.find('Accounts', row['Company'])).length, 'No new account from the prospect company').toBe(0);
   });
 
-  test('Account: 3 Contact exists, no account', async ({ zohoIntegration, saleshandyPage, saleshandySequence, crm }) => {
+  test('Account: 3 Contact exists, has no account', async ({ zohoIntegration, saleshandyPage, saleshandySequence, crm }) => {
     const row = prospect('Account > 3');
-    const contactId = await crm.createContact(split(row));
+    const contactId = await new ZohoForms(crm).createContact({ first: row['First Name'], last: row['Last Name'], email: row['Email'] });
     await configure(zohoIntegration, saleshandyPage, TRIGGER, [{ action: ZOHO_ACTION.account }]);
     await sendAndReply(saleshandySequence, SEQUENCE_ID, row);
-    const account = await crm.waitForRecord('Accounts', row['Company']);
-    expect(account, `No Zoho account named ${row['Company']}`).toBeTruthy();
-    expect(ZohoCrmPage.field(await crm.recordText('Contacts', contactId), 'Account Name')).toBe(row['Company']);
+    expect(await crm.waitForRecord('Accounts', row['Company']), `No Zoho account named ${row['Company']}`).toBeTruthy();
+    await untilPasses('the contact is linked to the account', async () => {
+      expect(ZohoCrmPage.field(await crm.recordText('Contacts', contactId), 'Account Name')).toBe(row['Company']);
+    }, 120_000);
   });
 
-  test('Account: 4 Account with the same name exists, no contact', async ({ zohoIntegration, saleshandyPage, saleshandySequence, crm }) => {
-    const row = prospect('Account > 4');
-    const id = await crm.createAccount(row['Company']);
-    await configure(zohoIntegration, saleshandyPage, TRIGGER, [{ action: ZOHO_ACTION.account }]);
-    await sendAndReply(saleshandySequence, SEQUENCE_ID, row);
-    expect(ZohoCrmPage.noteCount(await crm.waitForNotes('Accounts', id, 1))).toBe(1);
-    expect((await crm.find('Accounts', row['Company'])).length).toBe(1);
-  });
-
-  // ---- Create/Update a Deal ----
-  // A deal has no email or name to search by, so the run's deal is the first one that was not in the list before.
+  // ---- Create/Update a Deal in Zoho ----
 
   test('Deal: 1 Prospect not in Zoho, Closing date 7', async ({ zohoIntegration, saleshandyPage, saleshandySequence, crm }) => {
     const row = prospect('Deal > 1');
-    const before = await crm.ids('Deals');
     await configure(zohoIntegration, saleshandyPage, TRIGGER, [{ action: ZOHO_ACTION.deal, closingDays: '7' }]);
     await sendAndReply(saleshandySequence, SEQUENCE_ID, row);
-    const deal = await crm.waitForNewRecord('Deals', before);
-    expect(deal, 'No new Zoho deal').toBeTruthy();
-    const text = await crm.recordText('Deals', deal!.id);
-    expect(ZohoCrmPage.field(text, 'Contact Name')).toBe('');
-    expect(phoneDigits(ZohoCrmPage.field(text, 'Amount'))).toContain(phoneDigits(row['Deal Value']));
-    expect(ZohoCrmPage.field(text, 'Closing Date')).toMatch(ZohoCrmPage.dateText(7));
+    const found = await crm.waitForRecord('Deals', fullName(row));
+    expect(found, `No Zoho deal named ${fullName(row)}`).toBeTruthy();
+    const text = await crm.recordText('Deals', found!.id);
+    expect(ZohoCrmPage.field(text, 'Amount')).toContain(Number(row['Deal Value']).toLocaleString('en-US'));
+    expect(ZohoCrmPage.field(text, 'Closing Date')).toBe(inDays(7));
+    expect(emptyField(text, 'Contact Name', 'Modified By'), 'The deal is not linked to a contact').toBe(true);
+    expect((await crm.find('Deals', fullName(row))).length).toBe(1);
+    expect((await crm.find('Contacts', row['Email'])).length, 'The Deal action must not create a contact').toBe(0);
+    // Z-5 (known): the deal also makes an account named after the company. Recorded.
+    expect(await crm.waitForRecord('Accounts', row['Company'], 30_000)).toBeTruthy();
   });
 
-  test('Deal: 2 Contact exists, has no deal', async ({ zohoIntegration, saleshandyPage, saleshandySequence, crm }) => {
+  test('Deal: 2 Contact has 2 deals, the second made a few minutes after the first', async ({ zohoIntegration, saleshandyPage, saleshandySequence, crm }) => {
     const row = prospect('Deal > 2');
-    await crm.createContact(split(row));
-    const before = await crm.ids('Deals');
-    await configure(zohoIntegration, saleshandyPage, TRIGGER, [{ action: ZOHO_ACTION.deal, closingDays: '7' }]);
+    const forms = new ZohoForms(crm);
+    await forms.createContact({ first: row['First Name'], last: row['Last Name'], email: row['Email'] });
+    const olderName = `Older Deal ${stamp} ${row['Last Name']}`;
+    const newerName = `Newer Deal ${stamp} ${row['Last Name']}`;
+    const olderId = await forms.createDeal({ name: olderName, closing: inDays(30), contact: fullName(row), amount: '100' });
+    // The newest deal is the one made last. A pause makes the order clear in Zoho.
+    await crm.page.waitForTimeout(60_000);
+    const newerId = await forms.createDeal({ name: newerName, closing: inDays(30), contact: fullName(row), amount: '200' });
+    await configure(zohoIntegration, saleshandyPage, TRIGGER, [{ action: ZOHO_ACTION.deal, closingDays: '0' }]);
     await sendAndReply(saleshandySequence, SEQUENCE_ID, row);
-    const deal = await crm.waitForNewRecord('Deals', before);
-    expect(deal, 'No new Zoho deal').toBeTruthy();
-    expect(ZohoCrmPage.field(await crm.recordText('Deals', deal!.id), 'Contact Name')).toBe(fullName(row));
+    await untilPasses('the newest deal is updated', async () => {
+      expect(ZohoCrmPage.field(await crm.recordText('Deals', newerId), 'Amount')).toContain(Number(row['Deal Value']).toLocaleString('en-US'));
+    }, 120_000);
+    const older = await crm.recordText('Deals', olderId);
+    expect(ZohoCrmPage.field(older, 'Amount'), 'The older deal is unchanged').toContain('100.00');
+    expect(ZohoCrmPage.noteCount(older), 'No note on the older deal').toBe(0);
+    expect((await crm.find('Deals', olderName)).length + (await crm.find('Deals', newerName)).length, 'No new deal').toBe(2);
   });
 
-  test('Deal: 3 Contact has 1 deal', async ({ zohoIntegration, saleshandyPage, saleshandySequence, crm }) => {
+  test('Deal: 3 Deal with Stage changed by hand to Negotiation/Review', async ({ zohoIntegration, saleshandyPage, saleshandySequence, crm }) => {
     const row = prospect('Deal > 3');
-    const before = await crm.ids('Deals');
-    // Reply 1 makes the contact and its linked deal. Reply 2 runs the Deal action alone.
-    await configure(zohoIntegration, saleshandyPage, TRIGGER, [{ action: ZOHO_ACTION.contact }, { action: ZOHO_ACTION.deal, closingDays: '3' }]);
+    const forms = new ZohoForms(crm);
+    await forms.createContact({ first: row['First Name'], last: row['Last Name'], email: row['Email'] });
+    const dealId = await forms.createDeal({ name: `Staged Deal ${stamp} ${row['Last Name']}`, closing: inDays(30), contact: fullName(row), amount: '100', stage: 'Negotiation/Review' });
+    await configure(zohoIntegration, saleshandyPage, TRIGGER, [{ action: ZOHO_ACTION.deal, closingDays: '0' }]);
     await sendAndReply(saleshandySequence, SEQUENCE_ID, row);
-    const deal = await crm.waitForNewRecord('Deals', before);
-    expect(deal, 'No Zoho deal after reply 1').toBeTruthy();
-    const afterFirst = await crm.ids('Deals');
-    await configure(zohoIntegration, saleshandyPage, TRIGGER, [{ action: ZOHO_ACTION.deal, closingDays: '9' }]);
-    await replyAgain(saleshandySequence, SEQUENCE_ID, row);
-    expect(await crm.waitForNewRecord('Deals', afterFirst, 60_000), 'A second deal was made').toBeUndefined();
-    expect(ZohoCrmPage.field(await crm.recordText('Deals', deal!.id), 'Closing Date')).toMatch(ZohoCrmPage.dateText(9));
+    await untilPasses('the deal is updated', async () => {
+      expect(ZohoCrmPage.field(await crm.recordText('Deals', dealId), 'Amount')).toContain(Number(row['Deal Value']).toLocaleString('en-US'));
+    }, 120_000);
+    expect(ZohoCrmPage.field(await crm.recordText('Deals', dealId), 'Stage'), 'The Stage set by hand is kept').toBe('Negotiation/Review');
   });
 
-  test('Deal: 4 Contact has 2 deals', async ({ zohoIntegration, saleshandyPage, saleshandySequence, crm }) => {
+  test('Deal: 4 Contact exists, no deal, Closing date left empty', async ({ zohoIntegration, saleshandyPage, saleshandySequence, crm }) => {
     const row = prospect('Deal > 4');
-    const before = await crm.ids('Deals');
-    await configure(zohoIntegration, saleshandyPage, TRIGGER, [{ action: ZOHO_ACTION.contact }, { action: ZOHO_ACTION.deal, closingDays: '3' }]);
-    await sendAndReply(saleshandySequence, SEQUENCE_ID, row);
-    const older = await crm.waitForNewRecord('Deals', before);
-    expect(older, 'No Zoho deal after reply 1').toBeTruthy();
-    const newerId = await crm.createDeal({ name: `Second deal ${stamp}`, closingDate: ZohoCrmPage.dateInput(30), contact: fullName(row) });
-    const afterSecond = await crm.ids('Deals');
-    await configure(zohoIntegration, saleshandyPage, TRIGGER, [{ action: ZOHO_ACTION.deal, closingDays: '9' }]);
-    await replyAgain(saleshandySequence, SEQUENCE_ID, row);
-    expect(await crm.waitForNewRecord('Deals', afterSecond, 60_000), 'A third deal was made').toBeUndefined();
-    expect(ZohoCrmPage.field(await crm.recordText('Deals', newerId), 'Closing Date')).toMatch(ZohoCrmPage.dateText(9));
-    expect(ZohoCrmPage.field(await crm.recordText('Deals', older!.id), 'Closing Date')).toMatch(ZohoCrmPage.dateText(3));
-  });
-
-  test('Deal: 5 Stage changed by hand to Negotiation/Review', async ({ zohoIntegration, saleshandyPage, saleshandySequence, crm }) => {
-    const row = prospect('Deal > 5');
-    const before = await crm.ids('Deals');
-    await configure(zohoIntegration, saleshandyPage, TRIGGER, [{ action: ZOHO_ACTION.contact }, { action: ZOHO_ACTION.deal, closingDays: '3' }]);
-    await sendAndReply(saleshandySequence, SEQUENCE_ID, row);
-    const deal = await crm.waitForNewRecord('Deals', before);
-    expect(deal, 'No Zoho deal after reply 1').toBeTruthy();
-    await crm.setDealStage(deal!.id, 'Negotiation/Review');
-    expect(ZohoCrmPage.field(await crm.recordText('Deals', deal!.id), 'Stage')).toBe('Negotiation/Review');
-    await configure(zohoIntegration, saleshandyPage, TRIGGER, [{ action: ZOHO_ACTION.deal, closingDays: '9' }]);
-    await replyAgain(saleshandySequence, SEQUENCE_ID, row);
-    const text = await crm.waitForNotes('Deals', deal!.id, 2);
-    expect(ZohoCrmPage.field(text, 'Stage')).toBe('Negotiation/Review');
-  });
-
-  test('Deal: 6 Closing date left empty', async ({ zohoIntegration, saleshandyPage, saleshandySequence, crm }) => {
-    const row = prospect('Deal > 6');
-    const before = await crm.ids('Deals');
+    await new ZohoForms(crm).createContact({ first: row['First Name'], last: row['Last Name'], email: row['Email'] });
     await configure(zohoIntegration, saleshandyPage, TRIGGER, [{ action: ZOHO_ACTION.deal, closingDays: '' }]);
     await sendAndReply(saleshandySequence, SEQUENCE_ID, row);
-    const deal = await crm.waitForNewRecord('Deals', before);
-    expect(deal, 'No new Zoho deal').toBeTruthy();
-    expect(ZohoCrmPage.field(await crm.recordText('Deals', deal!.id), 'Closing Date')).toBe('');
+    const found = await crm.waitForRecord('Deals', fullName(row));
+    expect(found, `No Zoho deal named ${fullName(row)}`).toBeTruthy();
+    const text = await crm.recordText('Deals', found!.id);
+    expect(ZohoCrmPage.field(text, 'Contact Name'), 'The deal is linked to the contact').toBe(fullName(row));
+    expect(ZohoCrmPage.field(text, 'Closing Date'), 'No Closing Date').not.toMatch(/\d{2}\/\d{2}\/\d{4}/);
+    expect((await crm.find('Deals', fullName(row))).length).toBe(1);
   });
 
-  // ---- Create a Task ----
-  // A task has no email or name to search by either, so the run's task is the first one that was not in the list before.
+  // ---- Create a Task in Zoho ----
 
-  test('Task: 1 Prospect not in Zoho, due in 3 days', async ({ zohoIntegration, saleshandyPage, saleshandySequence, crm }) => {
+  test('Task: 1 Prospect not in Zoho, Due In 3', async ({ zohoIntegration, saleshandyPage, saleshandySequence, crm }) => {
     const row = prospect('Task > 1');
-    const before = await crm.ids('Tasks');
-    await configure(zohoIntegration, saleshandyPage, TRIGGER, [{ action: ZOHO_ACTION.task, task: task() }]);
+    await configure(zohoIntegration, saleshandyPage, TRIGGER, [{ action: ZOHO_ACTION.task, task: TASK }]);
     await sendAndReply(saleshandySequence, SEQUENCE_ID, row);
-    const contact = await crm.waitForRecord('Contacts', row['Email']);
-    expect(contact, `No Zoho contact for ${row['Email']}`).toBeTruthy();
-    expect(ZohoCrmPage.noteCount(await crm.waitForNotes('Contacts', contact!.id, 1))).toBe(1);
-    const found = await crm.waitForNewRecord('Tasks', before);
-    expect(found, 'No new Zoho task').toBeTruthy();
+    const found = await crm.waitForRecord('Tasks', fullName(row));
+    expect(found, `No Zoho task for ${fullName(row)}`).toBeTruthy();
     const text = await crm.recordText('Tasks', found!.id);
-    expect(ZohoCrmPage.field(text, 'Subject')).toBe(TASK_SUBJECT);
-    expect(ZohoCrmPage.field(text, 'Status')).toBe('Not Started');
-    expect(ZohoCrmPage.field(text, 'Priority')).toBe('Normal');
-    expect(ZohoCrmPage.field(text, 'Due Date')).toMatch(ZohoCrmPage.dateText(3));
-    expect(text).toContain(fullName(row));
+    expect(ZohoCrmPage.field(text, 'Subject')).toBe(TASK.subject);
+    expect(ZohoCrmPage.field(text, 'Status')).toBe(TASK.status);
+    expect(ZohoCrmPage.field(text, 'Priority')).toBe(TASK.priority);
+    expect(ZohoCrmPage.field(text, 'Due Date')).toBe(inDays(3));
+    expect(ZohoCrmPage.field(text, 'Contact Name')).toBe(fullName(row));
+    expect((await crm.find('Tasks', fullName(row))).length).toBe(1);
+    expect((await crm.find('Contacts', row['Email'])).length, 'The contact is created').toBe(1);
   });
 
-  test('Task: 2 Contact exists', async ({ zohoIntegration, saleshandyPage, saleshandySequence, crm }) => {
+  test('Task: 2 Contact exists, Status Completed, Priority Highest', async ({ zohoIntegration, saleshandyPage, saleshandySequence, crm }) => {
     const row = prospect('Task > 2');
-    const contactId = await crm.createContact(split(row));
-    const before = await crm.ids('Tasks');
-    await configure(zohoIntegration, saleshandyPage, TRIGGER, [{ action: ZOHO_ACTION.task, task: task() }]);
+    const contactId = await new ZohoForms(crm).createContact({ first: row['First Name'], last: row['Last Name'], email: row['Email'] });
+    await configure(zohoIntegration, saleshandyPage, TRIGGER, [{ action: ZOHO_ACTION.task, task: { ...TASK, status: 'Completed', priority: 'Highest' } }]);
     await sendAndReply(saleshandySequence, SEQUENCE_ID, row);
-    const found = await crm.waitForNewRecord('Tasks', before);
-    expect(found, 'No new Zoho task').toBeTruthy();
-    expect(await crm.recordText('Tasks', found!.id)).toContain(fullName(row));
-    expect(ZohoCrmPage.noteCount(await crm.waitForNotes('Contacts', contactId, 1))).toBe(1);
-    expect((await crm.find('Contacts', row['Email'])).length).toBe(1);
-  });
-
-  test('Task: 3 Status Completed, Priority Highest', async ({ zohoIntegration, saleshandyPage, saleshandySequence, crm }) => {
-    const row = prospect('Task > 3');
-    const before = await crm.ids('Tasks');
-    await configure(zohoIntegration, saleshandyPage, TRIGGER, [{ action: ZOHO_ACTION.task, task: task({ status: 'Completed', priority: 'Highest' }) }]);
-    await sendAndReply(saleshandySequence, SEQUENCE_ID, row);
-    const found = await crm.waitForNewRecord('Tasks', before);
-    expect(found, 'No new Zoho task').toBeTruthy();
+    const found = await crm.waitForRecord('Tasks', fullName(row));
+    expect(found, `No Zoho task for ${fullName(row)}`).toBeTruthy();
     const text = await crm.recordText('Tasks', found!.id);
     expect(ZohoCrmPage.field(text, 'Status')).toBe('Completed');
     expect(ZohoCrmPage.field(text, 'Priority')).toBe('Highest');
+    expect(ZohoCrmPage.field(text, 'Contact Name')).toBe(fullName(row));
+    expect((await crm.find('Tasks', fullName(row))).length).toBe(1);
+    expect((await crm.find('Contacts', row['Email'])).map((r) => r.id), 'Still one contact').toEqual([contactId]);
   });
 
-  test('Task: 4 Subject empty', async ({ zohoIntegration, saleshandyPage, saleshandySequence, crm }) => {
-    const row = prospect('Task > 4');
-    const before = await crm.ids('Tasks');
-    await configure(zohoIntegration, saleshandyPage, TRIGGER, [{ action: ZOHO_ACTION.task, task: task({ subject: '' }) }]);
-    await sendAndReply(saleshandySequence, SEQUENCE_ID, row);
-    // The run completes and the contact is still made, but there is no task and no task note.
-    expect(await crm.waitForRecord('Contacts', row['Email']), `No Zoho contact for ${row['Email']}`).toBeTruthy();
-    expect(await crm.waitForNewRecord('Tasks', before, 60_000), 'A task was made').toBeUndefined();
-  });
-
-  test('Task: 5 Due In empty', async ({ zohoIntegration, saleshandyPage, saleshandySequence, crm }) => {
-    const row = prospect('Task > 5');
-    const before = await crm.ids('Tasks');
-    await configure(zohoIntegration, saleshandyPage, TRIGGER, [{ action: ZOHO_ACTION.task, task: task({ dueIn: '' }) }]);
-    await sendAndReply(saleshandySequence, SEQUENCE_ID, row);
-    const contact = await crm.waitForRecord('Contacts', row['Email']);
-    expect(contact, `No Zoho contact for ${row['Email']}`).toBeTruthy();
-    expect(ZohoCrmPage.noteCount(await crm.waitForNotes('Contacts', contact!.id, 1))).toBe(1);
-    const found = await crm.waitForNewRecord('Tasks', before);
-    expect(found, 'No new Zoho task').toBeTruthy();
-    expect(ZohoCrmPage.field(await crm.recordText('Tasks', found!.id), 'Due Date')).toBe('');
+  // UI check only (QA 2026-11-03, AL-4198): no email is sent. The Task dialog with an empty Subject must not save.
+  test('Task: 3 Subject left empty', async ({ zohoIntegration, saleshandyPage }) => {
+    await zohoIntegration.openTriggers();
+    await zohoIntegration.enableOnly(TRIGGER);
+    for (const chip of await zohoIntegration.selectedActivities(TRIGGER)) await zohoIntegration.removeActivity(TRIGGER, chip);
+    await zohoIntegration.selectActivity(TRIGGER, ZOHO_ACTION.task);
+    const dialog = saleshandyPage.getByRole('dialog');
+    await dialog.waitFor();
+    await dialog.getByRole('textbox').first().fill('');
+    await expect(dialog.getByRole('button', { name: 'Save', exact: true }), 'Save must be disabled with an empty Subject').toBeDisabled({ timeout: 10_000 });
   });
 
   // ---- Combined actions ----
 
-  test('Combined: 1 Contact, Deal and Task, prospect not in Zoho', async ({ zohoIntegration, saleshandyPage, saleshandySequence, crm }) => {
+  test('Combined: 1 Contact, Deal and Task selected, prospect not in Zoho', async ({ zohoIntegration, saleshandyPage, saleshandySequence, crm }) => {
     const row = prospect('Combined > 1');
-    const dealsBefore = await crm.ids('Deals');
-    const tasksBefore = await crm.ids('Tasks');
-    await configure(zohoIntegration, saleshandyPage, TRIGGER, [{ action: ZOHO_ACTION.contact }, { action: ZOHO_ACTION.deal, closingDays: '7' }, { action: ZOHO_ACTION.task, task: task() }]);
-    await sendAndReply(saleshandySequence, SEQUENCE_ID, row);
-    const contact = await crm.waitForRecord('Contacts', row['Email']);
-    expect(contact, `No Zoho contact for ${row['Email']}`).toBeTruthy();
-    const deal = await crm.waitForNewRecord('Deals', dealsBefore);
-    const taskRecord = await crm.waitForNewRecord('Tasks', tasksBefore);
-    expect(deal, 'No new Zoho deal').toBeTruthy();
-    expect(taskRecord, 'No new Zoho task').toBeTruthy();
-    expect(ZohoCrmPage.noteCount(await crm.waitForNotes('Contacts', contact!.id, 1))).toBe(1);
-    const dealText = await crm.recordText('Deals', deal!.id);
-    expect(ZohoCrmPage.field(dealText, 'Contact Name')).toBe(fullName(row));
-    expect(ZohoCrmPage.noteCount(dealText)).toBe(1);
-    const taskText = await crm.recordText('Tasks', taskRecord!.id);
-    expect(taskText).toContain(fullName(row));
-    expect(ZohoCrmPage.noteCount(taskText)).toBe(1);
-    expect((await crm.find('Contacts', row['Email'])).length).toBe(1);
-  });
-
-  test('Combined: 2 Lead and Contact, prospect not in Zoho', async ({ zohoIntegration, saleshandyPage, saleshandySequence, crm }) => {
-    const row = prospect('Combined > 2');
-    await configure(zohoIntegration, saleshandyPage, TRIGGER, [{ action: ZOHO_ACTION.lead }, { action: ZOHO_ACTION.contact }]);
-    await sendAndReply(saleshandySequence, SEQUENCE_ID, row);
-    const lead = await crm.waitForRecord('Leads', row['Email']);
-    const contact = await crm.waitForRecord('Contacts', row['Email']);
-    expect(lead, `No Zoho lead for ${row['Email']}`).toBeTruthy();
-    expect(contact, `No Zoho contact for ${row['Email']}`).toBeTruthy();
-    expect(ZohoCrmPage.noteCount(await crm.waitForNotes('Leads', lead!.id, 1))).toBe(1);
-    expect(ZohoCrmPage.noteCount(await crm.waitForNotes('Contacts', contact!.id, 1))).toBe(1);
-    expect((await crm.find('Leads', row['Email'])).length).toBe(1);
-    expect((await crm.find('Contacts', row['Email'])).length).toBe(1);
-  });
-
-  test('Combined: 3 Contact and Account, prospect has a company', async ({ zohoIntegration, saleshandyPage, saleshandySequence, crm }) => {
-    const row = prospect('Combined > 3');
-    await configure(zohoIntegration, saleshandyPage, TRIGGER, [{ action: ZOHO_ACTION.contact }, { action: ZOHO_ACTION.account }]);
-    await sendAndReply(saleshandySequence, SEQUENCE_ID, row);
-    const contact = await crm.waitForRecord('Contacts', row['Email']);
-    const account = await crm.waitForRecord('Accounts', row['Company']);
-    expect(contact, `No Zoho contact for ${row['Email']}`).toBeTruthy();
-    expect(account, `No Zoho account named ${row['Company']}`).toBeTruthy();
-    expect(ZohoCrmPage.field(await crm.recordText('Contacts', contact!.id), 'Account Name')).toBe(row['Company']);
-    expect((await crm.find('Accounts', row['Company'])).length).toBe(1);
-  });
-
-  test('Combined: 4 All 5 actions, contact, account and deal already exist', async ({ zohoIntegration, saleshandyPage, saleshandySequence, crm }) => {
-    const row = prospect('Combined > 4');
-    const accountId = await crm.createAccount(row['Company']);
-    const contactId = await crm.createContact({ ...split(row), account: row['Company'] });
-    const dealId = await crm.createDeal({ name: `Existing deal ${stamp}`, closingDate: ZohoCrmPage.dateInput(30), contact: fullName(row), account: row['Company'] });
-    const dealsBefore = await crm.ids('Deals');
-    const tasksBefore = await crm.ids('Tasks');
-    await configure(zohoIntegration, saleshandyPage, TRIGGER, [
-      { action: ZOHO_ACTION.contact }, { action: ZOHO_ACTION.lead }, { action: ZOHO_ACTION.account },
-      { action: ZOHO_ACTION.deal, closingDays: '7' }, { action: ZOHO_ACTION.task, task: task() },
+    // configureWaiting waits for the saved message after each Deal and Task dialog. Plain configure picks the next
+    // action too early and the last chip is lost (script race, found by the Email Sent session 2026-11-02).
+    await configureWaiting(zohoIntegration, saleshandyPage, TRIGGER, [
+      { action: ZOHO_ACTION.contact },
+      { action: ZOHO_ACTION.deal, closingDays: '0' },
+      { action: ZOHO_ACTION.task, task: TASK },
     ]);
     await sendAndReply(saleshandySequence, SEQUENCE_ID, row);
-    const lead = await crm.waitForRecord('Leads', row['Email']);
-    expect(lead, `No Zoho lead for ${row['Email']}`).toBeTruthy();
-    expect(await crm.waitForNewRecord('Tasks', tasksBefore), 'No new Zoho task').toBeTruthy();
-    expect(ZohoCrmPage.noteCount(await crm.waitForNotes('Contacts', contactId, 1))).toBe(1);
-    expect(ZohoCrmPage.noteCount(await crm.waitForNotes('Accounts', accountId, 1))).toBe(1);
-    expect(ZohoCrmPage.noteCount(await crm.waitForNotes('Deals', dealId, 1))).toBe(1);
-    expect(ZohoCrmPage.noteCount(await crm.waitForNotes('Leads', lead!.id, 1))).toBe(1);
-    // No duplicates: one contact, one account, and no new deal.
-    expect((await crm.find('Contacts', row['Email'])).length).toBe(1);
-    expect((await crm.find('Accounts', row['Company'])).length).toBe(1);
-    expect(await crm.waitForNewRecord('Deals', dealsBefore, 30_000), 'A new deal was made').toBeUndefined();
+    const contact = await crm.waitForRecord('Contacts', row['Email']);
+    expect(contact, `No Zoho contact for ${row['Email']}`).toBeTruthy();
+    const deal = await crm.waitForRecord('Deals', fullName(row));
+    expect(deal, `No Zoho deal for ${fullName(row)}`).toBeTruthy();
+    const task = await crm.waitForRecord('Tasks', fullName(row));
+    expect(task, `No Zoho task for ${fullName(row)}`).toBeTruthy();
+    expect((await crm.find('Contacts', row['Email'])).length, 'One contact').toBe(1);
+    expect((await crm.find('Deals', fullName(row))).length, 'One deal').toBe(1);
+    expect((await crm.find('Tasks', fullName(row))).length, 'One task').toBe(1);
+    await untilPasses('the deal and the task are linked to the contact', async () => {
+      expect(ZohoCrmPage.field(await crm.recordText('Deals', deal!.id), 'Contact Name')).toBe(fullName(row));
+      expect(ZohoCrmPage.field(await crm.recordText('Tasks', task!.id), 'Contact Name')).toBe(fullName(row));
+    }, 120_000);
+    expect(ZohoCrmPage.noteCount(await crm.recordText('Contacts', contact!.id)), 'A note on the contact').toBeGreaterThanOrEqual(1);
+    expect(ZohoCrmPage.noteCount(await crm.recordText('Deals', deal!.id)), 'A note on the deal').toBeGreaterThanOrEqual(1);
+  });
+
+  // Skipped (QA 2026-11-03): selecting all 5 actions is not a realistic setup.
+  test.skip('Combined: 2 All 5 actions selected, contact, account and deal already exist', async ({ zohoIntegration, saleshandyPage, saleshandySequence, crm }) => {
+    const row = prospect('Combined > 2');
+    const forms = new ZohoForms(crm);
+    const accountName = `Combined Account ${stamp}`;
+    const dealName = `Combined Deal ${stamp} ${row['Last Name']}`;
+    const accountId = await crm.createAccount(accountName);
+    const contactId = await forms.createContact({ first: row['First Name'], last: row['Last Name'], email: row['Email'], account: accountName });
+    const dealId = await forms.createDeal({ name: dealName, closing: inDays(30), contact: fullName(row), amount: '100', account: accountName });
+    await configureWaiting(zohoIntegration, saleshandyPage, TRIGGER, [
+      { action: ZOHO_ACTION.contact },
+      { action: ZOHO_ACTION.lead },
+      { action: ZOHO_ACTION.account },
+      { action: ZOHO_ACTION.deal, closingDays: '0' },
+      { action: ZOHO_ACTION.task, task: TASK },
+    ]);
+    await sendAndReply(saleshandySequence, SEQUENCE_ID, row);
+    await untilPasses('the contact, account and deal are updated', async () => {
+      expect(await crm.recordText('Contacts', contactId)).toContain(row['Department']);
+      expect(ZohoCrmPage.field(await crm.recordText('Deals', dealId), 'Amount')).toContain(Number(row['Deal Value']).toLocaleString('en-US'));
+    }, 180_000);
+    expect(await crm.waitForRecord('Leads', row['Email']), 'One new lead').toBeTruthy();
+    expect(await crm.waitForRecord('Tasks', fullName(row)), 'One new task').toBeTruthy();
+    expect((await crm.find('Contacts', row['Email'])).map((r) => r.id), 'No second contact').toEqual([contactId]);
+    expect((await crm.find('Accounts', accountName)).map((r) => r.id), 'No second account').toEqual([accountId]);
+    expect((await crm.find('Deals', dealName)).map((r) => r.id), 'No second deal').toEqual([dealId]);
+    expect((await crm.find('Leads', row['Email'])).length, 'One lead').toBe(1);
+    expect((await crm.find('Tasks', fullName(row))).length, 'One task').toBe(1);
   });
 
   // ---- Real reply ----
-  // Sends step 1 to QA's Gmail address, then waits up to 20 min for QA to reply from Gmail. Set ZOHO_REPLY_GMAIL.
 
-  test('Real reply: 1 Contact action, prospect mailbox is the QA Gmail address', async ({ zohoIntegration, saleshandyPage, saleshandySequence, crm }) => {
-    test.skip(!GMAIL, 'Set ZOHO_REPLY_GMAIL to the QA Gmail address to run this row');
-    test.setTimeout(30 * 60_000);
+  test('Real reply: 1 Contact action, prospect mailbox is a Gmail address', async ({ zohoIntegration, saleshandyPage, saleshandySequence, crm }) => {
+    test.skip(!GMAIL, 'Set ZOHO_REPLY_GMAIL to a Gmail address that QA can reply from');
+    test.setTimeout(35 * 60_000);
     const row = prospect('Real reply > 1', { Email: GMAIL! });
-    await configure(zohoIntegration, saleshandyPage, TRIGGER, [{ action: ZOHO_ACTION.contact }]);
-    await saleshandySequence.createAndAddProspect(SEQUENCE_ID, row);
-    await saleshandySequence.sendNow(SEQUENCE_ID, fullName(row), 1, row['Email']);
-    console.log(`REPLY NOW: reply from ${GMAIL} to the step 1 email of "Zoho Reply Received QA".`);
+    await configure(zohoIntegration, saleshandyPage, TRIGGER, contactOnly);
+    await sendStep(saleshandySequence, SEQUENCE_ID, row);
+    console.log(`REAL REPLY: open the email in ${GMAIL} and reply to it now. The test waits up to 20 minutes.`);
     await saleshandySequence.waitForReplied(SEQUENCE_ID, fullName(row), 1, row['Email'], 20 * 60_000);
     const found = await crm.waitForRecord('Contacts', row['Email']);
     expect(found, `No Zoho contact for ${row['Email']}`).toBeTruthy();
     const text = await crm.recordText('Contacts', found!.id);
     expect(ZohoCrmPage.field(text, 'Contact Name')).toBe(fullName(row));
-    expect(ZohoCrmPage.noteCount(text)).toBe(1);
-  });
-
-  // ---- Contact 7: runs last. It empties the Contact Fields mapping and puts it back in `finally`. ----
-
-  test('Contact: 7 Contact Fields mapping is empty, prospect not in Zoho', async ({ zohoIntegration, saleshandyPage, saleshandySequence, crm }) => {
-    const row = prospect('Contact > 7');
-    const pairs = Object.entries(ZOHO_FIELD_MAPPING['Contact Fields']);
-    try {
-      await zohoIntegration.openMappingCard('Contact Fields');
-      for (const [field] of pairs) await zohoIntegration.unmapField(field);
-      await zohoIntegration.save();
-      await zohoIntegration.savedToast().waitFor({ timeout: 30_000 });
-      await configure(zohoIntegration, saleshandyPage, TRIGGER, [{ action: ZOHO_ACTION.contact }]);
-      await sendAndReply(saleshandySequence, SEQUENCE_ID, row);
-      // Proposed, unconfirmed: the run completes and a contact is made with no mapped fields. Zoho may reject it
-      // because Last Name is empty (see Contact 5). If so, record the result and ask QA.
-      expect(await crm.waitForRecord('Contacts', row['Email']), `No Zoho contact for ${row['Email']}`).toBeTruthy();
-    } finally {
-      await zohoIntegration.openMappingCard('Contact Fields');
-      for (const [field, zohoField] of pairs) await zohoIntegration.mapField(field, zohoField);
-      await zohoIntegration.save();
-      await zohoIntegration.savedToast().waitFor({ timeout: 30_000 });
-    }
+    expect(ZohoCrmPage.noteCount(text), 'One note').toBe(1);
+    expect((await crm.find('Contacts', row['Email'])).length).toBe(1);
   });
 });

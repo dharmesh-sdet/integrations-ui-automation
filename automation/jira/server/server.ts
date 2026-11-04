@@ -18,6 +18,8 @@ import { addComment, createBug, describeFields, issueStatus, JIRA_SITE, whoAmI, 
 const root = path.resolve(import.meta.dirname, '../..');
 const reportsDir = path.resolve(root, process.env.REPORTS_DIR ?? 'reports');
 const draftsDir = path.join(root, 'jira/drafts');
+// The review app (jira/web, built with npm run jira:build). Without a build the old report.html is served.
+const appDir = path.join(root, 'jira/web/dist');
 const PORT = Number(process.env.JIRA_SERVER_PORT ?? 4317);
 
 type Draft = (BugDraft | CommentDraft) & { sent?: Sent & { at: string }; waitingFor?: string };
@@ -53,7 +55,7 @@ const json = (res: ServerResponse, status: number, body: unknown) => {
   res.end(JSON.stringify(body));
 };
 
-const TYPES: Record<string, string> = { '.html': 'text/html; charset=utf-8', '.png': 'image/png', '.json': 'application/json', '.zip': 'application/zip', '.md': 'text/plain; charset=utf-8' };
+const TYPES: Record<string, string> = { '.html': 'text/html; charset=utf-8', '.png': 'image/png', '.json': 'application/json', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.svg': 'image/svg+xml', '.map': 'application/json', '.zip': 'application/zip', '.md': 'text/plain; charset=utf-8' };
 
 // One send at a time per draft, so a double click cannot create two tickets.
 const sending = new Set<string>();
@@ -120,11 +122,18 @@ createServer(async (req, res) => {
       // The review page, the Dashboard, Drafts, and the four platform pages are one page;
       // it reads the address to decide what to show.
       const pages = ['/', '/dashboard', '/drafts', '/salesforce', '/hubspot', '/pipedrive', '/zoho'];
-      const rel = decodeURIComponent(pages.includes(url.pathname.replace(/(.)\/+$/, '$1')) ? '/report.html' : url.pathname);
-      const file = path.join(reportsDir, rel);
-      if (file.startsWith(reportsDir + path.sep) && existsSync(file) && statSync(file).isFile()) {
+      const hasApp = existsSync(path.join(appDir, 'index.html'));
+      const isPage = pages.includes(url.pathname.replace(/(.)\/+$/, '$1'));
+      const serve = (file: string) => {
         res.writeHead(200, { 'Content-Type': TYPES[path.extname(file)] ?? 'application/octet-stream' });
-        return res.end(readFileSync(file));
+        res.end(readFileSync(file));
+      };
+      if (isPage && hasApp) return serve(path.join(appDir, 'index.html'));
+      const rel = decodeURIComponent(isPage ? '/report.html' : url.pathname);
+      // Built app files first (/assets/...), then the reports folder (screenshots, traces).
+      for (const base of hasApp ? [appDir, reportsDir] : [reportsDir]) {
+        const file = path.join(base, rel);
+        if (file.startsWith(base + path.sep) && existsSync(file) && statSync(file).isFile()) return serve(file);
       }
     }
     json(res, 404, { error: 'Not found.' });

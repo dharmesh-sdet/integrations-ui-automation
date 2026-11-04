@@ -1,3 +1,4 @@
+import type { Locator } from '@playwright/test';
 import type { ZohoMappingCard } from '../../config/zoho-field-mapping.ts';
 import { SalesforceIntegrationPage } from './salesforce-integration.page.ts';
 
@@ -23,5 +24,20 @@ export class ZohoIntegrationPage extends SalesforceIntegrationPage {
   // so enableOnly (which turns the others off) is not used to switch a trigger off.
   async turnOff(name: string): Promise<void> {
     await this.setTrigger(this.triggerRow(name), false);
+  }
+
+  // Opens the Extra Configuration dialog of a selected action chip. The chip is looked up inside this trigger's block only,
+  // because a page-wide lookup took the first Task chip, which belongs to another trigger on the shared account
+  // (it read "Follow up after reply", 2026-11-03).
+  // TODO(needs-input): the first icon of the chip opening its dialog is a guess (the last one removes it).
+  async openActivityConfiguration(trigger: string, activity: string): Promise<Locator> {
+    const block = this.page
+      .locator('div:has(> div > div > .switchToggle):has(> div > div > .action-container)')
+      .filter({ has: this.page.locator('div:has(> .switchToggle)').filter({ hasText: trigger }) });
+    const chip = block.locator('div:has(> .action-container)').filter({ hasText: activity }).first();
+    await chip.locator('.action-container > svg').first().click();
+    const dialog = this.page.getByRole('dialog');
+    await dialog.waitFor({ timeout: 15_000 });
+    return dialog;
   }
 }

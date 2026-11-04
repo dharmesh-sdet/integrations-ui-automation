@@ -19,7 +19,6 @@ const ROWS: Array<[string, string]> = [
   ['Trigger and setup > 1', 'Contact > 1'],
   ['Trigger and setup > 3', 'Contact > 1'],
   ['Trigger and setup > 4', 'Contact > 1'],
-  ['Trigger and setup > 5', 'Contact > 1'],
   ['Contact > 1', 'Contact > 1'],
   ['Contact > 2', 'Contact > 1'],
   ['Contact > 3', 'Contact > 1'],

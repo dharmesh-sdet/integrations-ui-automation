@@ -26,6 +26,10 @@ root, add `@<folder>/CLAUDE.md` to its root `CLAUDE.md`, add the same
 `.mcp.json`, and drop the "How this fits the automation project" section
 from [CLAUDE.md](CLAUDE.md).
 
+## Jira page
+
+The page at `http://localhost:4317` (`npm run jira`) opens on the Dashboard and is a React and Vite app in `web/`. Run `npm run jira:build` once, and again after you change `web/src`. Without a build, the server still serves the old `reports/report.html`. The app reads `/api/tests` and `/api/drafts`, and sends or deletes drafts through the same routes as before.
+
 ## Contents
 
 ```

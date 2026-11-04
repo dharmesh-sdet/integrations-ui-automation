@@ -2,7 +2,8 @@
 
 Every comment goes through the confirmation gate in [../CLAUDE.md](../CLAUDE.md):
 show the full text, name the ticket it goes on, get an explicit "looks good",
-then post it with `addOrEditJiraIssueComment`. Editing an existing comment
+then write it to `jira/drafts/` as a `comment` draft. QA sends it from
+`npm run jira`. Claude does not post it. Editing an existing comment
 (for example, adding a row to a retest table) needs the gate too.
 
 ## 1. Pick the comment type

@@ -62,8 +62,21 @@ export async function sendAndReply(seq: SaleshandySequencePage, sequenceId: stri
   await seq.markAsReplied(sequenceId, name, 1, row['Email']);
 }
 
+// Same as sendAndReply, but Mark as Replied is clicked on the Prospects tab (Zoho Reply Received, QA 2026-11-03).
+export async function sendAndReplyFromProspects(seq: SaleshandySequencePage, sequenceId: string, row: Row): Promise<void> {
+  const name = fullName(row);
+  await seq.createAndAddProspect(sequenceId, row);
+  await seq.sendNow(sequenceId, name, 1, row['Email']);
+  await seq.markAsRepliedFromProspects(sequenceId, name, row['Email'], 1);
+}
+
 // A second reply from the same prospect: step 2 is sent and marked as replied.
 export async function replyAgain(seq: SaleshandySequencePage, sequenceId: string, row: Row, step = 2): Promise<void> {
   await seq.sendNow(sequenceId, fullName(row), step, row['Email']);
   await seq.markAsReplied(sequenceId, fullName(row), step, row['Email']);
+}
+
+export async function replyAgainFromProspects(seq: SaleshandySequencePage, sequenceId: string, row: Row, step = 2): Promise<void> {
+  await seq.sendNow(sequenceId, fullName(row), step, row['Email']);
+  await seq.markAsRepliedFromProspects(sequenceId, fullName(row), row['Email'], step);
 }

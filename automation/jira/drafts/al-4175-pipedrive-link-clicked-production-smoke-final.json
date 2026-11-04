@@ -1,0 +1,12 @@
+{
+  "type": "comment",
+  "ticket": "AL-4175",
+  "body": "**Verification:** Production testing is done. Smoke tested the Link is Clicked in Saleshandy (Pipedrive) trigger on Production, 11 checks:\n\n| # | Activity | What was checked | Status |\n| --- | --- | --- | --- |\n| 1 | Create a Lead, Create a Deal and Create a Person in Pipedrive | New prospect, first link clicked. One person with one lead and one deal titled with the prospect email, and one activity. | Pass |\n| 2 | Create a Person in Pipedrive | Existing person with an old value in a mapped field. The person is updated, there is still one person, and a further activity is added. | Pass |\n| 3 | Create a Person in Pipedrive (second link) | Prospect already clicked the first link. The second link is clicked 180 s after the send. A further activity is added to the same person, and there is still one person. | Pass |\n| 4 | Update a Deal in Pipedrive | Person with 2 deals. Only the newest deal changes: the title is the prospect email and the stage is Pipeline / Contact Made. The older deal is unchanged. | Pass |\n| 5 | Update a Person in Pipedrive | Existing person with an old value in a mapped field. The mapped fields are updated and one activity is added. | Pass |\n| 6 | Delete Deal in Pipedrive | Person with 2 deals. Only the newest deal is deleted and the older deal stays. | Pass |\n| 7 | Delete Person in Pipedrive | The person is deleted. | Pass |\n| 8 | Create Organization in Pipedrive | Prospect with a company that has no organization of that name. One organization named after the company is created, and it is not linked to any person. | Pass |\n| 9 | Update Organization in Pipedrive | An organization with the exact company name exists. No second organization is created. | Pass |\n| 10 | Delete Organization in Pipedrive | An organization with the exact company name exists. The organization is deleted. | Pass |\n| 11 | Create a Person in Pipedrive (no click) | Email opened in Mailinator, link not clicked. No person and no activity is created. | Pass |",
+  "waitingFor": "QA to send from npm run jira. Source: Production smoke of Pipedrive Link Clicked on emailopenedprod, 2026-10-29. All 11 checks Pass. Wording approved by QA in chat.",
+  "sent": {
+    "key": "AL-4175",
+    "url": "https://saleshandy.atlassian.net/browse/AL-4175",
+    "problems": [],
+    "at": "2026-10-29T10:02:13.828Z"
+  }
+}

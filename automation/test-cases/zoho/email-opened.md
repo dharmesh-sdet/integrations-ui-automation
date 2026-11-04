@@ -27,8 +27,7 @@ Not covered, still open: Z-1, Z-5 and Q3. All three are known and kept by decisi
 | 1 | Open trigger OFF, Contact action saved | Open the email | Opened count goes up. Nothing created or changed in Zoho | None |
 | 2 | Trigger ON, Contact action saved, page reloaded | Open Triggers & Activity | The selected action and its Extra Configuration values show as saved | None |
 | 3 | Track email opens is off in the sequence, Contact action on | Open the email | No Opened count. No contact and no note in Zoho | None |
-| 4 | Contact action on, prospect opened once and the first run is done | Open the same email a second time | Opened count reaches 2. Still 1 contact. A second note with Open Count 2 (proposed, unconfirmed) | None |
-| 5 | Only "Reply is Received in Saleshandy" on, with the Contact action | Open the email | Opened count goes up. No contact and no note in Zoho | None |
+| 4 | Contact action on, prospect opened once and the first run is done | Open the same email a second time | Opened count reaches 2. Still 1 contact. A second note with Open Count 2 (seen 2026-10-31) | None |
 
 ## Create/Update a Contact in Zoho
 
@@ -90,4 +89,4 @@ Extra Configuration: Task and Deal values as in their sections.
 | # | Scenario | Do | Expected | Ticket |
 |---|---|---|---|---|
 | 1 | Contact, Lead, Account, Deal and Task all selected, prospect not in Zoho | Open the email | 1 contact. The lead, deal and task exist for it from the first event. Accounts as Z-5 allows | None |
-| 2 | Contact and Deal selected, prospect not in Zoho, then a second open | Open the email, then open it again | After the first open: 1 contact and 1 deal (the deal can be unlinked, as in developer run VO1). After the second open: still 1 contact and 1 deal, now linked to the contact (proposed, unconfirmed) | None |
+| 2 | Contact and Deal selected, prospect not in Zoho, then a second open | Open the email, then open it again | After the first open: 1 contact and 1 deal, and the deal already shows the contact and the company name (seen 2026-10-31). After the second open: still 1 deal for this prospect (seen 2026-10-31). A deal for another prospect appeared at the same time from a parallel run, so the deal count of the whole module is not a valid check | None |

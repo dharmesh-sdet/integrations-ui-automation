@@ -1,0 +1,12 @@
+{
+  "type": "comment",
+  "ticket": "AL-4218",
+  "body": "Verified on production after deploy. Retested the scenario from this ticket and it works as expected.",
+  "waitingFor": "QA to review wording and send via npm run jira.",
+  "sent": {
+    "key": "AL-4218",
+    "url": "https://saleshandy.atlassian.net/browse/AL-4218",
+    "problems": [],
+    "at": "2026-11-02T13:55:11.055Z"
+  }
+}

@@ -30,9 +30,9 @@ Not covered, still open: Z-1, Z-5 and Q3. All three are known and kept by decisi
 | 1 | Trigger OFF, Contact action saved | Unsubscribe (UI) | Prospects tab shows Unsubscribed. Nothing created or changed in Zoho | None |
 | 2 | Trigger ON, Contact action saved, page reloaded | Open Triggers & Activity | The selected action and its Extra Configuration values show as saved | None |
 | 3 | Contact action on, prospect not in Zoho, step 1 sent | Unsubscribe (UI) | 1 contact. Tag Unsubscribed-Saleshandy on it. One note | None |
-| 4 | Same setup as row 3, new prospect | Unsubscribe (link) | Page says "You will no longer receive emails from us". Prospects tab shows Unsubscribed. 1 contact with the tag and one note, as in row 3 (proposed, unconfirmed) | None |
-| 5 | Row 4 done, same prospect | Open the same unsubscribe link a second time | Still 1 contact and 1 tag. A second note can be added (proposed, unconfirmed) | None |
-| 6 | Row 4 done, same prospect | Click "Subscribe here" on the unsubscribe page | Page says "You have successfully subscribed and added to our list for future communication". Prospects tab shows the previous status. The tag stays on the contact. No new note (proposed, unconfirmed) | None |
+| 4 | Same setup as row 3, new prospect | Unsubscribe (link) | Page says "You will no longer receive emails from us". Prospects tab shows Unsubscribed, but only when the email stays open about 20 seconds before the link is used. Without that pause the row stayed Active for 120 seconds (seen 2026-10-31). 1 contact and one note (seen 2026-10-31). The tag was not seen in the record text (unconfirmed) | None |
+| 5 | Row 4 done, same prospect | Open the same unsubscribe link a second time | Still 1 contact. A second note is added, 2 notes in total (seen 2026-10-31). The tag was not seen in the record text (unconfirmed) | None |
+| 6 | Row 4 done, same prospect | Click "Subscribe here" on the unsubscribe page | Page says "You have successfully subscribed and added to our list for future communication". Prospects tab shows Active, the previous status (seen 2026-10-31). No new note, still 2 notes (seen 2026-10-31). The tag was not seen in the record text (unconfirmed) | None |
 
 ## Create/Update a Contact in Zoho
 
@@ -41,8 +41,7 @@ Extra Configuration: None.
 | # | Scenario | Do | Expected | Ticket |
 |---|---|---|---|---|
 | 1 | Prospect not in Zoho | Unsubscribe (UI) | One contact with the 11 mapped Contact fields and the real phone. Tag Unsubscribed-Saleshandy. One note, as in run U1 | None |
-| 2 | Contact exists with an old Title and the phone filled in | Unsubscribe (UI) | Same contact updated with the prospect Title. Phone kept. Still 1 contact. Tag added | None |
-| 3 | Contact exists with the tag VIP | Unsubscribe (UI) | Tag Unsubscribed-Saleshandy added and VIP replaced (Z-6, known, kept by decision). Phone kept, as in run U2 | None |
+| 2 | Contact exists with an old Title and the phone filled in | Unsubscribe (UI) | Same contact updated with the prospect Title and the prospect Phone (the prospect has a Phone Number, so it replaces the old one). Still 1 contact. Tag added | None |
 
 ## Create/Update a Lead in Zoho
 
@@ -50,7 +49,7 @@ Extra Configuration: None.
 
 | # | Scenario | Do | Expected | Ticket |
 |---|---|---|---|---|
-| 1 | Prospect not in Zoho | Unsubscribe (UI) | One lead with the mapped Lead Fields (City, Designation, Phone) and the prospect company. One note. Whether a contact with the tag is also created is not documented (proposed, unconfirmed) | None |
+| 1 | Prospect not in Zoho | Unsubscribe (UI) | One lead with the mapped Lead Fields (City, Designation, Phone) and the prospect company. One note. No contact is created: 1 lead and 0 contacts with the email (seen 2026-10-31) | None |
 | 2 | Lead exists for the prospect email | Unsubscribe (UI) | Same lead updated. Still 1 lead | None |
 | 3 | Prospect has no company | Unsubscribe (UI) | Lead created without Company, no error | None |
 
@@ -80,7 +79,7 @@ Extra Configuration: Subject "Follow up after unsubscribe", Status Not Started, 
 | # | Scenario | Do | Expected | Ticket |
 |---|---|---|---|---|
 | 1 | Prospect not in Zoho | Unsubscribe (UI) | Contact created, then one task linked to it with the 4 values. Due date is today plus 3 days | None |
-| 2 | Subject left empty | Unsubscribe (UI) | No task and no task note. The run still completes | None |
+| 2 | Subject left empty (Contact action saved first) | Open the Task Extra Configuration, leave Subject empty, then unsubscribe (UI) | Save stays disabled, so the Task is never saved (AL-4198). The contact is created. No task and no task note | AL-4198 |
 
 ## Combined actions
 

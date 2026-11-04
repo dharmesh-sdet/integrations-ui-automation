@@ -1,0 +1,25 @@
+{
+  "type": "bug",
+  "project": "AL",
+  "priority": "Medium",
+  "environment": "Production",
+  "epic": "AL-3982",
+  "assignee": {
+    "name": "Darshan",
+    "accountId": "5af5d8dd244bc90a10605d4f"
+  },
+  "qa": {
+    "name": "Dharmesh Patel",
+    "accountId": "712020:c7dedb58-9cb3-4450-a98f-5b5b56f6556b"
+  },
+  "links": [],
+  "attachments": [],
+  "summary": "Sequence > Emails: Actions menu opens empty, without Preview email, Mark as replied and Mark as bounced",
+  "description": "**Prerequisites:**\n- A sequence with at least one sent email, for example Zoho's First Sequence.\n\n**Steps to Reproduce:**\n1. Open Sequences and open a sequence that has sent emails.\n2. Go to the Emails tab.\n3. In the Actions column, click the three-dot icon on any row.\n4. Check the options shown.\n\n**Actual Result:**\n- An empty dropdown opens. It shows no options.\n- A screenshot will be attached to the ticket manually.\n\n**Expected Result:**\n- The dropdown shows three options: Preview email, Mark as replied and Mark as bounced, as on Production.\n\n**Note:**\n- Affected Environment - Staging.",
+  "sent": {
+    "key": "AL-4217",
+    "url": "https://saleshandy.atlassian.net/browse/AL-4217",
+    "problems": [],
+    "at": "2026-11-02T09:37:06.086Z"
+  }
+}

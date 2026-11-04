@@ -1,0 +1,12 @@
+{
+  "type": "comment",
+  "ticket": "AL-4193",
+  "body": "**Verification:** Production testing is done. Smoke tested the Sequence Email is Opened in Saleshandy trigger (Zoho) on Production, all 5 activities:\n\n| # | Activity | What was checked | Status |\n| --- | --- | --- | --- |\n| 1 | Create/Update a Contact in Zoho | Prospect not in Zoho: one contact created with the mapped Contact Fields and one note with Open Count 1. Email opened a second time: Open Count reaches 2, still one contact, and a second note. Existing contact with an old Title: the same contact is updated and no second contact is made. | Pass |\n| 2 | Create/Update a Lead in Zoho | Prospect not in Zoho: one lead created with the mapped Lead Fields and the prospect company, and one note. | Pass |\n| 3 | Create/Update Account in Zoho | Prospect with a company and no contact: account created with the company name and the mapped Account Fields, not linked to a contact. | Pass |\n| 4 | Create/Update a Deal in Zoho | Prospect not in Zoho, Closing date 0: one deal created with the Deal Value as Amount, Stage Qualification and an empty Closing Date. No contact is created. | Pass |\n| 5 | Create a Task in Zoho | Contact created, then one task linked to it with the configured Subject, Status, Priority and the due date set 3 days ahead. | Pass |",
+  "waitingFor": "QA to review wording and send via npm run jira.",
+  "sent": {
+    "key": "AL-4193",
+    "url": "https://saleshandy.atlassian.net/browse/AL-4193",
+    "problems": [],
+    "at": "2026-11-02T15:21:52.930Z"
+  }
+}

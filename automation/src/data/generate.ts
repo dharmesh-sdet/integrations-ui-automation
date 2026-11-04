@@ -11,6 +11,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { readCsv, type Row } from './csv.ts';
 import { EXTRA_NATIONALITIES, type Nationality } from './countries.ts';
+import { MORE_NAMES } from './more-names.ts';
 import { pipedriveIndustry } from './pipedrive-industries.ts';
 
 export const dataDir = path.resolve(import.meta.dirname, '../../test-data');
@@ -62,6 +63,14 @@ export const NATIONALITIES: Nationality[] = [
 // 2026-10-13 (QA): many more countries, so new people do not match anyone
 // HubSpot already holds. See countries.ts.
 NATIONALITIES.push(...EXTRA_NATIONALITIES);
+
+// 2026-11-03 (QA): the pool ran dry, so more first and last names are added to existing countries. See more-names.ts.
+for (const [country, more] of Object.entries(MORE_NAMES)) {
+  const nat = NATIONALITIES.find((n) => n.country === country);
+  if (!nat) throw new Error(`more-names.ts: no country "${country}" in NATIONALITIES`);
+  nat.first.push(...more.first.filter((f) => !nat.first.includes(f)));
+  nat.last.push(...more.last.filter((l) => !nat.last.includes(l)));
+}
 
 // Countries of the people made before 2026-10-13. Kept in NATIONALITIES because
 // refreshUsed looks an existing row's country up there, but not used for new people.

@@ -68,11 +68,11 @@ export class SalesforceIntegrationPage extends SaleshandyPage {
 
   // Each trigger row is a div holding the toggle and the trigger name. The
   // toggle has no accessible name, so the row is found by CSS plus its text.
-  private triggerRows(): Locator {
+  protected triggerRows(): Locator {
     return this.page.locator('div:has(> .switchToggle)');
   }
 
-  private triggerRow(name: string): Locator {
+  protected triggerRow(name: string): Locator {
     return this.triggerRows().filter({ hasText: name });
   }
 
@@ -80,7 +80,7 @@ export class SalesforceIntegrationPage extends SaleshandyPage {
     return this.triggerRow(name).locator('input[name="Switch"]').isChecked();
   }
 
-  private async setTrigger(row: Locator, on: boolean): Promise<void> {
+  protected async setTrigger(row: Locator, on: boolean): Promise<void> {
     const checkbox = row.locator('input[name="Switch"]');
     if ((await checkbox.isChecked()) === on) return;
     await this.closeSidebar();

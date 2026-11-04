@@ -132,14 +132,15 @@
 
   // One page, five views, chosen by the address (the server serves this file for all of them):
   // / review page (drafts still waiting for a click, then the tests), /dashboard,
-  // /salesforce and /hubspot (tabs Test and Drafts).
+  // and one page per platform (tabs Test and Drafts). Add a platform here, in the
+  // server's pages list and in jira/server/platform.ts.
   const route = location.pathname.replace(/(.)\/+$/, '$1');
-  const PLATFORMS = { '/salesforce': 'salesforce', '/hubspot': 'hubspot' };
-  const NAMES = { salesforce: 'Salesforce', hubspot: 'HubSpot', other: 'Other' };
-  const platform = PLATFORMS[route] || null;
+  const NAMES = { salesforce: 'Salesforce', hubspot: 'HubSpot', pipedrive: 'Pipedrive', zoho: 'Zoho', other: 'Other' };
+  const PLATFORM_KEYS = ['salesforce', 'hubspot', 'pipedrive', 'zoho'];
+  const platform = PLATFORM_KEYS.find((k) => route === '/' + k) || null;
   const tabName = new URLSearchParams(location.search).get('tab') === 'drafts' ? 'drafts' : 'test';
   document.title = platform ? NAMES[platform] : route === '/dashboard' ? 'Dashboard' : document.title;
-  document.getElementById('nav').innerHTML = [['/', 'Review'], ['/dashboard', 'Dashboard'], ['/salesforce', 'Salesforce'], ['/hubspot', 'HubSpot']]
+  document.getElementById('nav').innerHTML = [['/', 'Review'], ['/dashboard', 'Dashboard'], ...PLATFORM_KEYS.map((k) => ['/' + k, NAMES[k]])]
     .map(([href, label]) => `<a href="${href}" class="${href === route ? 'on' : ''}">${label}</a>`).join('');
   if (platform) {
     document.getElementById('page-head').innerHTML = `
@@ -482,8 +483,8 @@
       };
       const other = drafts.filter((d) => d.platform === 'other');
       draftsBox.innerHTML = `<h1>Dashboard</h1><div class="muted">Pick a platform to see its tests and its Jira drafts</div>
-        <div class="dash-grid">${card('salesforce')}${card('hubspot')}</div>
-        ${other.length ? `<p class="hint">${plural(other.length, 'draft')} could not be matched to Salesforce or HubSpot.</p>` : ''}`;
+        <div class="dash-grid">${PLATFORM_KEYS.map(card).join('')}</div>
+        ${other.length ? `<p class="hint">${plural(other.length, 'draft')} could not be matched to a platform.</p>` : ''}`;
       return;
     }
     // Review page: only what still needs the one click.
@@ -492,7 +493,7 @@
       <div class="jira-drafts-head">
         <div>
           <h1 style="margin:0">Jira drafts</h1>
-          <div class="muted">${waiting.length ? plural(waiting.length, 'draft') + ' waiting for one click' : 'Nothing waiting. Sent tickets and comments are on the Dashboard.'}</div>
+          <div class="muted">${waiting.length ? plural(waiting.length, 'draft') + ' waiting for one click' : 'Nothing waiting. Sent tickets and comments are on each platform page, under Drafts.'}</div>
         </div>
         ${waiting.length ? '<div class="actions"><button data-expand-all>Expand all</button><button data-collapse-all>Collapse all</button></div>' : ''}
       </div>`

@@ -1,0 +1,28 @@
+{
+  "type": "bug",
+  "project": "AL",
+  "priority": "Medium",
+  "environment": "Production",
+  "epic": "AL-3982",
+  "assignee": {
+    "name": "Darshan",
+    "accountId": "5af5d8dd244bc90a10605d4f"
+  },
+  "qa": {
+    "name": "Dharmesh Patel",
+    "accountId": "712020:c7dedb58-9cb3-4450-a98f-5b5b56f6556b"
+  },
+  "links": [
+    "AL-4170",
+    "AL-4172"
+  ],
+  "attachments": [],
+  "summary": "Reply is Received in Saleshandy: Create a Person in Pipedrive and Update a Person in Pipedrive activities show Success but do not add an activity to the person",
+  "description": "**Prerequisites:**\n- The Pipedrive integration is connected to Saleshandy.\n- The Reply is Received in Saleshandy trigger is enabled with one activity only, saved. Run the steps once with Create a Person in Pipedrive (prospect not in Pipedrive) and once with Update a Person in Pipedrive (prospect already a person in Pipedrive).\n- A sequence with the prospect added.\n\n**Steps to Reproduce:**\n1. Go to Triggers and Activities, enable Reply is Received in Saleshandy, select Create a Person in Pipedrive, and click Save.\n2. Add the prospect to the sequence and send step 1 with Send now. Wait until the email shows Sent.\n3. Open the sequence > Emails and use Mark as Replied for the prospect.\n4. Wait 15 seconds, then open the person in Pipedrive and check Focus and History > Activities.\n5. Go to Integrations > Pipedrive > Logs and open the newest Reply is Received in Saleshandy entry.\n6. Repeat steps 1 to 5 with a new prospect and the Update a Person in Pipedrive activity only.\n\n**Actual Result:**\n- The person is created (Create a Person) or found (Update a Person). Logs show the status Success, and the \"Create a person\" and \"Log Activity\" steps show Success.\n- The person has no activity. Focus is empty and Activities shows 0.\n- The same happens when Create a Person is selected in slot 1 and Update a Person in slot 2, and when Create Organization and Create a Person are selected together.\n\n**Expected Result:**\n- An activity is added to the person, as the Email Sent trigger adds \"Email sent from Saleshandy\" and the Prospect is Unsubscribed in Saleshandy trigger adds \"Prospect is Unsubscribed in Saleshandy\".\n\n**Note:**\n- Affected Environment - Staging.\n- Seen in four runs with new prospects.\n- Example from the Prospect is Unsubscribed in Saleshandy trigger with the Create a Person activity: the new person (Tiago Sitoe) shows an activity titled \"Prospect is Unsubscribed in Saleshandy\" with the sequence name, and Activities shows 1. A screenshot will be attached to the ticket manually.\n",
+  "sent": {
+    "key": "AL-4186",
+    "url": "https://saleshandy.atlassian.net/browse/AL-4186",
+    "problems": [],
+    "at": "2026-10-28T09:48:25.620Z"
+  }
+}

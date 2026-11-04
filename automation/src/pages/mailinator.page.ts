@@ -39,7 +39,8 @@ export class MailinatorPage {
     // The HTML body is in an iframe; its links go through the tracking domain.
     const target = page.locator('#html_msg_body').contentFrame().getByRole('link').nth(link);
     const opened = page.context().waitForEvent('page');
-    await target.click();
+    // Fail in a minute when the email has no link, not at the end of the test timeout.
+    await target.click({ timeout: 60_000 });
     await (await opened).close();
   }
 
@@ -80,7 +81,23 @@ export class MailinatorPage {
     await this.clickLink(page, link);
   }
 
-  private async openMessage(page: Page, email: string, subject: string | RegExp): Promise<void> {
+  // Subject of the newest email in the inbox, for a run that must work with any sequence. Reloads
+  // until an email shows. A new prospect has one email, so the newest one is the one just sent.
+  async latestSubject(email: string): Promise<string> {
+    const open = this.opened.get(email);
+    const page = open && !open.page.isClosed() ? open.page : await this.context.newPage();
+    this.opened.set(email, { page, subject: '' });
+    await this.openInbox(page, email);
+    // Row 0 is the From / Subject / Received header; cell 1 of the next row is the subject.
+    const subject = page.getByRole('row').nth(1).getByRole('cell').nth(1);
+    await expect(async () => {
+      if (!(await subject.isVisible())) await page.reload();
+      await expect(subject).toBeVisible({ timeout: 5_000 });
+    }, `an email in ${email}`).toPass({ timeout: 2 * 60_000 });
+    return (await subject.innerText()).trim();
+  }
+
+  private async openInbox(page: Page, email: string): Promise<void> {
     await gotoWithRetry(page, MAILINATOR_URL);
     // The button next to the box is "Search for inbox" in a headed browser but
     // "GO" headless (two page versions, 2026-10-09); Enter works on both once loaded.
@@ -93,6 +110,10 @@ export class MailinatorPage {
       await page.getByRole('button', { name: /^(Search for inbox|GO)$/ }).first().click();
       await page.waitForURL(/inboxes\.jsp\?to=/);
     });
+  }
+
+  private async openMessage(page: Page, email: string, subject: string | RegExp): Promise<void> {
+    await this.openInbox(page, email);
     // Usually there within seconds of sending; reload until it shows.
     const message = page.getByRole('cell', { name: subject, exact: true }).first();
     await expect(async () => {

@@ -1,0 +1,12 @@
+{
+  "type": "comment",
+  "ticket": "AL-4191",
+  "body": "**Verification:** Production testing is done. Smoke tested the Email Sent from Saleshandy trigger (Zoho) on Production, all 5 activities, 8 checks:\n\n| # | Activity | What was checked | Status |\n|---|---|---|---|\n| 1 | Create/Update a Lead in Zoho | Prospect not in Zoho: one lead created with the mapped Lead Fields and the prospect company, and one note. | Pass |\n| 2 | Create/Update a Contact in Zoho | Prospect not in Zoho: one contact created with the mapped Contact Fields. | Pass |\n| 3 | Create/Update a Contact in Zoho | Existing contact with an old Phone and Title: the same contact is updated and no second contact is made. | Pass |\n| 4 | Create/Update Account in Zoho | Prospect with a company and no contact: account created with the company name and the mapped Account Fields, not linked to a contact. | Pass |\n| 5 | Create/Update a Deal in Zoho | Prospect not in Zoho, Closing date 0: one deal created with the Deal Value as Amount and an empty Closing Date. | Pass |\n| 6 | Create a Task in Zoho | Contact created, then one task linked to it with the configured Subject, Status, Priority and the due date set 3 days ahead. | Pass |\n| 7 | Create/Update a Contact and Create/Update a Lead together | One contact and one lead created, no duplicate contact. | Pass |\n| 8 | Trigger turned off | Email sent with the trigger off: nothing created or changed in Zoho. | Pass |",
+  "waitingFor": "QA to review wording and send via npm run jira.",
+  "sent": {
+    "key": "AL-4191",
+    "url": "https://saleshandy.atlassian.net/browse/AL-4191",
+    "problems": [],
+    "at": "2026-11-02T13:59:19.099Z"
+  }
+}

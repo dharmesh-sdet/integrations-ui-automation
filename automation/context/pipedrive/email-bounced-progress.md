@@ -73,3 +73,12 @@ QA approved the cases (note `notes/production-testing/12-pipedrive-email-bounced
 ## Production smoke, manual run done (2026-10-28)
 QA released the workflow to production (the Refold block no longer applies) and ran a short manual smoke: checks 1, 6 and 11 all Pass (Create a Lead/Deal/Person, Delete Person, real bounce). Summary posted on AL-4183, Jira comment 79528 (draft `jira/drafts/al-4183-pipedrive-email-bounced-production-smoke-summary.json`). The other 8 checks were not run by hand. The script `npm run smoke:pipedrive-email-bounced` was not run and stays optional.
 Next: nothing required. B1 and B2 are still open and not covered.
+
+## Production smoke, script run (2026-10-29)
+QA asked for the script run. `npm run smoke:pipedrive-email-bounced` on emailopenedprod, Pipedrive saleshandy.pipedrive.com.
+- First attempt: the gate passed, then the sequence setup failed. In the "Select email accounts to add to the sequence" dialog the row for `rudra+emailsentprod@saleshandy.com` was greyed out with a red dot and its checkbox could not be ticked (5 min timeout). Read from the failure screenshot only; the account state was not opened. QA gave sequence 985126 (active, working sender, one step), so the next runs used `SMOKE_SEQUENCE_ID=985126`.
+- Second run (26.5 min): gate passed, 9 of 11 checks passed. Check 1 (Create a Lead, Create a Deal and Create a Person) failed: person 428 had the lead only, no deal, Activities (0), although Saleshandy Logs showed Success. Check 4 (Update a Deal, 2 deals) gave up after 180 s and its last screenshot was a Pipedrive "Not Found" page on the deal. Checks 6 and 11, also done by hand on 2026-10-28, passed.
+- Rerun of checks 1 and 4 with new test data (4.4 min): both passed. No cause found for the first failures, and they did not repeat. Not proven script or product.
+- Result: all 11 checks passed, but not in one clean run. One real email was sent (check 11).
+- Jira: draft `jira/drafts/al-4183-pipedrive-email-bounced-production-smoke-script-summary.json` for AL-4183 (template 04), waiting for QA to check and send. The comment from the manual pass (79528) is already posted.
+- Open: B1 and B2 still not covered. `rudra+emailsentprod@saleshandy.com` shows greyed out in the sequence dialog on production.

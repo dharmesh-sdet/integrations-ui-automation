@@ -37,3 +37,20 @@ Date: 2026-10-29. QA answers (2026-10-29): hand-written specs; Email Sent first;
 - 2026-10-29, QA OK: Email Sent test cases saved in `test-cases/zoho/email-sent.md` (24 rows). Next: page objects in `src/pages/zoho/`, flow `src/flows/saleshandy-to-zoho.ts`, spec `tests/zoho/email-sent.spec.ts` (hand-written). Zoho reads need a headed browser (xvfb) with `auth/mcp-zoho-profile`. QA decision pending: duplicate Task and Deal records when the contact is new.
 
 - 2026-10-29, end of day, Email Sent: spec `tests/zoho/email-sent.spec.ts` (15 rows), flow `src/flows/zoho-email-sent.ts`, data script `scripts/make-zoho-email-sent-data.ts` written. `Lead: 1` passes. The other 14 rows have not run (stopped for low memory, about 4 emails sent). Next: free memory, run the rows in small groups, then write the rows that need a hand-made Zoho record. Details: `email-sent-progress.md`, sections "Code written" and "Run status". QA decision pending: duplicate Task and Deal records when the contact is new.
+
+- 2026-10-30, QA OK: Email Opened test cases saved in `test-cases/zoho/email-opened.md` (25 rows, account `notemailsentzoho`, Mailinator open). Progress and next steps: `email-opened-progress.md`. Next: sequence "Zoho Email Opened QA", then the hand-written spec `tests/zoho/email-opened.spec.ts`. No page objects, flow, data or spec yet.
+
+- 2026-10-30, QA OK: Email Bounced test cases saved in `test-cases/zoho/email-bounced.md` (23 rows after the cuts, account `notemailsentzoho`, Mark as bounced plus 1 real bounce). Progress and next steps: `email-bounced-progress.md`. Next: sequence "Zoho Email Bounced QA", then the hand-written spec `tests/zoho/email-bounced.spec.ts`. No sequence, data or spec yet.
+
+- 2026-10-30: QA wants one account and parallel workflows (`notemailsentzoho`, own sequence and prospects each). Link Clicked test cases saved in `test-cases/zoho/link-clicked.md` (23 rows after cuts), QA "looks good" received. Progress: `link-clicked-progress.md`. Track email opens is OFF in the Link Clicked sequence so a click does not fire Email Opened; the first run checks it.
+
+- Progress table: `PROGRESS.md` in this folder (QA format, 2026-10-30). Show it when QA asks for progress.
+- 2026-10-30: Link Clicked spec written (23 tests, typechecks), sequence waits for a sender mailbox. See `link-clicked-progress.md` "Parallel-run notes".
+
+- 2026-10-30, QA OK ("looks great"): Prospect Unsubscribed test cases saved in `test-cases/zoho/prospect-unsubscribed.md` (20 rows, account `notemailsentzoho`, UI unsubscribe plus 3 link rows). QA asked for cases only, no script yet. Progress: `prospect-unsubscribed-progress.md`.
+
+- 2026-10-30, QA OK: Conversation Category Updated test cases saved in `test-cases/zoho/conversation-category-updated.md` (20 rows, account `notemailsentzoho`). QA wants test cases only, no script yet. Progress: `conversation-category-updated-progress.md`.
+- 2026-11-02 night, Reply Received: 7 passed, 26 failed, 1 skipped. Blocked on QA OK to read Zoho Logs once. Resume section: `reply-received-progress.md` "Resume here (saved 2026-11-02 night)".
+- 2026-11-03, QA: Link Clicked is LIVE on production. Production smoke 8 of 8 passed (note `notes/production-testing/17-zoho-link-clicked.md`, sequence 988717), AL-4194 comment sent, sheet row 25 written. Nothing left to run. See `link-clicked-progress.md` "LIVE on production".
+- 2026-11-03: Reply Received production smoke written (note 19, spec, run script, data), sequence 989765, headless read-only walk-through done (no script change), not run: waits for the AL-4219 deploy, QA runs `npm run smoke:zoho-reply-received` (login first). Read reply-received-progress.md "Production walk-through".
+- 2026-11-04: Conversation Category production smoke written (note 20, spec, setup, data, run script), typechecked, not run: the workflow is not deployed on production. QA runs `npm run smoke:zoho-conversation-category-updated` after the deploy (login first). Read conversation-category-updated-progress.md "Production smoke".

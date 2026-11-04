@@ -1,4 +1,5 @@
 import { chromium, type BrowserContext, type Page } from 'playwright';
+import { blockHeavyAssets } from '../../utils/block-assets.ts';
 
 // Zoho CRM, org 941113438 (US data center). Seen on staging 2026-10-29.
 // Zoho CRM cannot be read headless ("Verify your identity"), and a visible window takes the user's focus.
@@ -22,6 +23,8 @@ export type ZohoRecord = { id: string; row: string };
 
 export async function openZohoProfile(profileDir: string): Promise<{ context: BrowserContext; crm: ZohoCrmPage }> {
   const context = await chromium.launchPersistentContext(profileDir, { headless: false, viewport: { width: 1500, height: 1200 } });
+  // The spec reads text only, so Zoho pictures, video and tracking scripts are not loaded (ASSET_BLOCK=0 turns it off).
+  await blockHeavyAssets(context, { images: true });
   const page = context.pages()[0] ?? (await context.newPage());
   const crm = new ZohoCrmPage(page);
   await crm.open(`${ZOHO_ORG}${LIST.Contacts}`).catch(async (e) => { await context.close(); throw e; });
@@ -30,6 +33,7 @@ export async function openZohoProfile(profileDir: string): Promise<{ context: Br
 
 export class ZohoCrmPage {
   readonly page: Page;
+  private readonly sorted = new Set<ZohoModule>();
   constructor(page: Page) {
     this.page = page;
   }
@@ -37,7 +41,16 @@ export class ZohoCrmPage {
   // Opens a Zoho page. Zoho sometimes asks "Verify your identity" (password), at the start or later in a run,
   // so every page load goes through here: try ZOHO_PASSWORD once, else stop with a clear message.
   async open(url: string): Promise<void> {
-    await this.page.goto(url, { waitUntil: 'domcontentloaded', timeout: 60_000 });
+    // Zoho sometimes answers net::ERR_TIMED_OUT at once (2026-11-03, 3 rows). Try the load up to 3 times.
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      try {
+        await this.page.goto(url, { waitUntil: 'domcontentloaded', timeout: 60_000 });
+        break;
+      } catch (e) {
+        if (attempt === 3) throw e;
+        await this.page.waitForTimeout(5_000);
+      }
+    }
     const verify = this.page.getByText('Verify your identity');
     const loaded = this.page.getByRole('button', { name: 'Sort' }).first().or(this.page.getByText('Total Records')).or(this.page.getByText('Related List'));
     await loaded.first().or(verify).first().waitFor({ timeout: 60_000 }).catch(() => undefined);
@@ -61,9 +74,14 @@ export class ZohoCrmPage {
   async find(module: ZohoModule, needle: string): Promise<ZohoRecord[]> {
     await this.open(`${ZOHO_ORG}${LIST[module]}`);
     await this.page.getByRole('button', { name: 'Sort' }).first().waitFor({ timeout: 60_000 });
-    await this.page.waitForTimeout(4_000);
-    await this.sortNewestFirst();
     const tab = TAB[module];
+    // Wait for the first record link instead of a fixed 4 s. An empty list has none, so the wait ends after 8 s at most.
+    await this.page.locator(`[role="row"] a[href*="/tab/${tab}/"]`).first().waitFor({ timeout: 8_000 }).catch(() => undefined);
+    // Zoho keeps the sort per user and view, so it is set once per module and then left alone.
+    if (!this.sorted.has(module)) {
+      await this.sortNewestFirst();
+      this.sorted.add(module);
+    }
     const rows = await this.page.locator('[role="row"]').evaluateAll(
       (els, args) =>
         els.map((el) => {
@@ -112,16 +130,20 @@ export class ZohoCrmPage {
   async recordText(module: ZohoModule, id: string): Promise<string> {
     await this.open(`${ZOHO_ORG}/tab/${TAB[module]}/${id}`);
     await this.page.getByText('Overview', { exact: true }).first().waitFor({ timeout: 60_000 });
+    // The note text loads after the Notes count. A 1.5 s wait cut it off on 2026-11-04 (4 rows saw "Notes 1" without the note
+    // title), so the fixed 6 s stays.
     await this.page.waitForTimeout(6_000);
     return (await this.page.locator('body').innerText()).replace(/\n\s*\n+/g, '\n');
   }
 
   // Value on the line after a label in a record page's text, or '' when the field is empty.
-  static field(text: string, label: string): string {
+  // An empty field can show no value line at all, so the next line is the next label (seen 2026-11-02: an
+  // empty Company on a lead is followed by the label "Lead Name"). Pass that label as `nextLabel` to read it as empty.
+  static field(text: string, label: string, nextLabel?: string): string {
     const lines = text.split('\n').map((l) => l.trim());
     const i = lines.findIndex((l) => l === label);
     const next = i >= 0 ? (lines[i + 1] ?? '') : '';
-    return next === '-' ? '' : next;
+    return next === '-' || (nextLabel !== undefined && next === nextLabel) ? '' : next;
   }
 
   static noteCount(text: string): number {

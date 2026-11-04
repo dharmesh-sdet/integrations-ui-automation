@@ -1,0 +1,12 @@
+{
+  "type": "comment",
+  "ticket": "AL-4183",
+  "body": "**Verification:** Production testing is done. Smoke tested the Email is Bounced in Saleshandy (Pipedrive) trigger on Production with the smoke script, all 11 checks:\n\n| # | Activity | What was checked | Status |\n| --- | --- | --- | --- |\n| 1 | Create a Lead, Create a Deal and Create a Person in Pipedrive | New prospect, step 1 email marked as bounced. One person with one lead and one deal titled with the prospect email, and one activity. | Pass |\n| 2 | Create a Person in Pipedrive | Existing person with an old value in a mapped field. Still one person, and an activity is added. | Pass |\n| 3 | Update a Person in Pipedrive | Existing person with an old value in a mapped field. Mapped fields are updated and one activity is added. | Pass |\n| 4 | Update a Deal in Pipedrive | Person with 2 deals. Only the newest deal changes (title is the prospect email, Pipeline / Contact Made). The older deal is unchanged. | Pass |\n| 5 | Delete Deal in Pipedrive | Person with 2 deals. Only the newest deal is deleted. The older deal stays. | Pass |\n| 6 | Delete Person in Pipedrive | Existing person is deleted. | Pass |\n| 7 | Create Organization in Pipedrive | Company with no organization of that name. One organization is created with the mapped fields, not linked to any person or deal. | Pass |\n| 8 | Update Organization in Pipedrive | Organization with the exact company name and an old mapped value. Still one organization, mapped value updated. | Pass |\n| 9 | Delete Organization in Pipedrive | Organization with the exact company name is deleted. | Pass |\n| 10 | Only \"Reply is Received in Saleshandy\" enabled | Bounce creates no person in Pipedrive. | Pass |\n| 11 | Create a Person in Pipedrive (real bounce) | Real-bounce address, Send now on step 1. The Emails tab shows Bounced, with one person and one activity (type email, done, subject \"Email is bounced in Saleshandy\"). | Pass |",
+  "waitingFor": "QA to check the wording and send. Source: smoke script run by QA on 2026-10-29, account emailopenedprod, Pipedrive saleshandy.pipedrive.com, sequence 985126. First run: 9 of 11 passed (checks 1 and 4 failed). Rerun of checks 1 and 4 with new test data: both passed.",
+  "sent": {
+    "key": "AL-4183",
+    "url": "https://saleshandy.atlassian.net/browse/AL-4183",
+    "problems": [],
+    "at": "2026-10-29T08:19:49.640Z"
+  }
+}

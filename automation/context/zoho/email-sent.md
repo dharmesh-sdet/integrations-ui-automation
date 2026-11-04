@@ -34,3 +34,7 @@ Checks 1 to 7 in `00-overview.md`. Save the Zoho mappings first. Use a new prosp
 
 1. The note title and exact note text in the Zoho UI.
 2. How long the record takes to appear in Zoho. Proposed: wait 15 seconds after the Emails tab shows Sent, then look in Zoho first.
+
+## Combined 1 (all five actions)
+
+The row stays as it is (QA, 2026-11-03). What to expect and what not to expect is in `00-overview.md`, section "Combined 1: all five actions on one trigger". Email Sent fires on Send now. On 2026-11-02 the row passed in 1 of 2 runs, and the other run made 2 tasks.

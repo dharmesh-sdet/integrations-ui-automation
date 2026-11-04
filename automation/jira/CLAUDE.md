@@ -52,12 +52,15 @@ kit are relative to the file they are in.
    shows Error status", "the action shows the Errored label") is enough for
    Actual Result. Ask for exact text only when the notes do not say *what*
    failed.
-5. **Confirmation gate on every Jira write.** Show the full final draft
-   (description or comment text, plus every field in the payload) and get an
-   explicit "looks good" before calling any write: `createJiraIssue`,
+5. **Claude never calls a Jira write tool** (`createJiraIssue`,
    `addOrEditJiraIssueComment`, `editJiraIssue`, `createJiraIssueLink`,
-   `transitionJiraIssue`, attachments. Small follow-ups ("also add X to the
-   comment") need the gate too.
+   `transitionJiraIssue`, attachments). Show the full final draft (description
+   or comment text, plus every field in the payload) and get an explicit
+   "looks good". Then write the draft to `jira/drafts/<slug>.json`. Use
+   `type: bug` or `type: comment` with `ticket` and `body`, like
+   `al-4119-retest-comment.json`. Tell QA to send it from `npm run jira`.
+   "Looks good" approves the wording, not a write. Small follow-ups ("also add
+   X to the comment") need the gate too.
 6. **Never retry a failed Jira write.** A retry can create a duplicate ticket
    or comment. Show the exact error verbatim, stop, and wait for the user.
 7. **Match the established style.** Reshape the user's notes into the

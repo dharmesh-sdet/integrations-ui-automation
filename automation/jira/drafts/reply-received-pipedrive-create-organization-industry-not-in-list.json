@@ -1,0 +1,28 @@
+{
+  "type": "bug",
+  "project": "AL",
+  "priority": "Medium",
+  "environment": "Production",
+  "epic": "AL-3982",
+  "assignee": {
+    "name": "Darshan",
+    "accountId": "5af5d8dd244bc90a10605d4f"
+  },
+  "qa": {
+    "name": "Dharmesh Patel",
+    "accountId": "712020:c7dedb58-9cb3-4450-a98f-5b5b56f6556b"
+  },
+  "links": [
+    "AL-4170",
+    "AL-4172"
+  ],
+  "attachments": [],
+  "summary": "Reply is Received in Saleshandy: Create Organization in Pipedrive activity creates the organization when the prospect's Industry is not in the Pipedrive Industry list",
+  "description": "**Prerequisites:**\n- The Pipedrive integration is connected to Saleshandy.\n- Field Mapping > Organisation Fields: Industry and Company Industry are paired with the Pipedrive Industry field. The Pipedrive Industry field on an organization is a list of fixed values.\n- The Reply is Received in Saleshandy trigger is enabled with the Create Organization activity only, saved.\n- A sequence with a prospect whose Industry and Company Industry are not in the Pipedrive Industry list (for example Work Management), and whose company is not an organization in Pipedrive.\n\n**Steps to Reproduce:**\n1. Go to Triggers and Activities, enable Reply is Received in Saleshandy, select Create Organization, and click Save.\n2. Open Organizations in Pipedrive and write down how many organizations have the prospect's company name.\n3. Add the prospect to the sequence and send step 1 with Send now. Wait until the email shows Sent.\n4. Open the sequence > Emails and use Mark as Replied for the prospect.\n5. Wait 15 seconds, then count the organizations with the company name in Pipedrive again.\n6. Go to Integrations > Pipedrive > Logs and open the newest Reply is Received in Saleshandy entry.\n\n**Actual Result:**\n- An organization is created for the prospect's company, although the Industry is not in the Pipedrive Industry list. The count went from 0 to 1.\n- Execution ID: 6ae1c7e84173827c1d9a1577\n\n**Expected Result:**\n- Pipedrive rejects the organization because the Industry is not in its list, and no organization is created, as on the Email Sent trigger (status 400, \"Invalid input: industry with provided value does not exist.\").\n\n**Note:**\n- Affected Environment - Staging.\n",
+  "sent": {
+    "key": "AL-4188",
+    "url": "https://saleshandy.atlassian.net/browse/AL-4188",
+    "problems": [],
+    "at": "2026-10-28T10:14:21.817Z"
+  }
+}

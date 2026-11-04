@@ -61,3 +61,11 @@ Date: 2026-10-30. Mode: regression (staging). QA asked for test cases only, no s
 - Account 2 (QA 2026-11-03): the linked account taking the company name is expected. Expected changed, rerun passed.
 - Seen once: contact Javier Portillo got City and State but not Country "Egypt". Next Contact 1 run (Philippines) had the Country.
 - Not committed.
+
+## Production smoke (2026-11-04)
+
+- QA "looks good" 2026-11-04 on 8 checks (Contact 3, Lead 1, Account 1, Deal 2, Task 1). The workflow is NOT deployed on production, so nothing was run.
+- Written, typechecked, not run: note `notes/production-testing/20-zoho-conversation-category-updated.md` (README row 20), spec `tests/zoho/conversation-category-updated-smoke.spec.ts`, setup `tests/setup/zoho-conversation-category-updated-smoke-sequence.spec.ts`, data script `scripts/make-zoho-conversation-category-updated-smoke-data.ts`, run script `scripts/run-zoho-conversation-category-updated-smoke.sh`, `npm run smoke:zoho-conversation-category-updated`.
+- Open: workflow ticket unknown (every Ticket cell None; no Jira draft until QA gives one). QA logs in first (`npm run login:saleshandy -- emailopenedprod`), turns Email Sent and Email Opened off, then runs the command after the deploy.
+- 2026-11-04, QA asked for a production check: probe `tests/setup/zoho-cc-prod-probe.spec.ts` (CC_PROD_PROBE=1, not committed) passed on `emailopenedprod`. Zoho connected, the trigger is listed, and it saved ON with Contact + category Interested; reload and read-back matched. Email Sent and Email Opened are OFF. Nothing sent. Not checked: the outcome dropdown on production Prospects, Zoho record reads, the sequence setup.
+- 2026-11-04, production outcome dropdown probe (`tests/setup/zoho-cc-prod-outcome-probe.spec.ts`, not committed, read only) passed on sequence 989765: `.prospect-custom-outcome-select` found (8 rows), options Uncategorized, Interested, Not Interested, Meeting Booked, Out of Office, Closed, Not Now, Do Not Contact. All 7 outcomes the smoke uses are present. Nothing picked.

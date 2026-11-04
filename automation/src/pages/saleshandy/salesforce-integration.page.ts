@@ -140,6 +140,13 @@ export class SalesforceIntegrationPage extends SaleshandyPage {
         .filter({ hasText: new RegExp(`^\\s*${escapeRegExp(choice)}\\s*$`) })
         .click();
     }
+    // The Select Object list of Record(log) an Email Activity stays open after a pick (seen 2026-11-04, 3 rows) and its
+    // overlay blocks Save. A click on the dialog heading closes it.
+    const overlay = this.page.locator('.transfer-overlay.transfer-select-box.show');
+    if (await overlay.first().isVisible().catch(() => false)) {
+      await dialog.getByText('Extra Configuration').first().click();
+      await overlay.first().waitFor({ state: 'hidden', timeout: 5_000 }).catch(() => undefined);
+    }
     await dialog.getByRole('button', { name: 'Save', exact: true }).click();
     await dialog.waitFor({ state: 'hidden', timeout: 15_000 });
   }
@@ -399,6 +406,22 @@ export class SalesforceIntegrationPage extends SaleshandyPage {
     } catch {
       await this.openLogs();
     }
+  }
+
+  // The text of the failed step of one Logs entry: opens the entry, then "View Details" of its first step, then the
+  // collapsed error list (seen 2026-11-04: the list row shows only the status, the error code is in this detail,
+  // for example DUPLICATES_DETECTED on Create Contact).
+  async errorDetail(workflow: string, id: string): Promise<string> {
+    await this.openLogs();
+    const row = this.page.getByRole('button', { name: `Open execution detail for ${workflow}`, exact: true }).filter({ hasText: id });
+    await row.first().click({ timeout: 30_000 });
+    const dialog = this.page.getByRole('dialog').first();
+    await dialog.getByText('View Details').first().click({ timeout: 15_000 });
+    // The Request block shows "{ 8 keys }" first and the Response error list "{ 3 keys }" second (seen 2026-11-04).
+    const keys = dialog.getByText(/\d+ keys/);
+    if ((await keys.count()) > 1) await keys.nth(1).click();
+    await this.page.waitForTimeout(1_500);
+    return (await dialog.innerText()).replace(/\s+/g, ' ');
   }
 
   // Entries on the first page for one workflow, newest first. The Logs columns

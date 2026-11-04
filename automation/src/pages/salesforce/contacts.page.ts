@@ -2,7 +2,7 @@ import type { Page } from '@playwright/test';
 import { SalesforceObjectPage, waitForCreated } from './object.page.ts';
 import { fillOpportunityForm, type OpportunityInput } from './opportunities.page.ts';
 
-export type ContactInput = { firstName: string; lastName: string; email: string; phone?: string; department?: string };
+export type ContactInput = { firstName: string; lastName: string; email: string; phone?: string; department?: string; title?: string };
 
 // Fills and saves an open New Contact dialog: from the Contacts list (createContact) or
 // from an Account's Contacts related list (accounts.page.ts newContact), where Salesforce
@@ -16,6 +16,7 @@ export async function fillContactForm(page: Page, person: ContactInput): Promise
   // Phone and Department are the standard Contact form labels (not run on this org yet).
   if (person.phone) await form.getByRole('textbox', { name: 'Phone', exact: true }).fill(person.phone);
   if (person.department) await form.getByRole('textbox', { name: 'Department' }).fill(person.department);
+  if (person.title) await form.getByRole('textbox', { name: 'Title', exact: true }).fill(person.title);
   await form.getByRole('button', { name: 'Save', exact: true }).click();
   await waitForCreated(page, 'Contact');
 }

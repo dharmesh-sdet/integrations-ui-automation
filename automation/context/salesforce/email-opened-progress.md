@@ -42,3 +42,22 @@
 ## 2026-11-04 17:05: the Reply Received session took over this lane
 - Run `20261104104843` (parallel). At 16:59: 19 of 31 done, 17 passed, 2 failed: Trigger behavior 2 and Create a Account 3. Trigger behavior 2 failed again after the IP was trusted (it ran at 16:20 with a fresh Salesforce session), so the expired-session cause from the handoff is not confirmed. Read its error after the run.
 - Next: read both failures, fix script failures, rerun only failed or unrun rows with `KEEP_TEST_DATA=1`, record product failures here.
+
+## 2026-11-04 18:25: all 31 rows passed at least once
+- Passed over several runs, never in one full run: parallel run 20 passed, rerun 1 passed 7, rerun 2 passed the last 4 (Trigger behavior 2, Create a Account 3, Create a Opportunity 1, Attach Note 2).
+- All earlier failures were script causes, not product ones: the prospect form never showed "Done" because Saleshandy had already seen the email in the first attempt, and Salesforce said "Similar Records Exist" for a second setup Contact with the same name. Fix used: new email for those rows in `test-data/salesforce/email-opened.csv` (Create a Opportunity 1 also a new name).
+- Product failures found: none.
+- Still open: no-ai-slop pass on `test-cases/salesforce/email-opened.md`, read-only check of tracking domain `cd1.shengage02.com` on sfemailopened, QA's full run.
+
+## 2026-11-04 18:55: STAGING APPROVED (QA)
+- QA approved Salesforce Email Opened (AL-4135) on staging, together with Reply Received. All 31 rows passed at least once over several partial runs, no product failure. QA runs the full script for the final proof.
+- Still open, not blocking: no-ai-slop pass on `test-cases/salesforce/email-opened.md`, read-only check of tracking domain `cd1.shengage02.com` on sfemailopened, 3 to 4 new mailboxes not attached to sequence 197671 (sender dharmesh+replyreceived@saleshandy.com).
+- Not committed. Commit only when QA asks, no Co-Authored-By line.
+
+## 2026-11-04: production smoke built, not run (note 23)
+- QA approved the 11 smoke checks (10 sends, row 11 = AL-4168 field check). Note: `notes/production-testing/23-salesforce-email-opened.md`, README row 23.
+- Files: `tests/salesforce/email-opened-smoke.spec.ts`, `tests/setup/salesforce-email-opened-smoke-sequence.spec.ts`, `scripts/make-salesforce-email-opened-smoke-data.ts`, `scripts/run-salesforce-email-opened-smoke.sh`, `scripts/run-salesforce-pair-smoke.sh`. Flow `src/flows/salesforce-email-opened.ts` now reads `OPEN_AFTER_MS`, `OPEN_COUNT_TIMEOUT_MS`, `SMOKE_STEP1_SUBJECT` from the environment (defaults keep staging unchanged).
+- Account: `emailopenedprod` and the same Salesforce org as every other production smoke (QA 2026-11-04).
+- Commands: `npm run smoke:salesforce-email-opened` (alone), `npm run smoke:salesforce-pair` (with Reply Received, QA 2026-11-04). QA runs them; the workflow is probably not published on production yet.
+- Parallel risk: Reply Received unmaps Closing Date for its Opportunity rows and maps it again after row 8. Check 7 and 8 here also need it unmapped. If the Reply run maps it back in between, rerun checks 7 and 8 only.
+- Not run. Typecheck: no errors in the new files (only old errors in `jira/web`).

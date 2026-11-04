@@ -12,10 +12,12 @@ import { fullName } from './saleshandy-to-salesforce.ts';
 export const TRIGGER = 'Sequence Email is Opened in Saleshandy';
 export const EMAIL_SENT_TRIGGER = 'Email Sent from Saleshandy';
 // Subject of step 1 of "Salesforce Email Opened Regression", built by tests/setup/salesforce-email-opened-sequence.spec.ts.
-export const STEP_1_SUBJECT = 'Quick question about your outreach';
+export const STEP_1_SUBJECT = process.env.SMOKE_STEP1_SUBJECT || 'Quick question about your outreach';
 export const STEP_2_SUBJECT = 'Following up on my last note';
 // Staging: an open counts 10 s after the send, a later one 10 s after the one before (QA, 2026-10-12).
-export const OPEN_AFTER_MS = 10_000;
+// Production smoke: the first open counts 60 s after the send (developer, 2026-10-15). The smoke spec sets
+// OPEN_AFTER_MS=60000 and SMOKE_STEP1_SUBJECT, so staging runs keep the defaults.
+export const OPEN_AFTER_MS = Number(process.env.OPEN_AFTER_MS ?? 10_000);
 export const OPEN_SETTLE_MS = 10_000;
 
 // Opens the email of `step` in the Mailinator inbox (images load, which is the open). Calling it again
@@ -36,7 +38,7 @@ export async function openEmail(seq: SaleshandySequencePage, mailinator: Mailina
   await untilPasses(`Opened count of step ${step} for ${row['Email']} did not rise above ${before}`, async () => {
     after = await opened();
     expect(after).toBeGreaterThan(before);
-  }, 90_000);
+  }, Number(process.env.OPEN_COUNT_TIMEOUT_MS ?? 90_000));
   return after;
 }
 

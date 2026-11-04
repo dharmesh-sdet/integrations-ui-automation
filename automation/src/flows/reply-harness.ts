@@ -1,3 +1,5 @@
+import fs from 'node:fs';
+import path from 'node:path';
 import { expect, test } from '@playwright/test';
 import { readCsv, type Row } from '../data/csv.ts';
 import { markUsed } from '../data/used.ts';
@@ -29,6 +31,12 @@ export type ReplyScenario = {
   outcome?: string;
   // true: the trigger is turned off (and saved) instead of set to `activities`.
   triggerOff?: boolean;
+  // Id of the row whose prospect this row uses again (nothing is created or sent for this row).
+  reuses?: string;
+  // true: Mark as replied is clicked again on a step 1 email that already shows Replied.
+  again?: boolean;
+  // Runs just before the reply. Its result is World.before (counts taken before the reply).
+  before?: (salesforce: Salesforce, row: Row) => Promise<unknown>;
   check: (world: World) => Promise<void>;
 };
 
@@ -49,13 +57,16 @@ export class World {
   readonly scenario: ReplyScenario;
   readonly row: Row;
   readonly repliedAt: number;
+  readonly before: unknown;
+  lastLog: SalesforceLogEntry | undefined;
   private readonly harness: ReplyHarness;
 
-  constructor(harness: ReplyHarness, scenario: ReplyScenario, row: Row, repliedAt: number) {
+  constructor(harness: ReplyHarness, scenario: ReplyScenario, row: Row, repliedAt: number, before?: unknown) {
     this.harness = harness;
     this.scenario = scenario;
     this.row = row;
     this.repliedAt = repliedAt;
+    this.before = before;
   }
 
   get salesforce(): Salesforce {
@@ -103,7 +114,7 @@ export class World {
 
   // For "no record should appear": looks 15 s and 20 s after the reply and returns
   // the highest count seen, then records the Logs status (no entry is not a failure).
-  async absent(count: () => Promise<number>): Promise<number> {
+  async absent(count: () => Promise<number>, logWaitMs = 60_000): Promise<number> {
     let seen = 0;
     await test.step('Wait 15 s, look in Salesforce; wait 5 s, look again', async () => {
       await this.salesforce.leads.page.waitForTimeout(15_000);
@@ -113,8 +124,15 @@ export class World {
         seen = await count();
       }
     });
-    await this.logStatus(60_000);
+    await this.logStatus(logWaitMs);
     return seen;
+  }
+
+  // The failed step's text of the Logs entry this reply created (the error code is not in the list row).
+  async logErrorText(): Promise<string> {
+    const { sf } = this.harness.options;
+    if (!this.lastLog) return '';
+    return test.step('Open the Logs entry and read its error detail', () => sf.errorDetail('Reply is Received in Saleshandy', this.lastLog!.id));
   }
 
   // Reads the status of the Logs entry this reply created. '' when none shows in `timeoutMs`.
@@ -124,6 +142,7 @@ export class World {
     await test.step('Open Logs and read the entry this reply created', async () => {
       entry = await newLogEntry(sf, this.repliedAt, timeoutMs).catch(() => undefined);
     });
+    this.lastLog = entry;
     note('Logs row', entry?.text ?? 'no entry after the reply');
     note('Logs status', entry?.status ?? 'none');
     return entry?.status ?? '';
@@ -133,10 +152,27 @@ export class World {
 // What has been done so far. Playwright builds the page objects again for every
 // test, so the spec keeps one ReplyState at module level and hands it to each
 // ReplyHarness; a row run after Setup then skips what Setup already did.
-export type ReplyState = { record: Set<string>; added: Set<string>; sent: Set<string>; configured: string };
+export type ReplyState = { record: Set<string>; added: Set<string>; sent: Set<string>; configured: string; file?: string };
 
-export function newReplyState(): ReplyState {
-  return { record: new Set(), added: new Set(), sent: new Set(), configured: '' };
+// Playwright starts a new worker after a failed test, and a new worker loses everything in memory. So the steps
+// done (records created, prospects added, step 1 sent) are also written to test-data/<csv>.state.json, keyed by
+// "<row id>|<email>". A row with a new email (new data) is not found there and starts clean.
+export function newReplyState(csv?: string): ReplyState {
+  const state: ReplyState = { record: new Set(), added: new Set(), sent: new Set(), configured: '' };
+  if (!csv) return state;
+  state.file = path.resolve(import.meta.dirname, '../../test-data', csv.replace(/\.csv$/, '.state.json'));
+  if (fs.existsSync(state.file)) {
+    const saved = JSON.parse(fs.readFileSync(state.file, 'utf8')) as { record?: string[]; added?: string[]; sent?: string[] };
+    saved.record?.forEach((k) => state.record.add(k));
+    saved.added?.forEach((k) => state.added.add(k));
+    saved.sent?.forEach((k) => state.sent.add(k));
+  }
+  return state;
+}
+
+function saveState(state: ReplyState): void {
+  if (!state.file) return;
+  fs.writeFileSync(state.file, JSON.stringify({ record: [...state.record], added: [...state.added], sent: [...state.sent] }));
 }
 
 export class ReplyHarness {
@@ -148,6 +184,10 @@ export class ReplyHarness {
     this.state = state;
   }
 
+  private key(id: string, row: Row): string {
+    return `${id}|${row['Email']}`;
+  }
+
   scenario(id: string): ReplyScenario {
     const found = this.options.scenarios.find((s) => s.id === id);
     if (!found) throw new Error(`No scenario "${id}"`);
@@ -156,9 +196,10 @@ export class ReplyHarness {
 
   // The CSV row with the scenario's own values on top.
   rowOf(id: string): Row {
-    const base = readCsv(this.options.csv).find((r) => r['Scenario'] === id);
+    const dataId = this.scenario(id).reuses ?? id;
+    const base = readCsv(this.options.csv).find((r) => r['Scenario'] === dataId);
     if (!base) throw new Error(`No row "${id}" in test-data/${this.options.csv}`);
-    const override = Object.fromEntries(Object.entries(this.scenario(id).override ?? {}).filter((e): e is [string, string] => e[1] !== undefined));
+    const override = Object.fromEntries(Object.entries(this.scenario(dataId).override ?? {}).filter((e): e is [string, string] => e[1] !== undefined));
     return { ...base, ...override };
   }
 
@@ -168,28 +209,34 @@ export class ReplyHarness {
 
   private async addRecords(id: string, row: Row): Promise<void> {
     const { setup } = this.scenario(id);
-    if (!setup || this.state.record.has(id)) return;
+    if (!setup || this.state.record.has(this.key(id, row))) return;
     await this.options.salesforce.seed(setup, row);
-    this.state.record.add(id);
+    this.state.record.add(this.key(id, row));
+    saveState(this.state);
   }
 
   // The row is marked used first: a failed add can still leave the prospect in Saleshandy.
   private async addProspect(seq: SaleshandySequencePage, id: string, row: Row): Promise<void> {
-    if (this.state.added.has(id)) return;
+    if (this.state.added.has(this.key(id, row))) return;
     markUsed(this.options.csv, readCsv(this.options.csv).find((r) => r['Scenario'] === id)!['Email']);
+    // The row is saved as added before the form closes: a failed add can still leave the prospect in Saleshandy,
+    // and adding it twice only makes the form wait for a "Done" that never shows.
+    this.state.added.add(this.key(id, row));
+    saveState(this.state);
     await seq.createAndAddProspect(this.options.sequenceId, row);
-    this.state.added.add(id);
   }
 
   private async sendOut(seq: SaleshandySequencePage, id: string, row: Row): Promise<void> {
-    if (this.state.sent.has(id)) return;
+    if (this.state.sent.has(this.key(id, row))) return;
     await seq.sendNow(this.options.sequenceId, this.fullName(row), 1, row['Email']);
-    this.state.sent.add(id);
+    this.state.sent.add(this.key(id, row));
+    saveState(this.state);
   }
 
   // Everything before the reply that Setup has not done yet. A row run on its own
   // (-g) prepares itself, so no row depends on Setup having run.
   async prepare(id: string): Promise<void> {
+    if (this.scenario(id).reuses) return; // the row it reuses created everything
     const row = this.rowOf(id);
     await this.addRecords(id, row);
     await this.addProspect(this.options.seq, id, row);
@@ -250,20 +297,28 @@ export class ReplyHarness {
   async reply(id: string): Promise<number> {
     const { seq, sequenceId } = this.options;
     const row = this.rowOf(id);
-    const { outcome } = this.scenario(id);
+    const { outcome, again } = this.scenario(id);
     await test.step('Make sure the Salesforce records, the prospect and the step 1 send are ready', () => this.prepare(id));
     await test.step('Wait until the step 1 email shows Sent', () => seq.ensureSent(sequenceId, this.fullName(row), 1, row['Email']));
     if (outcome) await test.step(`Set the prospect outcome to ${outcome}`, () => seq.setProspectOutcome(sequenceId, row['Email'], outcome));
+    const { before } = this.scenario(id);
+    if (before) this.beforeValue = await test.step('Count the records before the reply', () => before(this.options.salesforce, row));
     const at = Date.now();
-    await test.step('Mark the step 1 email as replied', () => seq.markAsReplied(sequenceId, this.fullName(row), 1, row['Email']));
+    if (again) {
+      await test.step('Mark the same step 1 email as replied again', () => seq.markAsRepliedAgain(sequenceId, this.fullName(row), row['Email']));
+    } else {
+      await test.step('Mark the step 1 email as replied', () => seq.markAsReplied(sequenceId, this.fullName(row), 1, row['Email']));
+    }
     return at;
   }
+
+  private beforeValue: unknown;
 
   // The reply and the scenario's check, for a row whose trigger is already set.
   async replyAndCheck(id: string): Promise<void> {
     const scenario = this.scenario(id);
     const at = await this.reply(id);
-    await scenario.check(new World(this, scenario, this.rowOf(id), at));
+    await scenario.check(new World(this, scenario, this.rowOf(id), at, this.beforeValue));
   }
 
   // One full row: configure the trigger, reply, run the scenario's check.

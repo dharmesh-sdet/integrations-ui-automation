@@ -69,3 +69,84 @@ Next: look at the row 4 trace, fix if script, then run only rows 4 onward with K
 - Script/setup: Create a Lead 1 and 3 (Done button not found), Create a Lead 4 and Update a Lead 1 and 2 ("Similar Records Exist").
 - Probably script: Record(log) an Email Activity 1 to 4 (Save click blocked by transfer-overlay).
 - Unclear: Create a Opportunity 2 (Save disabled), Update a Opportunity 1 (no "was created" toast).
+
+## Restart 2026-11-04 (nothing run, nothing scripted)
+- QA: Email Sent and Prospect Outcome Updated are QA-passed and live on production. Reply Received (AL-4133, parent AL-4131) is the Salesforce workflow to continue. Last run was 2026-10-21: 13 passed, 27 failed (script/setup failures, 17 not run because of the send cap). No QA sign-off.
+- Decision: restart through the `workflow-testing` skill (Salesforce, regression, hand-written spec), starting with the test cases. Old files `test-cases/salesforce/reply-received-all-activities.md` (39 rows) and `tests/salesforce/reply-received-all-activities.spec.ts` (40 tests) are the reference, not the base: the skill rebuilds cases from scratch.
+- Developer work to use from the start: `knowledge-base/product/workflow-behaviour-dev-kit.md`, `integration-skills/test-logs/salesforce/reply-received-in-saleshandy.md` (Refold v3, 12 of 12 API tests), run-now API (`src/flows/refold-run-now.ts`, `scripts/run-now.ts`), automatic reconnect (`src/flows/salesforce-connection.ts`), no-SMS login (`src/utils/salesforce-login.ts`, commit f82f22f).
+- Skill edited 2026-11-04 (QA OK): `.claude/skills/workflow-testing/SKILL.md` step 0 now reads the dev kit and the developer test log. Step 1 takes Expected results and known tickets from them and keeps uncovered rows "(proposed, unconfirmed)". No script changed.
+- Known script failures from 2026-10-21 still to fix: Create a Lead 1, 3 (Done button not found), Create a Lead 4, Update a Lead 1, 2 ("Similar Records Exist"), Record(log) an Email Activity 1 to 4 (Save click blocked by transfer-overlay). Unclear: Create a Opportunity 2 (Save disabled), Update a Opportunity 1 (no "was created" toast).
+- Next: read dev kit and test log, one round of open questions with defaults, draft new cases, QA "looks good", then script. Rerun only failed or unrun rows with KEEP_TEST_DATA=1.
+- Sheet "Integration wfs": Salesforce Reply Received row is still "In QA", date 5 Nov 2026, last note 21 Oct blocker. Sheet update belongs to another session, not this one.
+
+## 2026-11-04 later: cases draft (not saved, waiting for QA "looks good")
+- Read dev kit, developer log (`integration-skills/test-logs/salesforce/reply-received-in-saleshandy.md`, v3 sign-off, v4 to v6 not live-tested), old cases. No other session owns this workflow (ListAgents).
+- QA skipped the question round. Defaults used: 38 rows, dev kit match rules (Account by full name, Opportunity by email as Name, newest), accepted cases as rows with dev kit Expected, staging looked at read-only.
+- Seen on staging (sfreplyreceived, Connected): Account mapping saved: Website, City, State, Country, Company to Account Name, Company Website, Industry, Size, Revenue, Founded Year, Company Phone, HQ Location. Opportunity mapping saved: Prospect Overview to Description, Deal Value to Amount, Closing Date to Close Date.
+- Open for QA: Closing Date is mapped to Close Date on Opportunity. Dev kit says Closing Date mapping gives a format error. Draft unmaps it for the Opportunity rows.
+- Live Refold version on staging not known. Rows that depend on v5/v6 (unmapped field untouched) are marked.
+
+## 2026-11-04 later: cases approved and saved (QA "looks good")
+- Saved `test-cases/salesforce/reply-received.md`: 37 rows (4 baseline, 32 activity, 1 combined). Combined 1 (Create a Lead and Create a Contact together) dropped, QA took the recommendation. Realistic names added to every row.
+- QA: Mark as replied works on the Emails tab and the Prospects tab on staging (AL-4217 fixed). Use the Emails tab way. A second reply is "Mark as replied" again on the same step 1 email (no step 2 row after a reply).
+- Parallel: possible with `npm run parallel`, own account `sfreplyreceived`. Raise SEND_CAP to about 80 (37 sends). No other Salesforce regression is ready as a partner.
+- Next: write the new spec from the SCENARIOS table in `tests/salesforce/reply-received-all-activities.spec.ts` (harness `src/flows/reply-harness.ts`). Old lookups use Company for Account and full name for Opportunity. The dev kit says Account by full name and Opportunity by email. Fix in the new spec.
+
+## 2026-11-04: spec plan (not written yet)
+- Build: new `tests/salesforce/reply-received.spec.ts` (replaces the old Create-a-Lead spec, git keeps it) with the SCENARIOS pattern of `reply-received-all-activities.spec.ts` and `src/flows/reply-harness.ts`. Ids = the 37 rows of `test-cases/salesforce/reply-received.md`.
+- Data: new `test-data/salesforce/reply-received.csv` with the named prospects of the cases, a small generator script, unique mailinator emails. Needs a Scenario column = row id.
+- Seed values: `LEGACY` in `src/pages/salesforce/salesforce.ts` has "Pilot Legacy Co" and "Legacy Title QA" (QA 2026-10-28: no "Legacy" names). Add realistic prior values through `Setup` and keep `LEGACY` for other specs.
+- Match rules per dev kit: Account seeded and looked up by the prospect's full name (Update a Account 1, Create a Account 2 uses Company), Opportunity named with the prospect's email, two Opportunities for Update a Opportunity 1 and Record(log) 3 (stale first, newest second). Needs a helper to read stage per Opportunity in `opportunities.page.ts`.
+- Record(log) 1: Mark as replied has no reply text, so the case text "Description holds the reply text" cannot be asserted. Assert the Task shows (subject on the timeline) and record the Description. Tell QA.
+- Create a Opportunity 2: second "Mark as replied" on the same step 1 email, needs a `replyAgain` path in the harness (markAsReplied is a no-op if the cell shows Replied; HubSpot clicked the menu again).
+- Run: SEND_CAP about 80, KEEP_TEST_DATA=1, once to learn errors, then failed rows only. Unmap Closing Date on the Opportunity mapping before the Opportunity rows, restore after.
+- Data strategy (advisor): the org is never cleaned, so names the product matches on (Account by full name or Company) must differ per run and stay realistic (pool of names, not a RUN tag on a company). Emails unique per run. Saleshandy rejects an email seen before (code 1001), so a failed-row rerun needs a fresh row. Copy the Zoho pattern (`scripts/make-zoho-reply-received-data.ts --force`), check `TEST_DATA_ONLY` and how global setup treats `salesforce/reply-received.csv`.
+- Record(log) 1: show QA the one-line Expected change (no reply text with Mark as replied) and get the OK before editing the approved cases file.
+- Second reply (Create a Opportunity 2): `markAsReplied` returns early when the Replied cell is set. Add a forced variant that clicks the menu again and proves success with a new Logs entry after the click time.
+- Before the first run: read the 2026-10-21 failure causes (Done button not found, Similar Records Exist, transfer-overlay on Record(log) Save). Grep every user of `LEGACY`. Run ListAgents again: another session works on Salesforce Email Opened (untracked `email-opened-progress.md`), shares the org, the reconnect limit and the send-cap log.
+- Context reached the 120K rule 2026-11-04: QA asked to switch model and /compact before the spec is written.
+
+## 2026-11-04: spec written, not run yet
+- QA OK: Record(log) 1 Expected changed (Description can be empty). Cases file updated.
+- Written: `tests/salesforce/reply-received.spec.ts` (40 tests: 37 rows, Setup, unmap and restore of Closing Date). Typechecks, `--list` shows all 40. Not run.
+- Data: `scripts/make-salesforce-reply-received-data.ts` builds `test-data/salesforce/reply-received.csv` (32 named prospects, new email each run). Rerun of failed rows: `node scripts/make-salesforce-reply-received-data.ts --rows "<id>,<id>"` (new email; Account-by-name rows also get an alternate name). `npm run data:sf-reply-received`.
+- Run: `npm run test:sf-reply-received` (sets KEEP_TEST_DATA=1, TEST_DATA_ONLY, SEND_CAP default 80). For one row add `-- -g "<id>"`. In `npm run parallel` set KEEP_TEST_DATA=1 yourself (the arg `reply-received` also matches the hubspot, zoho and pipedrive CSVs, which a refresh would replace).
+- Code changes: `Setup` in `salesforce.ts` (prior values, `opportunities` list named with the email, `account.name`), `inDaysOrg` and `dayIs` (org shows DD/MM/YYYY), `ContactInput.title`, `SalesforceOpportunitiesPage.all()`, harness fields `reuses`, `again`, `before`, `World.lastLog`, `markAsRepliedAgain` in `sequence.page.ts`.
+- Mailbox: shared with the Email Opened session (`local-project-ec`, 31 rows). Sender dharmesh+replyreceived@saleshandy.com, limit 150 a day. Start only after their full run ends and 40 or more sends are left.
+- Before the first run: unknown whether Update a Opportunity finds the Opportunity by the Name or by the Contact Role; Company-to-Account-Name mapping on sfreplyreceived is mapped (progress line 85), so Create a Account 1 records which name is used.
+
+## 2026-11-04 18:25: first runs done, 36 of 37 passed at least once
+- Spec `tests/salesforce/reply-received.spec.ts` (40 tests: 37 rows, Setup, Closing Date unmap and restore). No single full run: parallel run with Email Opened (16:18), then reruns of failed or unrun rows only (`npm run test:sf-reply-received -- -g "<ids>"`). QA runs the full script.
+- Passed at least once: 36 of 37. Product failure candidate: 1 (Create a Lead 3).
+- Create a Lead 3 (confirmed row, QA 2026-10-16): with the Lead Properties mapping empty (the test now reads "Select" on all 7 fields after a reload, before the reply), the Lead gets Company "Northgate Freight" (the prospect's Company), not "HubSpot". Seen twice (the second time with the empty mapping proven). No Jira item drafted yet, QA decides.
+- Update a Account 1: the Account seeded with the prospect's full name is found; the test accepts the full name or the Company as the name after the update, because Company is mapped to Account Name on this account (QA 2026-10-22). The run records which name it found (`Account name after the reply`).
+- Create a Contact 3: Logs Error, errorCode DUPLICATES_DETECTED, no Contact, Lead unchanged (as expected). Read from the Logs entry detail (`SalesforceIntegrationPage.errorDetail`), the list row shows only the status.
+- Create a Opportunity 2 (second Mark as replied on the same email): a second Opportunity appeared (2 in total), as the cases expect.
+- Salesforce "Re-connect" drop seen once during Create a Lead 1 on the Logs tab (Saleshandy sent the page to the integrations list). It recovered by itself. Not a row failure.
+- Script fixes made this session: `markAsReplied` and `markAsRepliedAgain` search the Emails tab when the row is off page 1; harness state saved in `test-data/salesforce/reply-received.state.json` (a worker restart loses memory); `fillExtraConfiguration` closes the Select Object overlay before Save; Create a Opportunity 3 starts from Create a Lead only; new data per rerun with `node scripts/make-salesforce-reply-received-data.ts --rows "<id>,<id>"` (also gives rows that seed a Lead or Account by name an alternate name, because Salesforce says "Similar Records Exist" for the same name).
+- Incident: a Link Clicked setup spec run without KEEP_TEST_DATA=1 refreshed every CSV at 17:38. Data was rebuilt with `--force`. Always run with KEEP_TEST_DATA=1.
+- State left on the account: Lead mapping (7 fields) and Opportunity mapping (Closing Date to Close Date) restored and read back at 18:23. Trigger holds the last row's activities.
+- Not done: the first-run send count (about 45 sends today), a full single run, Jira drafts, sheet note.
+
+## 2026-11-04 18:50: correction, Create a Lead 3 is not a product failure
+- QA: with an empty Lead mapping the Lead gets the prospect's own Company (Northgate Freight). The "HubSpot" in the old Expected came from the 2026-10-16 observation (Catalina Fuentes), most likely that prospect's own Company (HubSpot is in the data generator's company pool). It was wrongly written as a Salesforce default. Cases row and spec now expect the prospect's Company. The "possible product failure" lines above are withdrawn; Reply Received has no product failure open. Rerun of the row started 18:50 (new email).
+
+## 2026-11-04 18:55: STAGING APPROVED (QA)
+- QA approved Salesforce Reply Received (AL-4133) on staging, together with Email Opened (AL-4135). All 37 rows passed at least once over several partial runs, no product failure open. QA runs the full script for the final proof.
+- Resume: smoke on production is not started. Next workflow is QA's pick. Run command: `npm run test:sf-reply-received` (KEEP_TEST_DATA=1 already set). Data for a rerun: `node scripts/make-salesforce-reply-received-data.ts --rows "<id>,<id>"`. Parallel with Email Opened: `KEEP_TEST_DATA=1 SEND_CAP=80 npm run parallel -- salesforce/reply-received salesforce/email-opened --yes`.
+- Account `sfreplyreceived` (dharmesh+salesforce+1@saleshandy.com), sequence 196746, sender dharmesh+salesforce@saleshandy.com. Salesforce login: API login works from the trusted IP 110.226.126.183 (office exit node); saved sessions refresh by themselves.
+- Not committed. Commit only when QA asks, no Co-Authored-By line.
+
+## 2026-11-04: production smoke built (workflow-testing, smoke mode)
+- QA approved the 10 cases (`notes/production-testing/22-salesforce-reply-received.md`, README row 22). Baseline, no fixed bug ticket. QA: the workflow is not published on production yet, so QA runs the script after the publish. AL-4217 (Jira, 2026-11-04) is a staging-only bug, production already shows the Actions menu, so it is not in the smoke.
+- Written, not run: `tests/salesforce/reply-received-smoke.spec.ts` (Prepare data + 10 checks + unmap/remap of Closing Date around the Opportunity checks), `tests/setup/salesforce-reply-received-smoke-sequence.spec.ts`, `scripts/run-salesforce-reply-received-smoke.sh`, `scripts/make-salesforce-reply-received-smoke-data.ts` (3 people per row, rotated per run). Command: `npm run smoke:salesforce-reply-received`. Gate is the shared `salesforce-email-sent-prod-gate.spec.ts`.
+- Typecheck clean outside `jira/web` (old errors there). `--list` shows 14 tests per browser project.
+- Open: Record(log) check looks for the step 1 subject on the Contact timeline (`SMOKE_STEP1_SUBJECT`, default "Salesforce Reply Received Smoke"). Not verified on production. Not committed.
+- QA 2026-11-04: production smoke runs in parallel with the other smokes on `emailopenedprod`. The runner sets `KEEP_OTHER_TRIGGERS=1`. Run each smoke runner in its own terminal. Another run's trigger that is on also fires on these sends.
+
+## Resume here (2026-11-04, production smoke saved)
+- State: smoke cases approved (`notes/production-testing/22-salesforce-reply-received.md`, README row 22). Spec, setup spec, runner, data builder written and listed, not run, not committed. Command: `npm run smoke:salesforce-reply-received`.
+- Blocker: the workflow is not published on production yet (QA). QA runs the script after the publish. I do not run it on production unless QA asks.
+- Pairing (QA 2026-11-04): this smoke runs in parallel with the Salesforce Sequence Email is Opened smoke on `emailopenedprod`. Both runners set `KEEP_OTHER_TRIGGERS=1`. Shared mailbox: default `SEND_CAP` 40 each, listed senders, read the Email Accounts page before sizing.
+- Next step: QA says "pair this with Email Opened". Then draft the Email Opened production smoke cases (`notes/production-testing/23-salesforce-email-opened.md`, 10 checks, from `test-cases/salesforce/email-opened.md`, 31 staging rows approved 2026-11-04), wait for "looks good", then spec and runner like Reply Received. Production open timing: first open 60 s after the send, second open 120 s after the first. Check `ListAgents` first: another session worked on Email Opened (`email-opened-progress.md`).
+- Open doubt: the Record(log) check reads the step 1 subject from the Contact timeline (`SMOKE_STEP1_SUBJECT`), not seen on production.

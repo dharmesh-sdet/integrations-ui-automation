@@ -77,6 +77,24 @@ export class SalesforceEmailSentPage extends SalesforceIntegrationPage {
     await expect(this.savedToast(), 'save confirmation').toBeVisible({ timeout: 15_000 });
   }
 
+  // Switches a second trigger on next to the one configureTrigger left on, with exactly `activities`
+  // selected, and saves. Every other trigger stays as it is (Link Clicked row 7: two triggers on).
+  async enableAlso(trigger: string, activities: ActivitySpec[]): Promise<void> {
+    await this.openTriggers();
+    for (let i = 0; i < 10; i++) {
+      const selected = await this.selectedActivities(trigger);
+      if (!selected.length) break;
+      await this.removeActivity(trigger, selected[0]);
+    }
+    await this.setTrigger(this.triggerRow(trigger), true);
+    for (const spec of activities) {
+      await this.selectActivity(trigger, spec.name);
+      await this.completeExtraConfig(spec);
+    }
+    await this.save();
+    await expect(this.savedToast(), 'save confirmation').toBeVisible({ timeout: 15_000 });
+  }
+
   // Every trigger off, then Save.
   async turnAllTriggersOff(): Promise<void> {
     await this.openTriggers();
@@ -84,7 +102,6 @@ export class SalesforceEmailSentPage extends SalesforceIntegrationPage {
     await this.save();
     await expect(this.savedToast(), 'save confirmation').toBeVisible({ timeout: 15_000 });
   }
-}
 
   // Types 0 in the Closing date field of a Create / Update a Opportunity dialog, reads whether the field is
   // marked invalid and whether Save is disabled, and closes the dialog without saving (AL-4168, QA 2026-10-22:
@@ -108,3 +125,4 @@ export class SalesforceEmailSentPage extends SalesforceIntegrationPage {
     await dialog.waitFor({ state: 'hidden', timeout: 15_000 });
     return { saveDisabled, invalid };
   }
+}

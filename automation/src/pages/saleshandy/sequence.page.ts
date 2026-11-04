@@ -185,6 +185,9 @@ export class SaleshandySequencePage extends SaleshandyPage {
   async markAsReplied(sequenceId: string, fullName: string, step = 1, email?: string): Promise<void> {
     await this.openEmails(sequenceId);
     for (let attempt = 1; attempt <= 3; attempt++) {
+      // The Emails list loads 25 rows a page; an older prospect's row can be on page 2 (Salesforce Reply Received,
+      // 2026-11-04), so search for the email when the row is not on the first page.
+      await this.searchIfOffFirstPage(fullName, step, email);
       const row = this.emailRow(fullName, step, email);
       await expect(row).toBeVisible({ timeout: 20_000 });
       const repliedCell = await this.cell(row, 'Replied');
@@ -201,6 +204,24 @@ export class SaleshandySequencePage extends SaleshandyPage {
         await this.openEmails(sequenceId);
       }
     }
+  }
+
+  // A second reply on a step 1 email that already shows Replied (Create a Opportunity 2 starts a second run). The
+  // Replied cell cannot prove this click, so the caller proves it with a new Logs entry. Emails tab three-dot menu
+  // first; if the menu does not offer the button, the Prospects tab toolbar icon.
+  async markAsRepliedAgain(sequenceId: string, fullName: string, email: string, step = 1): Promise<void> {
+    await this.openEmails(sequenceId);
+    await this.searchIfOffFirstPage(fullName, step, email);
+    const row = this.emailRow(fullName, step, email);
+    await expect(row).toBeVisible({ timeout: 20_000 });
+    await row.locator('#dropdown-basic').click();
+    const button = row.getByRole('button', { name: /Mark as replied$/ });
+    if (await button.waitFor({ state: 'visible', timeout: 5_000 }).then(() => true, () => false)) {
+      await button.click();
+      return;
+    }
+    await this.page.keyboard.press('Escape');
+    await this.toolbarAction(sequenceId, email, 'round-corner-arrow-back');
   }
 
   // Prospects tab > tick the prospect > toolbar icon "Mark as Replied" (icon "round-corner-arrow-back", tooltip

@@ -61,4 +61,19 @@ export class SalesforceOpportunitiesPage extends SalesforceObjectPage {
       description: await this.field('Description'),
     };
   }
+
+  // Every Opportunity whose Name shows `text`: Stage, Close Date and, when asked, the Activity timeline. Used when
+  // a prospect has two Opportunities (the older one must stay as it was).
+  async all(text: string, withTimeline = false): Promise<{ stage: string; closeDate: string; amount: string; timeline: string }[]> {
+    const n = await this.countByName(text);
+    const found: { stage: string; closeDate: string; amount: string; timeline: string }[] = [];
+    for (let i = 0; i < n; i++) {
+      await this.openRecord(text, i);
+      const stage = await this.field('StageName');
+      const closeDate = await this.field('CloseDate');
+      const amount = await this.field('Amount');
+      found.push({ stage, closeDate, amount, timeline: withTimeline ? await this.activityText() : '' });
+    }
+    return found;
+  }
 }

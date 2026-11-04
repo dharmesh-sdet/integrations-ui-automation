@@ -24,6 +24,7 @@ const ROWS: Array<[string, string]> = [
   ['Smoke > 6', 'Deal > 1'],
   ['Smoke > 7', 'Task > 1'],
   ['Smoke > 8', 'Combined > 1'],
+  ['Smoke > 9', 'Contact > 1'],
 ];
 
 if (fs.existsSync(path.join(dir, 'reply-received-smoke.csv')) && !process.argv.includes('--force')) {

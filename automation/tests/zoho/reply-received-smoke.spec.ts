@@ -24,7 +24,7 @@ import { chromium } from 'playwright';
 import { expect, test as base } from '../../src/fixtures/index.ts';
 import { readCsv, type Row } from '../../src/data/csv.ts';
 import { markUsed } from '../../src/data/used.ts';
-import { ZOHO_ACTION, configure, fullName, sendAndReply } from '../../src/flows/saleshandy-to-zoho.ts';
+import { ZOHO_ACTION, configure, fullName, sendAndReply, sendAndReplyFromProspects } from '../../src/flows/saleshandy-to-zoho.ts';
 import { configureWaiting, inDays } from '../../src/flows/zoho-email-sent.ts';
 import { ZOHO_ORG, ZohoCrmPage } from '../../src/pages/zoho/zoho-crm.page.ts';
 import { ZohoForms } from '../../src/pages/zoho/zoho-forms.page.ts';
@@ -162,6 +162,20 @@ test.describe('Zoho Reply Received (production smoke)', () => {
     expect((await crm.find('Contacts', row['Email'])).map((r) => r.id), 'Still one contact').toEqual([id]);
     // Unconfirmed: whether an update adds a note. Recorded, not asserted.
     test.info().annotations.push({ type: 'Notes on the updated contact', description: String(ZohoCrmPage.noteCount(await crm.recordText('Contacts', id))) });
+  });
+
+  // AL-4219 was reported with Mark as replied from sequence > Prospects. Checks 1 to 8 use the Emails tab menu.
+  test('9 Contact: Mark as replied from the Prospects tab', async ({ zohoIntegration, saleshandyPage, saleshandySequence, crm }) => {
+    const fx = { zohoIntegration, saleshandyPage, saleshandySequence, crm };
+    const row = prospect('Smoke > 9');
+    await useTrigger(fx, [{ action: ZOHO_ACTION.contact }]);
+    await test.step(`Add ${fullName(row)}, send step 1 and mark it as replied from the Prospects tab`, () => sendAndReplyFromProspects(fx.saleshandySequence, SEQUENCE_ID, row));
+    const found = await crm.waitForRecord('Contacts', row['Email'], LOOK);
+    expect(found, `No Zoho contact for ${row['Email']}`).toBeTruthy();
+    const text = await crm.waitForNotes('Contacts', found!.id, 1, LOOK);
+    expect(ZohoCrmPage.field(text, 'Contact Name')).toBe(fullName(row));
+    expect(ZohoCrmPage.noteCount(text), 'One note').toBe(1);
+    expect((await crm.find('Contacts', row['Email'])).length, 'One reply must make one contact').toBe(1);
   });
 
   // ---- Create/Update a Lead in Zoho ----

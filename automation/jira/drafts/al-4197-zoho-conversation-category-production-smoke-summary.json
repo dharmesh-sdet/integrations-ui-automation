@@ -1,0 +1,12 @@
+{
+  "type": "comment",
+  "ticket": "AL-4197",
+  "body": "**Verification:** Production testing is done. Smoke tested the Conversation Category is Updated in Saleshandy trigger (Zoho) on Production. All 8 checks pass across the 5 activities:\n\n| # | Activity | What was checked | Status |\n| --- | --- | --- | --- |\n| 1 | Create/Update a Contact in Zoho | Category Interested: a prospect not in Zoho gets one contact with the mapped Contact Fields and one note, \"New Outcome Updated: Interested\", with the sequence name and link. Outcome Not Interested (not the configured category): no contact and no note. Existing contact with an old Title: the same contact is updated and no second contact is made. | Pass |\n| 2 | Create/Update a Lead in Zoho | Category Not Interested: a prospect not in Zoho with a company gets one lead with the mapped Lead Fields and the company, plus one note. | Pass |\n| 3 | Create/Update Account in Zoho | Category Out of Office: a prospect with a company and no contact gets an account named after the company with the mapped Account Fields, not linked to a contact, plus one note. | Pass |\n| 4 | Create/Update a Deal in Zoho | Category Closed: when the contact has 2 deals, only the newest is updated and the older one is unchanged. Prospect not in Zoho: one deal with Deal Value as Amount, Stage Qualification and an empty Closing Date, one note, and no contact. The deal also creates an account named after the company (known). | Pass |\n| 5 | Create a Task in Zoho | Category Do Not Contact: a contact is created, then one task linked to it with the configured Subject, Status, Priority and a due date 3 days ahead. | Pass |",
+  "waitingFor": "QA approved ('looks good', 2026-11-04). QA sends via npm run jira. Source: Zoho Conversation Category production smoke 2026-11-04, sequence 990987, account emailopenedprod.",
+  "sent": {
+    "key": "AL-4197",
+    "url": "https://saleshandy.atlassian.net/browse/AL-4197",
+    "problems": [],
+    "at": "2026-11-04T08:16:47.849Z"
+  }
+}

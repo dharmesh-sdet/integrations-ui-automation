@@ -1,0 +1,12 @@
+{
+  "type": "comment",
+  "ticket": "AL-4217",
+  "body": "**Verification:** Also retested on Staging after the fix. Settings > Webhook: the three-dot icon on the webhook list now opens the action menu with its options. Pass.",
+  "waitingFor": "QA to check the wording and send via npm run jira. The Sequence > Emails part was already sent as comment 79775.",
+  "sent": {
+    "key": "AL-4217",
+    "url": "https://saleshandy.atlassian.net/browse/AL-4217",
+    "problems": [],
+    "at": "2026-11-04T08:58:25.642Z"
+  }
+}

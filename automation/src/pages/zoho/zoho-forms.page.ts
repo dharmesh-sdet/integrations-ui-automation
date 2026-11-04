@@ -66,7 +66,7 @@ export class ZohoForms {
   // Types the record's name in a lookup box and picks the matching entry of the list that opens.
   private async pickLookup(input: string, text: string): Promise<void> {
     // A record made seconds before (the account of a new deal) is not in the lookup list at once: the Zoho search lags
-    // (2026-11-03, Deal 2 and 3: the account existed in Zoho but the option never showed). Retype after a pause, up to 4 times.
+    // (2026-11-03, Deal 2 and 3: the account existed in Zoho but the option never showed). Retype after a pause, up to 8 times (2026-11-04 production smoke: 4 tries were not enough).
     const option = this.page.locator('lyte-drop-item[role="option"]').filter({ hasText: text }).first();
     for (let attempt = 1; ; attempt++) {
       await this.page.locator(input).click();
@@ -75,8 +75,8 @@ export class ZohoForms {
       // Options are <lyte-drop-item role="option"> (confirmed 2026-10-31); the label has a trailing space.
       const shown = await option.waitFor({ state: 'visible', timeout: 12_000 }).then(() => true, () => false);
       if (shown) break;
-      if (attempt === 4) throw new Error(`"${text}" never showed in the lookup list after ${attempt} tries`);
-      await this.page.waitForTimeout(15_000);
+      if (attempt === 8) throw new Error(`"${text}" never showed in the lookup list after ${attempt} tries`);
+      await this.page.waitForTimeout(20_000);
     }
     await option.click({ timeout: 20_000 });
   }

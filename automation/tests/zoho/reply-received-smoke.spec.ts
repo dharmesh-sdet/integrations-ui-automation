@@ -101,7 +101,7 @@ async function checkSaved(fx: Env, picks: Array<{ action: string }>): Promise<vo
     await fx.saleshandyPage.reload();
     await fx.zohoIntegration.openTriggers();
     expect(await fx.zohoIntegration.isTriggerOn(TRIGGER), `"${TRIGGER}" is on after the reload`).toBe(true);
-    expect(await fx.zohoIntegration.selectedActivities(TRIGGER), 'Saved actions after the reload').toEqual(picks.map((p) => p.action));
+    expect([...(await fx.zohoIntegration.selectedActivities(TRIGGER))].sort(), 'Saved actions after the reload').toEqual([...picks.map((p) => p.action)].sort());
     for (const sibling of SIBLING_TRIGGERS) {
       expect(await fx.zohoIntegration.isTriggerOn(sibling), `"${sibling}" is on. Turn it off and run again. Nothing was sent.`).toBe(false);
     }

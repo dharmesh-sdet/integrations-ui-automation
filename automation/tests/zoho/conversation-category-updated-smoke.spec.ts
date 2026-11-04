@@ -29,7 +29,6 @@ import { inDays, sendStep } from '../../src/flows/zoho-email-sent.ts';
 import {
   NOTE_PREFIX,
   OUTCOME,
-  SEQUENCE_NAME,
   TRIGGER,
   configureCategory,
   expectSavedCategory,
@@ -45,6 +44,8 @@ process.env.KEEP_OTHER_TRIGGERS ??= '1';
 
 const CSV = 'zoho/conversation-category-updated-smoke.csv';
 const SEQUENCE_ID = process.env.SMOKE_SEQUENCE_ID ?? '';
+// Row 7 puts both deals on an account that already exists in Zoho. A new account takes minutes to show in the Deal form's Account list (2026-11-04, two production runs).
+const DEAL_ACCOUNT = process.env.SMOKE_DEAL_ACCOUNT ?? 'Deal Account 1793774511475';
 const PROFILE = path.resolve(import.meta.dirname, '../../auth/zoho-conversation-category-updated-smoke-profile');
 const SIBLING_TRIGGERS = ['Email Sent from Saleshandy', 'Email is Opened in Saleshandy'];
 
@@ -158,7 +159,7 @@ test.describe('Zoho Conversation Category is Updated (production smoke)', () => 
     expect(ZohoCrmPage.field(text, 'Contact Name')).toBe(fullName(row));
     for (const value of [row['Job Title'], row['Department'], row['Twitter'], row['City'], row['State'], row['Country']]) expect(text).toContain(value);
     expect(phoneDigits(text)).toContain(phoneDigits(row['Phone Number']));
-    expect(text, 'Note carries the sequence name').toContain(SEQUENCE_NAME);
+    expect(text, 'Note carries the smoke sequence link').toContain(`/sequence/${SEQUENCE_ID}/`);
     expect(outcomeNotes(text), 'One note').toBe(1);
     expect((await crm.find('Contacts', row['Email'])).length, 'One outcome change must make one contact').toBe(1);
   });
@@ -250,10 +251,10 @@ test.describe('Zoho Conversation Category is Updated (production smoke)', () => 
     await forms.createContact({ first: row['First Name'], last: row['Last Name'], email: row['Email'] });
     const olderName = `Older Deal ${stamp} ${row['Last Name']}`;
     const newerName = `Newer Deal ${stamp} ${row['Last Name']}`;
-    const olderId = await forms.createDeal({ name: olderName, closing: inDays(30), contact: fullName(row), amount: '100' });
+    const olderId = await forms.createDeal({ name: olderName, closing: inDays(30), contact: fullName(row), amount: '100', account: DEAL_ACCOUNT });
     // The newest deal is the one made last. A pause makes the order clear in Zoho.
     await crm.page.waitForTimeout(60_000);
-    const newerId = await forms.createDeal({ name: newerName, closing: inDays(30), contact: fullName(row), amount: '200' });
+    const newerId = await forms.createDeal({ name: newerName, closing: inDays(30), contact: fullName(row), amount: '200', account: DEAL_ACCOUNT });
     await useTrigger(fx, dealPick);
     await sendAndChange(fx, row, OUTCOME.closed);
     await untilPasses('the newest deal is updated', async () => {

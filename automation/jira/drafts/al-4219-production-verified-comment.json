@@ -1,0 +1,6 @@
+{
+  "type": "comment",
+  "ticket": "AL-4219",
+  "body": "**Verification:** Retested on Production after the deploy. Reply is Received in Saleshandy trigger (Zoho): after Mark as replied from the sequence Prospects tab, the workflow starts and one contact with one note is created in Zoho. Also covered Mark as replied from the Emails tab three-dot menu for the Contact, Lead, Account, Deal, Task and combined actions (see the smoke summary on AL-4192). All pass. A real Gmail reply was not tested.",
+  "waitingFor": "QA to check and send. Source: Zoho Reply Received production smoke 2026-11-04, check 9 (Prospects tab) and checks 1 to 8, sequence 989765, account emailopenedprod."
+}

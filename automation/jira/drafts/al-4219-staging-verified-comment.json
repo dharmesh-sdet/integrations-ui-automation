@@ -1,0 +1,6 @@
+{
+  "type": "comment",
+  "ticket": "AL-4219",
+  "body": "**Verification:** Retested on Staging after the fix. Reply is Received in Saleshandy trigger (Zoho): after Mark as replied from the sequence Prospects tab, the workflow now starts and the Zoho record is created or updated (Contact, Lead, Account, Deal and Task actions). Also checked from the Emails tab three-dot menu. A real Gmail reply was not tested.",
+  "waitingFor": "QA to check and send. Source: Zoho Reply Received staging run 2026-11-03 (context/zoho/reply-received-progress.md), account gzoho."
+}

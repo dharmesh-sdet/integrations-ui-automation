@@ -216,10 +216,14 @@ test.describe('Zoho Prospect Unsubscribed (production smoke)', () => {
     await forms.createContact({ first: row['First Name'], last: row['Last Name'], email: row['Email'] });
     const olderName = `Older Deal ${stamp} ${row['Last Name']}`;
     const newerName = `Newer Deal ${stamp} ${row['Last Name']}`;
-    const olderId = await forms.createDeal({ name: olderName, closing: inDays(30), contact: fullName(row), amount: '100' });
+    // Both deals share one account. A second new account was never listed by the Zoho lookup within 4 minutes (2026-11-04,
+    // two runs); an account that the first deal already picked is listed at once.
+    const accountName = `Deal Account ${stamp} ${row['Last Name']}`;
+    await crm.createAccount(accountName);
+    const olderId = await forms.createDeal({ name: olderName, closing: inDays(30), contact: fullName(row), amount: '100', account: accountName });
     // The newest deal is the one made last. A pause makes the order clear in Zoho.
     await crm.page.waitForTimeout(60_000);
-    const newerId = await forms.createDeal({ name: newerName, closing: inDays(30), contact: fullName(row), amount: '200' });
+    const newerId = await forms.createDeal({ name: newerName, closing: inDays(30), contact: fullName(row), amount: '200', account: accountName });
     await useTrigger(fx, [{ action: ZOHO_ACTION.deal, closingDays: '0' }]);
     await unsubscribe(fx, row);
     await untilPasses('the newest deal is updated', async () => {

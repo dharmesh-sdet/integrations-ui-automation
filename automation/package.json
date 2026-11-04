@@ -21,6 +21,7 @@
     "smoke:salesforce-reply-received": "bash scripts/run-salesforce-reply-received-smoke.sh",
     "smoke:salesforce-email-opened": "bash scripts/run-salesforce-email-opened-smoke.sh",
     "smoke:salesforce-pair": "bash scripts/run-salesforce-pair-smoke.sh",
+    "smoke:salesforce-link-clicked": "bash scripts/run-salesforce-link-clicked-smoke.sh",
     "smoke:pipedrive-email-sent": "bash scripts/run-pipedrive-email-sent-smoke.sh",
     "smoke:pipedrive-outcome-updated": "bash scripts/run-pipedrive-outcome-updated-smoke.sh",
     "smoke:pipedrive-link-clicked": "bash scripts/run-pipedrive-link-clicked-smoke.sh",

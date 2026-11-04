@@ -26,6 +26,9 @@ export const accounts = {
   // notemailsentzoho (same login), now connected to Salesforce. Its sessions are copies of
   // auth/saleshandy-notemailsentzoho-chromium.json and auth/salesforce-sfreplyreceived-chromium.json.
   sfemailopened: { saleshandy: 'dharmesh+noemailsent@saleshandy.com' },
+  // Link is Clicked in Saleshandy, Salesforce (QA, 2026-11-04). Account dharmesh+zohointegration, Salesforce connected by QA.
+  // Saleshandy session: auth/saleshandy-sflinkclicked-chromium.json (QA logs in headed). Salesforce session: copy of auth/salesforce-sfreplyreceived-chromium.json.
+  sflinkclicked: { saleshandy: 'dharmesh+zohointegration@saleshandy.com' },
   // Pipedrive workflows (QA, 2026-10-23). Each has its own Saleshandy account and Pipedrive company, and its own saved sessions
   // (auth/saleshandy-<account>-chromium.json, auth/pipedrive-<account>-chromium.json). Addresses are a default, TODO(needs-input): confirm each one QA signs up with.
   gpipedrive: { saleshandy: 'dharmesh+gpipedrive@saleshandy.com' }, // QA, 2026-10-24: Saleshandy account for Pipedrive, with its own Saleshandy and Pipedrive sessions

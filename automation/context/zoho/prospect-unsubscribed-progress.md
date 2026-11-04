@@ -48,9 +48,17 @@ Date: 2026-10-30. Mode: regression (staging). Platform rule: hand-written spec (
 
 ## Review and speed-up run (2026-11-04)
 
-- Changes: `configureOnce` (skips an unchanged save, uses `configureWaiting`), faster `ZohoCrmPage.find()` (wait for first row, sort once per module), `blockHeavyAssets` (`ASSET_BLOCK=0` turns it off), Trigger 2 selector moved to `ZohoIntegrationPage.openActivityConfiguration`, Lead 1 / Trigger 5 / Trigger 6 / Deal 3 assertions tightened. Not committed.
+- Changes: `configureOnce` (skips an unchanged save, uses `configureWaiting`), faster `ZohoCrmPage.find()` (wait for first row, sort once per module), `blockHeavyAssets` (`ASSET_BLOCK=0` turns it off), Trigger 2 selector moved to `ZohoIntegrationPage.openActivityConfiguration`, Lead 1 / Trigger 5 / Trigger 6 / Deal 3 assertions tightened. Committed 2026-11-04.
 - Full run (`ZOHO_PU_SKIP_SEND=1`): 11 of 19 passed. Contact 1 (no step 1 send) fired the workflow, so the send can be skipped.
 - Failed rows 3, Contact 1, Deal 3, Combined 1: a 1.5 s wait in `recordText()` cut the note body. 6 s restored, the four rows passed on rerun. Keep the 6 s.
 - Failed rows 4, 5, 6 (link): the unsubscribe page opens but the Prospects tab stays "Completed" for 3 minutes. Same with `ASSET_BLOCK=0` (row 4 rerun). Log shows `net::ERR_TIMED_OUT` for `cd1.shengage02.com`. Cause not proved. QA to try one link by hand.
 - Failed Account 2: the linked account name became the prospect company ("Linked Account 315808" to "ChurnZero 315808"). Cases say the name is kept. QA to say bug or not.
 - Not rerun yet: the full suite after the 6 s restore (only the 4 rows were).
+
+## Link rows fixed, Account 2 settled (2026-11-04, later)
+
+- Link rows 4, 5, 6: the unsubscribe registers only when the click comes long enough after the send. 20 s after the email opened stayed Active for 3 minutes in 6 runs (also with 2 steps and `ASSET_BLOCK=0`). With 93 s (the HubSpot and Pipedrive production wait) row 4 showed Unsubscribed 15 s after the link (polled every 10 s). Rows 5 and 6 passed with the 93 s default (`ZOHO_PU_LINK_WAIT_MS`, 0 for the second open in row 5). Cause is a theory (a click too soon after the send is ignored), not confirmed by the product team.
+- Sequence 197600 now has 2 steps (a one-step sequence turns a prospect Completed, QA 2026-11-04). Setup test: `SETUP_STEP2=1`.
+- Account 2: QA 2026-11-04, Account Name is mapped to Company, so the hand-made name is replaced. Spec and cases updated. One run failed on State not on the account after 120 s, the rerun passed (late Zoho update).
+- Account used: Saleshandy `dharmesh+noemailsent@saleshandy.com` (key `notemailsentzoho`, fixed in `accounts.ts`), Zoho `rudra@saleshandy.com`.
+- Status: all 19 rows passed at least once, over several runs. No single full run after the last fixes. Committed 2026-11-04 (git log, "Zoho Prospect Unsubscribed").

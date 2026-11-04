@@ -16,7 +16,10 @@ const STEP_1_SUBJECT = 'Quick question about your outreach';
 // undefined on staging (the editors are on the page, `.mce-content-body` x2), so it never passes. This local helper
 // types a plain-text body (no links needed for bounce rows) and waits for the two editors on the page instead.
 async function addStep(page: Page, subject: string, text: string): Promise<void> {
-  await page.getByRole('button', { name: 'Email', exact: true }).click();
+  // On a sequence that already has a step, "Add Step" (the bottom button) opens the step types first (seen 2026-11-04).
+  const email = page.getByRole('button', { name: 'Email', exact: true });
+  if (!(await email.isVisible({ timeout: 3_000 }).catch(() => false))) await page.getByRole('button', { name: 'Add Step', exact: true }).click();
+  await email.click();
   const dialog = page.getByRole('dialog');
   await dialog.waitFor();
   await expect(dialog.locator('.mce-content-body'), 'Subject and body editors').toHaveCount(2, { timeout: 30_000 });
@@ -49,15 +52,17 @@ async function addStep(page: Page, subject: string, text: string): Promise<void>
   }
   await expect(dialog).toHaveCount(0);
 }
+const STEP_2_SUBJECT = 'Following up on my question';
+const STEP_2_BODY = 'Hello, I am following up on my earlier question.';
 const STEP_1_BODY = 'Hello, I wanted to ask a quick question about your outreach.';
 const SENDER = process.env.ZOHO_PU_SENDER ?? '';
 
 test.describe('Setup: Zoho Prospect Unsubscribed sequence', () => {
-  test.skip(process.env.SETUP_SEQUENCE !== '1', 'Set SETUP_SEQUENCE=1 to create the sequence');
   test.use({ account: 'notemailsentzoho' });
   test.describe.configure({ retries: 0 });
 
   test(`Create "${NAME}", add step 1, save Unsubscribe as Link, add the sender, activate it`, async ({ saleshandySequenceBuilder: builder, saleshandySequence }) => {
+    test.skip(process.env.SETUP_SEQUENCE !== '1', 'Set SETUP_SEQUENCE=1 to create the sequence');
     let id = await test.step('Open the Sequences list and look for the sequence by name', async () => {
       const listLoaded = builder.page.waitForResponse((r) => r.url().includes('/api/edge/sequences?') && r.ok());
       await builder.goto('/sequence');
@@ -152,5 +157,20 @@ test.describe('Setup: Zoho Prospect Unsubscribed sequence', () => {
     await test.step('Activate the sequence', async () => {
       await saleshandySequence.resumeSequence(id);
     });
+  });
+  // QA 2026-11-04: a one-step sequence turns a prospect "Completed" after step 1, and the unsubscribe link does not
+  // register on it. With a second step the prospect stays Active. Run with SETUP_STEP2=1 and ZOHO_PU_SEQUENCE_ID.
+  // Prospects that are unsubscribed never receive step 2, so it adds no sends.
+  test('Add step 2 to the existing sequence', async ({ saleshandySequenceBuilder: builder }) => {
+    test.skip(process.env.SETUP_STEP2 !== '1', 'Set SETUP_STEP2=1 to add step 2');
+    const id = process.env.ZOHO_PU_SEQUENCE_ID ?? '';
+    if (!id) throw new Error('Set ZOHO_PU_SEQUENCE_ID');
+    await builder.goto(`/sequence/${id}/steps`);
+    await builder.page.getByText(STEP_1_SUBJECT).first().waitFor({ timeout: 30_000 });
+    if ((await builder.page.getByText(STEP_2_SUBJECT).count()) === 0) {
+      await addStep(builder.page, STEP_2_SUBJECT, STEP_2_BODY);
+    }
+    await builder.page.reload();
+    await expect(builder.page.getByText(STEP_2_SUBJECT).first(), 'Step 2 on the Steps tab after a reload').toBeVisible({ timeout: 30_000 });
   });
 });

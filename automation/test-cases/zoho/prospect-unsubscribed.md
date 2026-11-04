@@ -11,7 +11,7 @@ Not covered, still open: Z-1, Z-5 and Q3. All three are known and kept by decisi
 ## Test data setup
 
 - Account `notemailsentzoho` is shared with the other Zoho workflows except Email Sent (QA, 2026-10-30). Workflows run in parallel. Each has its own sequence, mailbox and prospects.
-- Each row uses a new prospect with a Mailinator address, for example `yourname.zoho-u1@mailinator.com`. Add it to the active sequence "Zoho Prospect Unsubscribed QA". The sequence has 1 step, no A/B variants, and one mailbox that no other Zoho sequence uses. Sequence Settings > Unsubscribe > "Unsubscribe as Link" is saved for the link rows.
+- Each row uses a new prospect with a Mailinator address, for example `yourname.zoho-u1@mailinator.com`. Add it to the active sequence "Zoho Prospect Unsubscribed QA". The sequence has 2 steps (a one-step sequence turns a prospect Completed after step 1, and the unsubscribe link does not register on it, QA 2026-11-04), no A/B variants, and one mailbox that no other Zoho sequence uses. Sequence Settings > Unsubscribe > "Unsubscribe as Link" is saved for the link rows.
 - Step 1 must show Sent in the Emails tab before the unsubscribe.
 - "Unsubscribe (UI)" means: Prospects tab, tick the prospect, click the Mark as Unsubscribe icon in the toolbar. "Unsubscribe (link)" means: open mailinator.com, type the prospect email, click Go, open the sequence email, and click the unsubscribe link. Link rows are limited to 3 to save sends. All other rows use the UI.
 - Every row also shows "Unsubscribed" on the Prospects tab.
@@ -60,7 +60,7 @@ Extra Configuration: None.
 | # | Scenario | Do | Expected | Ticket |
 |---|---|---|---|---|
 | 1 | Prospect has a company, no contact, no account | Unsubscribe (UI) | Account named after the company with the Account Fields values. Not linked to a contact. One note | None |
-| 2 | Contact exists and is linked to an account | Unsubscribe (UI) | The linked account is updated with the mapped fields. Its name is kept. Contact gets the tag | None |
+| 2 | Contact exists and is linked to an account | Unsubscribe (UI) | The linked account is updated with the mapped fields. Its name becomes the prospect company, because Account Name is mapped to Company. Contact gets the tag | None |
 
 ## Create/Update a Deal in Zoho
 

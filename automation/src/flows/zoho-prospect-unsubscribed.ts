@@ -49,9 +49,11 @@ export async function unsubscribeByLink(
 }
 
 // Opens the link of an email already delivered (also the second open of Trigger and setup 5).
-export async function openLink(mailinator: MailinatorPage, row: Row, subject: string): Promise<Page> {
-  // The unsubscribe registers only when the email stayed open for a while (seen 2026-10-31: 20 s works, 0 s stayed Active for 120 s).
-  const page = await mailinator.openUnsubscribeLink(row['Email'], subject, Number(process.env.ZOHO_PU_LINK_WAIT_MS ?? 20_000));
+// The unsubscribe registers only when the click comes long enough after the send. 20 s after the email opened stayed Active
+// for 3 minutes in 6 runs (2026-11-04, 2 steps). 93 s registered it, 15 s later on the Prospects tab (the HubSpot and
+// Pipedrive production wait). waitMs = 0 for a second open of a link that already registered.
+export async function openLink(mailinator: MailinatorPage, row: Row, subject: string, waitMs = Number(process.env.ZOHO_PU_LINK_WAIT_MS ?? 93_000)): Promise<Page> {
+  const page = await mailinator.openUnsubscribeLink(row['Email'], subject, waitMs);
   await expect(page.getByText(UNSUBSCRIBED_TEXT), 'The unsubscribe page').toBeVisible({ timeout: 30_000 });
   return page;
 }

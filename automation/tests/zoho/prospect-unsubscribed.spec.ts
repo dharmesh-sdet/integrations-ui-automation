@@ -4,7 +4,7 @@
 // notes and tag, the Lead-only extras). The note title and text are not recorded: the first run writes the lines it
 // sees as test annotations ("note lines"), for the cases file.
 // Data: test-data/zoho/prospect-unsubscribed.csv (npm run data:zoho-prospect-unsubscribed), one prospect per row, found by the Scenario column.
-// Sequence: "Zoho Prospect Unsubscribed QA" on notemailsentzoho, 1 step, no A/B variants, one mailbox no other Zoho
+// Sequence: "Zoho Prospect Unsubscribed QA" on notemailsentzoho, 2 steps (QA 2026-11-04: one step turns a prospect Completed), no A/B variants, one mailbox no other Zoho
 //   sequence uses, Active, Sequence Settings > Unsubscribe > "Unsubscribe as Link" saved. Put its id in ZOHO_PU_SEQUENCE_ID.
 // Zoho CRM is read in a headed browser on its own copy of the saved profile, so run it through xvfb-run (see
 // package.json `test:zoho-prospect-unsubscribed`). Other Zoho workflows run at the same time on this account, each with
@@ -138,7 +138,10 @@ test.describe('Zoho Prospect Unsubscribed (staging)', () => {
     const row = prospect('Trigger and setup > 4');
     await configureOnce(zohoIntegration, saleshandyPage, TRIGGER, [{ action: ZOHO_ACTION.contact }]);
     await unsubscribeByLink(saleshandySequence, mailinator, SEQUENCE_ID, row);
+    const clicked = Date.now();
     await saleshandySequence.expectProspectStatus(SEQUENCE_ID, row['Email'], 'Unsubscribed');
+    // Seconds from the link page to the Prospects tab (polled every 10 s), for the cases file.
+    test.info().annotations.push({ type: 'seconds from the link to Unsubscribed on the Prospects tab', description: String(Math.round((Date.now() - clicked) / 1000)) });
     // Proposed, unconfirmed: contact, tag and note as in row 3. The contact is checked, the tag and the note are recorded.
     const found = await crm.waitForRecord('Contacts', row['Email'], 180_000);
     expect(found, `No Zoho contact for ${row['Email']}`).toBeTruthy();
@@ -157,7 +160,7 @@ test.describe('Zoho Prospect Unsubscribed (staging)', () => {
     const found = await crm.waitForRecord('Contacts', row['Email'], 180_000);
     expect(found, `No Zoho contact for ${row['Email']}`).toBeTruthy();
     const before = await crm.waitForNotes('Contacts', found!.id, 1);
-    await openLink(mailinator, row, subject);
+    await openLink(mailinator, row, subject, 0);
     // Seen 2026-10-31: the second open adds a second note. Zoho is read until it shows (the first read is 15 s later).
     const after = await crm.waitForNotes('Contacts', found!.id, ZohoCrmPage.noteCount(before) + 1, 90_000);
     expect(ZohoCrmPage.noteCount(after), 'A second note is added').toBe(ZohoCrmPage.noteCount(before) + 1);
@@ -292,7 +295,8 @@ test.describe('Zoho Prospect Unsubscribed (staging)', () => {
       const text = await crm.recordText('Accounts', accountId);
       for (const value of [row['City'], row['State'], row['Country']]) expect(text).toContain(value);
     }, 120_000);
-    expect(ZohoCrmPage.field(await crm.recordText('Accounts', accountId), 'Account Name'), 'The account name is kept').toBe(accountName);
+    // QA 2026-11-04: Account Name is mapped to the Saleshandy Company, so the hand-made name is replaced by the prospect company.
+    expect(ZohoCrmPage.field(await crm.recordText('Accounts', accountId), 'Account Name'), 'The account name becomes the prospect company').toBe(row['Company']);
     // The cases file: the contact gets the tag. The tag text is not on the record page, so it is recorded, not asserted.
     test.info().annotations.push(tagAnnotation(await crm.recordText('Contacts', contactId)));
   });

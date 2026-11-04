@@ -37,8 +37,7 @@ export const accounts = {
   gzoho: { saleshandy: 'dharmesh+gzoho@saleshandy.com' }, // Saleshandy account for Zoho CRM, Email Sent only
   // Every Zoho workflow except Email Sent, run in parallel with gzoho (QA, 2026-10-29). Own sessions
   // (auth/saleshandy-notemailsentzoho-chromium.json, auth/zoho-notemailsentzoho-chromium.json).
-  // TODO(needs-input): confirm the address QA signs up with.
-  notemailsentzoho: { saleshandy: 'dharmesh+notemailsentzoho@saleshandy.com' }, // Saleshandy account for Zoho CRM, all workflows except Email Sent
+  notemailsentzoho: { saleshandy: 'dharmesh+noemailsent@saleshandy.com' }, // Saleshandy account for Zoho CRM, all workflows except Email Sent
   // Lead / Contact / Account / Opportunity is created in Salesforce (tests/salesforce/*-created.spec.ts).
   // One account for the four Salesforce-side workflows: each spec turns on only its own
   // trigger, and fewer accounts on the shared Salesforce user means fewer token drops.

@@ -29,6 +29,7 @@
     "smoke:zoho-link-clicked": "bash scripts/run-zoho-link-clicked-smoke.sh",
     "smoke:zoho-email-bounced": "bash scripts/run-zoho-email-bounced-smoke.sh",
     "smoke:zoho-reply-received": "bash scripts/run-zoho-reply-received-smoke.sh",
+    "smoke:zoho-prospect-unsubscribed": "bash scripts/run-zoho-prospect-unsubscribed-smoke.sh",
     "smoke:zoho-conversation-category-updated": "bash scripts/run-zoho-conversation-category-updated-smoke.sh",
     "test:pipedrive-email-opened": "bash scripts/run-pipedrive-email-opened.sh",
     "test:pipedrive-outcome-updated": "bash scripts/run-pipedrive-outcome-updated.sh",

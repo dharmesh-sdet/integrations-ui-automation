@@ -62,3 +62,12 @@ Date: 2026-10-30. Mode: regression (staging). Platform rule: hand-written spec (
 - Account 2: QA 2026-11-04, Account Name is mapped to Company, so the hand-made name is replaced. Spec and cases updated. One run failed on State not on the account after 120 s, the rerun passed (late Zoho update).
 - Account used: Saleshandy `dharmesh+noemailsent@saleshandy.com` (key `notemailsentzoho`, fixed in `accounts.ts`), Zoho `rudra@saleshandy.com`.
 - Status: all 19 rows passed at least once, over several runs. No single full run after the last fixes. Committed 2026-11-04 (git log, "Zoho Prospect Unsubscribed").
+
+## Production smoke (2026-11-04)
+
+- QA: workflow deployed on production. Sequence 990987 (https://my.saleshandy.com/sequence/990987/settings), step 2 to be added, defaults accepted ("looks good").
+- Written, typechecked, NOT RUN: note `notes/production-testing/21-zoho-prospect-unsubscribed.md` (8 checks), README row 21, `tests/zoho/prospect-unsubscribed-smoke.spec.ts`, `tests/setup/zoho-prospect-unsubscribed-smoke-sequence.spec.ts`, `scripts/make-zoho-prospect-unsubscribed-smoke-data.ts`, `scripts/run-zoho-prospect-unsubscribed-smoke.sh`, `npm run smoke:zoho-prospect-unsubscribed`, data `test-data/zoho/prospect-unsubscribed-smoke.csv` (8 rows).
+- Setup spec ran on production (2 runs, passed): sequence 990987 has 2 steps and "Unsubscribe as Link" saved after a reload.
+- Seen on the sequence: step 1 is titled "Zoho Conversation Category Smoke 2026-11-04 - Step 1", 6 prospects already, senders Pipedrive Production (134/150 a day) and Round TwoProd (133/150). Both senders have about 16 sends left. The run needs 8. QA to say if sharing this sequence with the Conversation Category smoke is fine.
+- QA runs `npm run login:saleshandy -- emailopenedprod`, then `npm run smoke:zoho-prospect-unsubscribed`.
+- QA 2026-11-04: sharing sequence 990987 with the Conversation Category smoke is fine. The two smokes use different prospects. Open risk: both change triggers on the same Zoho integration of emailopenedprod.

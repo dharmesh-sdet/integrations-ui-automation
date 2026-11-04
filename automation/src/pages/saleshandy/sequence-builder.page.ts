@@ -124,11 +124,12 @@ export class SequenceBuilderPage extends SaleshandyPage {
     return this.editor().locator('.editor-editable-content.single-line-content');
   }
 
+  // TinyMCE 6.8 (staging 2026-11-04) has no tinymce.editors, so tinymce.get() is the fallback.
   // Reads the body editor's HTML through window.tinymce (the body is the editor
   // whose element lacks class single-line-content).
   private async bodyHtml(): Promise<string> {
     return this.page.evaluate(() => {
-      const eds = (window as any).tinymce?.editors ?? [];
+      const eds = ((window as any).tinymce?.editors ?? (window as any).tinymce?.get?.() ?? []);
       for (const ed of eds) {
         const el: HTMLElement | undefined = ed.getElement?.() ?? ed.bodyElement;
         if (el && !el.classList.contains('single-line-content')) return ed.getContent() as string;
@@ -139,7 +140,7 @@ export class SequenceBuilderPage extends SaleshandyPage {
 
   private async setBodyHtml(html: string): Promise<void> {
     await this.page.evaluate((h) => {
-      const eds = (window as any).tinymce?.editors ?? [];
+      const eds = ((window as any).tinymce?.editors ?? (window as any).tinymce?.get?.() ?? []);
       for (const ed of eds) {
         const el: HTMLElement | undefined = ed.getElement?.() ?? ed.bodyElement;
         if (el && !el.classList.contains('single-line-content')) ed.setContent(h);
@@ -155,7 +156,7 @@ export class SequenceBuilderPage extends SaleshandyPage {
     await this.page.getByRole('button', { name: 'Email', exact: true }).click();
     await this.editor().waitFor();
     await expect
-      .poll(() => this.page.evaluate(() => (window as any).tinymce?.editors?.length ?? 0), {
+      .poll(() => this.page.evaluate(() => ((window as any).tinymce?.editors ?? (window as any).tinymce?.get?.() ?? []).length), {
         message: 'Editors did not load',
         intervals: [500],
       })

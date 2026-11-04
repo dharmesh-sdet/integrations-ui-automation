@@ -33,7 +33,7 @@
 - Used rows of test-data/salesforce/link-clicked.csv replaced (31 rows, only that CSV; backup in the 2026-11-04 session scratchpad). Row now Hassan Gamal.
 - Rerun 2 with the fresh prospect: PASSED (3.8 min, one network retry on page load). Overall: 34 of 34 passed at least once, no single full run.
 - Open, not proven: run 2 got Logs status Error while Salesforce had 2 Accounts named Alp Ozkan. With one Account (fresh prospect) the row passes. Whether the product errors when two Accounts match the name is not tested. 3 stale Accounts named Alp Ozkan remain in Salesforce, not deleted.
-- Product failures found: none. Sender interval and limits never checked. Not committed.
+- Product failures found: none. Sender interval and limits never checked. Committed in 6cbe445.
 
 ## QA decision 2026-11-04
 
@@ -46,4 +46,4 @@
 - QA decisions: runs ALONE on `emailopenedprod`, after the Reply Received and Email Opened pair (a click counts as an open). Sequence "Salesforce Link Clicked Smoke <date>", one step, two links, Track link clicks on, opens off. Staging sequence 197704 and `sflinkclicked` stay staging only.
 - Written, typechecked, listed, NOT run: `tests/salesforce/link-clicked-smoke.spec.ts`, `tests/setup/salesforce-link-clicked-smoke-sequence.spec.ts`, `scripts/make-salesforce-link-clicked-smoke-data.ts`, `scripts/run-salesforce-link-clicked-smoke.sh`, `npm run smoke:salesforce-link-clicked`. `src/flows/salesforce-link-clicked.ts` now reads `CLICK_AFTER_MS` and `CLICK_COUNT_TIMEOUT_MS` (staging defaults unchanged).
 - Not run on production by Claude (smoke rule). The workflow may not be published on production yet: QA confirms before the run. The setup spec sender and sequence-list code follows the staging setup of 2026-11-04 and was never run on production.
-- Not committed.
+- Committed and pushed: 6cbe445 on rudra-saleshandy (staging regression plus smoke). Next: QA runs `npm run smoke:salesforce-link-clicked` after the pair and after the publish.

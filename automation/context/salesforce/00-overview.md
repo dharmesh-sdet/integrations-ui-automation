@@ -164,8 +164,8 @@ Order is the Triggers & Activity list on staging. "Create a Lead in Salesforce" 
 | 3 | Prospect Outcome is updated in Saleshandy | AL-4134 | Done, live. Smoke comment posted 2026-10-22 |
 | 4 | Sequence Email is Opened in Saleshandy | AL-4135 | Done, live. Smoke 11 of 11 |
 | 5 | Link is Clicked in Saleshandy | AL-4136 | Done, live. Smoke 13 of 13 (2026-11-05), AL-4136 comment sent |
-| 6 | Prospect is Unsubscribed in Saleshandy | AL-4137 | Context file only, no tests |
-| 7 | Email is Bounced in Saleshandy | AL-4138 | Context file only, no tests |
+| 6 | Prospect is Unsubscribed in Saleshandy | AL-4137 | Done, live. Staging 30 of 30 passed at least once, smoke 9 of 9 on production (2026-11-05, check 1 passed on the second attempt), sheet row 13 written, AL-4137 comment draft for QA to send (`prospect-unsubscribed-progress.md`) |
+| 7 | Email is Bounced in Saleshandy | AL-4138 | Done, live. Staging 34 of 34 passed at least once, smoke 9 of 9 on production (2026-11-05, check 9 passed after a script fix), sheet row 14 written, AL-4138 comment draft for QA to send (`email-bounced-progress.md`) |
 | 8 | Lead is created in Salesforce (V1) | AL-4144 | Old draft, exploring on staging (`salesforce-created-progress.md`) |
 | 9 | Import Prospects from Salesforce | none | Not started |
 | 10 | Contact is created in Salesforce | AL-4141 | Old draft, Select box shows "No Data" (P1) |
@@ -174,4 +174,4 @@ Order is the Triggers & Activity list on staging. "Create a Lead in Salesforce" 
 | 13 | Call Logged in Saleshandy | AL-4139 | Not started |
 | 14 | Call Outcome Updated in Saleshandy | AL-4140 | Not started |
 
-5 of 14 done and live. Earlier lines in this section said Email Sent and Prospect Outcome Updated were in progress. They were out of date.
+7 of 14 done and live. Earlier lines in this section said Email Sent and Prospect Outcome Updated were in progress. They were out of date.

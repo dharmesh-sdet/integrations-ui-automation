@@ -153,11 +153,25 @@ Employees. Company Revenue → Annual Revenue. Company Founded Year → Year
 Started. Company Phone → Account Phone. Company HQ Location → Billing
 Zip/Postal Code.
 
-## Where things stand
+## Where things stand (QA, 2026-11-05)
 
-- Reply is Received > Create a Lead (AL-4133): in progress on staging, see
-  `reply-received-progress.md`.
-- Email Sent (AL-4132): context file written, staging exploration done,
-  scenarios in progress. See `email-sent.md`.
-- Prospect Outcome Updated (AL-4134): context file `prospect-outcome-updated.md` drafted from HubSpot + KB, QA created account `sfoutcomeupdated` 2026-10-20; read-only staging exploration of the Opportunity modals done there; Field Mapping, Account/Contact/Lead modals re-check and scenarios still to do.
-- All other Salesforce workflows: not started.
+Order is the Triggers & Activity list on staging. "Create a Lead in Salesforce" is an activity of Reply Received, not a trigger.
+
+| # | Workflow | Ticket | Status |
+|---|---|---|---|
+| 1 | Email Sent from Saleshandy | AL-4132 | Done, live. Jira comment sent 2026-10-22 |
+| 2 | Reply is Received in Saleshandy | AL-4133 | Done, live. Smoke 10 of 10 (2026-11-05) |
+| 3 | Prospect Outcome is updated in Saleshandy | AL-4134 | Done, live. Smoke comment posted 2026-10-22 |
+| 4 | Sequence Email is Opened in Saleshandy | AL-4135 | Done, live. Smoke 11 of 11 |
+| 5 | Link is Clicked in Saleshandy | AL-4136 | Done, live. Smoke 13 of 13 (2026-11-05), AL-4136 comment sent |
+| 6 | Prospect is Unsubscribed in Saleshandy | AL-4137 | Context file only, no tests |
+| 7 | Email is Bounced in Saleshandy | AL-4138 | Context file only, no tests |
+| 8 | Lead is created in Salesforce (V1) | AL-4144 | Old draft, exploring on staging (`salesforce-created-progress.md`) |
+| 9 | Import Prospects from Salesforce | none | Not started |
+| 10 | Contact is created in Salesforce | AL-4141 | Old draft, Select box shows "No Data" (P1) |
+| 11 | Opportunity is created in Salesforce | AL-4142 | Old draft, Select box shows "No Data" (P1) |
+| 12 | Account is created in Salesforce | AL-4143 | Old draft, not opened yet |
+| 13 | Call Logged in Saleshandy | AL-4139 | Not started |
+| 14 | Call Outcome Updated in Saleshandy | AL-4140 | Not started |
+
+5 of 14 done and live. Earlier lines in this section said Email Sent and Prospect Outcome Updated were in progress. They were out of date.

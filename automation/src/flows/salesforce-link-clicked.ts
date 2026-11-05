@@ -69,6 +69,9 @@ type Pages = {
   mailinator: MailinatorPage;
 };
 
+// The Logs helpers need no Mailinator, so other triggers (Email Bounced) can reuse them.
+export type LogPages = Pick<Pages, 'salesforceIntegration' | 'saleshandySequence'>;
+
 type ClickOptions = {
   sequenceId: string;
   row: Row;
@@ -83,7 +86,7 @@ type ClickOptions = {
   trigger?: string;
 };
 
-export async function knownLogIds(pages: Pages, trigger = TRIGGER): Promise<Set<string>> {
+export async function knownLogIds(pages: LogPages, trigger = TRIGGER): Promise<Set<string>> {
   await pages.salesforceIntegration.openLogs();
   return new Set((await pages.salesforceIntegration.logEntries(trigger)).map((e) => e.id));
 }
@@ -107,7 +110,7 @@ export async function addAndSend(pages: Pages, options: ClickOptions): Promise<v
 
 // Waits for new Logs entries of `trigger` that reached a final status and returns the first one.
 // The Logs page is read 15 s after the click is counted, then every 10 s (QA rule).
-export async function readNewLog(pages: Pages, known: Set<string>, trigger = TRIGGER, row?: Row): Promise<ClickResult> {
+export async function readNewLog(pages: LogPages, known: Set<string>, trigger = TRIGGER, row?: Row): Promise<ClickResult> {
   let result: ClickResult = { status: '', logRow: '', clicked: 0, newEntries: 0 };
   await test.step('Wait for the new Logs entry and read its status', async () => {
     await pages.saleshandySequence.page.waitForTimeout(15_000);

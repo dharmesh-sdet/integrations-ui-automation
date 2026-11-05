@@ -1,0 +1,12 @@
+{
+  "type": "comment",
+  "ticket": "AL-4136",
+  "body": "**Verification:** Production testing is done. Smoke tested the Link is Clicked in Saleshandy trigger on Production, all 10 activities. For each one, the email was sent, link 1 was clicked 90 seconds after the send, and the result was checked in Salesforce and in the Logs tab (Success):\n\n| # | Activity | What was checked | Status |\n| --- | --- | --- | --- |\n| 1 | Create a Lead in Salesforce | One Lead created with the mapped values as entered (apostrophe in the last name), Status \"Open - Not Contacted\". | Pass |\n| 2 | Update a Lead in Salesforce | With a Lead that has an old Job Title, Phone and Company, the mapped values show the prospect's, still one Lead. | Pass |\n| 3 | Create a Contact in Salesforce | Contact created with Name, Email, Business Phone, Department and Other City, and no Lead created. | Pass |\n| 4 | Update a Contact in Salesforce | Phone and Department show the prospect's values, still one Contact. | Pass |\n| 5 | Create a Account in Salesforce | One Account created, named like the prospect's full name. | Pass |\n| 6 | Update a Account in Salesforce | With an Account named like the prospect's full name, the mapped values (Phone, City) show the prospect's, still one Account. | Pass |\n| 7 | Create a Opportunity in Salesforce | One Opportunity named with the prospect's email, linked to the Contact, Close Date 7 days out, Stage Prospecting, Amount 12000. | Pass |\n| 8 | Update a Opportunity in Salesforce | With 3 Opportunities on the Contact, the newest gets Stage Qualification and Close Date 14 days out, the other two are unchanged. | Pass |\n| 9 | Attach Note in Salesforce | Paired with Create a Contact, one Contact and one Note on it. | Pass |\n| 10 | Record (log) an Email Activity in Salesforce | With Select Object Contact, one completed Email Task on the Contact. | Pass |\n\nClosing date 0 Days cannot be saved in the Create a Opportunity and Update a Opportunity modals (AL-4168).",
+  "waitingFor": "QA to send via npm run jira. Source: Link is Clicked in Saleshandy (Salesforce) Production smoke run 2026-11-05, sequence 992152, account emailopenedprod, dev org saleshandy-dev-ed. 11 of 11 checks passed (13 of 13 tests).",
+  "sent": {
+    "key": "AL-4136",
+    "url": "https://saleshandy.atlassian.net/browse/AL-4136",
+    "problems": [],
+    "at": "2026-11-05T07:57:23.032Z"
+  }
+}

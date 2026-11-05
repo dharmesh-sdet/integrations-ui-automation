@@ -47,3 +47,12 @@
 - Written, typechecked, listed, NOT run: `tests/salesforce/link-clicked-smoke.spec.ts`, `tests/setup/salesforce-link-clicked-smoke-sequence.spec.ts`, `scripts/make-salesforce-link-clicked-smoke-data.ts`, `scripts/run-salesforce-link-clicked-smoke.sh`, `npm run smoke:salesforce-link-clicked`. `src/flows/salesforce-link-clicked.ts` now reads `CLICK_AFTER_MS` and `CLICK_COUNT_TIMEOUT_MS` (staging defaults unchanged).
 - Not run on production by Claude (smoke rule). The workflow may not be published on production yet: QA confirms before the run. The setup spec sender and sequence-list code follows the staging setup of 2026-11-04 and was never run on production.
 - Committed and pushed: 6cbe445 on rudra-saleshandy (staging regression plus smoke). Next: QA runs `npm run smoke:salesforce-link-clicked` after the pair and after the publish.
+
+## Production smoke run (2026-11-05)
+
+- Sequence 992152 (QA's, "Salesforce Email Opened Smoke 2026-11-05", reused). Edited by Claude before the run: step 1 body now holds two links (saleshandy.com and saleshandy.com/pricing), Track link clicks on, Track email opens off, read back after reload. Sender dharmesh+prospectoutcome@saleshandy.com was already on it.
+- Command: `SMOKE_SEQUENCE_ID=992152 bash scripts/run-salesforce-link-clicked-smoke.sh`. Gate skipped (passed earlier today).
+- Result: 13 passed (checks 1 to 11 plus the two Opportunity mapping steps), 0 failed, 35.7 min. No product failure. Not committed. Jira comment and sheet row not done.
+- QA 2026-11-05 (later): Link Clicked is approved on production, RELEASED and LIVE. Open: AL-4136 comment, sheet row 12 (Salesforce Link is Clicked), commit.
+- Sheet row 12 written 2026-11-05 by the Reply Received session (E Released, F 5 Nov: Production smoke passed. Live.). Open: AL-4136 comment, commit.
+- AL-4136 comment sent (QA, 2026-11-05 07:57 UTC). Only the commit is open.

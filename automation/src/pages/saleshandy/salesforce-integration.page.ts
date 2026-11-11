@@ -266,7 +266,8 @@ export class SalesforceIntegrationPage extends SaleshandyPage {
 
   // Pause Delay In Days.
   pauseDays(): Locator {
-    return this.extraConfiguration().getByRole('spinbutton');
+    // Pause Delay In Days is a text input now (seen 2026-11-09, class bs-input), not a spinbutton.
+    return this.extraConfiguration().getByRole('spinbutton').or(this.extraConfiguration().locator('input.bs-input')).first();
   }
 
   configSaveButton(): Locator {

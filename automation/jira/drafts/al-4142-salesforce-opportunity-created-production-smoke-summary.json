@@ -1,0 +1,12 @@
+{
+  "type": "comment",
+  "ticket": "AL-4142",
+  "body": "**Verification:** Production testing is done. Smoke tested the Opportunity is Created in Salesforce trigger on Production, all 9 activities:\n\n| # | Activity | What was checked | Status |\n| --- | --- | --- | --- |\n| 1 | Activities list | The Select box opens with 9 activities in order and no \"No Data\" box. | Pass |\n| 2 | Add Prospect | A new deal with a contact role creates one prospect with First Name, Last Name, Email, Phone Number, Job Title and Department, status Inactive. | Pass |\n| 3 | Add Prospect | A Deal Value of 4321 reaches the prospect. | Pass |\n| 4 | Add Prospect | A deal with two contact roles creates two prospects. | Pass |\n| 5 | Move Prospect to another Sequence | The new deal contact is in the chosen sequence. | Pass |\n| 6 | Mark Prospect as Unsubscribed | A second deal for a contact already in the sequence sets Latest Status to Unsubscribed. | Pass |\n| 7 | Mark Prospect as Finished | The same setup sets Latest Status to Finished. | Pass |\n| 8 | Mark Prospect as Replied | The same setup sets Latest Status to Replied. | Pass |\n| 9 | Mark Prospect as Paused | The same setup sets Latest Status to Paused, and Activities shows the number of days. | Pass |\n| 10 | Mark Prospect as Resume(Un-pause) | A paused prospect goes back to Latest Status Active. | Pass |\n| 11 | Assign a tag to Prospect | The new deal contact is imported and tagged. | Pass |\n| 12 | Blacklist a Domain | A new deal contact on a test domain adds the domain to the Do Not Contact list, and no prospect is imported. | Pass |",
+  "waitingFor": "QA to send via npm run jira. Source: Opportunity is Created in Salesforce Production smoke run 2026-11-12, sequence 997965, account emailopenedprod, dev org saleshandy-dev-ed. 13 of 13 tests passed (12 checks and Restore). All rows Pass as drafted, QA approved the wording.",
+  "sent": {
+    "key": "AL-4142",
+    "url": "https://saleshandy.atlassian.net/browse/AL-4142",
+    "problems": [],
+    "at": "2026-11-12T06:48:12.704Z"
+  }
+}

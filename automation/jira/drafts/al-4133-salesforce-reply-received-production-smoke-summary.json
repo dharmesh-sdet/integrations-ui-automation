@@ -1,0 +1,12 @@
+{
+  "type": "comment",
+  "ticket": "AL-4133",
+  "body": "**Verification:** Production testing is done. Smoke tested the Reply is Received in Saleshandy trigger on Production, all 10 activities:\n\n| # | Activity | What was checked | Status |\n| --- | --- | --- | --- |\n| 1 | Create a Lead in Salesforce | One Lead created with the mapped values as entered (accented first name, apostrophe in the last name). | Pass |\n| 2 | Update a Lead in Salesforce | With a Lead that has an old Job Title, Phone and Company, the mapped values show the prospect's, still one Lead. | Pass |\n| 3 | Create a Contact in Salesforce | One Contact created with Name, Email, Business Phone, Department and Other Address, Title and Account Name empty, and no Lead created. | Pass |\n| 4 | Update a Contact in Salesforce | Phone and Department show the prospect's values, Title is unchanged, still one Contact. | Pass |\n| 5 | Create a Account in Salesforce | One Account created with the mapped Company, phone and city. | Pass |\n| 6 | Update a Account in Salesforce | With an Account named like the prospect's full name, the mapped values (Phone, City) show the prospect's, still one Account. | Pass |\n| 7 | Create a Opportunity in Salesforce | One Contact and one Opportunity linked to it, Close Date 7 days out, Stage Prospecting, Amount 12000. | Pass |\n| 8 | Update a Opportunity in Salesforce | With two Opportunities named with the prospect's email, only the newest changes to Stage Negotiation/Review and Close Date 14 days out, the older one is unchanged. | Pass |\n| 9 | Attach Note in Salesforce | Paired with Create a Contact, one Contact and one Note titled reply-received, with the sequence, step, sender and email details. | Pass |\n| 10 | Record (log) an Email Activity in Salesforce | With Select Object Contact, one completed Email Task on the existing Contact. | Pass |",
+  "waitingFor": "QA to send via npm run jira. Source: Reply is Received in Saleshandy (Salesforce) Production smoke run 2026-11-05, sequence 992146, account emailopenedprod, dev org saleshandy-dev-ed. All rows Pass, QA approved the wording.",
+  "sent": {
+    "key": "AL-4133",
+    "url": "https://saleshandy.atlassian.net/browse/AL-4133",
+    "problems": [],
+    "at": "2026-11-05T07:57:04.506Z"
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "type": "comment",
+  "ticket": "AL-4137",
+  "body": "**Verification:** Production testing is done. Smoke tested the Prospect is Unsubscribed in Saleshandy trigger on Production, all 9 checks. Each prospect unsubscribed through the real unsubscribe link, and the Prospects tab showed Unsubscribed.\n\n| # | Activity | What was checked | Status |\n| --- | --- | --- | --- |\n| 1 | Create a Lead in Salesforce | One Lead created with the mapped values as entered (apostrophe in the last name), Status \"Open - Not Contacted\". See Note. | Pass |\n| 2 | Update a Lead in Salesforce | With a Lead that has an old Job Title, Phone and Company, the mapped values show the prospect's, still one Lead. | Pass |\n| 3 | Create a Contact + Attach Note in Salesforce | One Contact with Name, Email, Business Phone, Department and Other City, and no Lead. One Note on the Contact. | Pass |\n| 4 | Update a Contact in Salesforce | Phone and Department show the prospect's values, still one Contact. | Pass |\n| 5 | Create a Account in Salesforce | One Account named like the prospect's full name, with Billing City, State, Country and Website. | Pass |\n| 6 | Update a Account in Salesforce | With an Account named like the prospect's full name, the mapped values (Phone, City) show the prospect's, still one Account. | Pass |\n| 7 | Create a Opportunity in Salesforce | One Opportunity named with the prospect's email, linked to the Contact, Close Date 7 days out, Stage Prospecting, Amount 12000. | Pass |\n| 8 | Update a Opportunity in Salesforce | With 3 Opportunities on the Contact, only the newest gets Stage Qualification and Close Date 14 days out. | Pass |\n| 9 | Closing date 0 Days (AL-4168) | In the Create a Opportunity and Update a Opportunity modals, the field turns red and Save is disabled. | Pass |\n\nNote: on the first attempt of check 1, the prospect showed Unsubscribed but no Lead appeared in Salesforce within 3 minutes. A second attempt with a new prospect created the Lead. The cause is not known.",
+  "waitingFor": "QA to send via npm run jira. Source: Prospect is Unsubscribed in Saleshandy (Salesforce) Production smoke run 2026-11-05, sequence 992152, account emailopenedprod, dev org saleshandy-dev-ed. 9 of 9 checks passed at least once (Check 1 passed on the second attempt). QA approved the wording.",
+  "sent": {
+    "key": "AL-4137",
+    "url": "https://saleshandy.atlassian.net/browse/AL-4137",
+    "problems": [],
+    "at": "2026-11-05T12:39:45.549Z"
+  }
+}

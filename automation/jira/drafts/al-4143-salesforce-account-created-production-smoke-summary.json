@@ -1,0 +1,12 @@
+{
+  "type": "comment",
+  "ticket": "AL-4143",
+  "body": "**Verification:** Production testing is done. Smoke tested the Account is Created in Salesforce trigger on Production, all 9 activities:\n\n| # | Activity | What was checked | Status |\n| --- | --- | --- | --- |\n| 1 | Activities list | The Select box opens with 9 activities in order, no \"No Data\" box and no \"Select a list\" field. | Pass |\n| 2 | Add Prospect | A new Account with one Contact creates one prospect with First Name, Last Name, Email, Phone Number, Job Title and Department, status Inactive. | Pass |\n| 3 | Add Prospect | The Account's Website, Phone and Industry reach the prospect. | Pass |\n| 4 | Add Prospect | An Account with two Contacts creates two prospects. | Pass |\n| 5 | Add Prospect | An Account with no Contact completes with no prospect and no error. | Pass |\n| 6 | Move Prospect to another Sequence | The new Account contact is in the chosen sequence at Step 1. | Pass |\n| 7 | Mark Prospect as Unsubscribed | A prospect is already in the sequence. A second Account with a Contact of the same email sets Latest Status to Unsubscribed. | Pass |\n| 8 | Mark Prospect as Finished | A prospect is already in the sequence. A second Account with a Contact of the same email sets Latest Status to Finished. | Pass |\n| 9 | Mark Prospect as Replied | A prospect is already in the sequence. A second Account with a Contact of the same email sets Latest Status to Replied. | Pass |\n| 10 | Mark Prospect as Paused | A prospect is already in the sequence. A second Account with a Contact of the same email sets Latest Status to Paused, and Activities shows the number of days. | Pass |\n| 11 | Mark Prospect as Resume(Un-pause) | A prospect is paused in the sequence. A third Account with a Contact of the same email sets Latest Status back to Active. | Pass |\n| 12 | Assign a tag to Prospect | The new Account contact is imported and tagged. | Pass |\n| 13 | Blacklist a Domain | A new Account contact on a test domain adds the domain to the Do Not Contact list, and no prospect is imported. | Pass |",
+  "waitingFor": "QA to send via npm run jira. Source: Account is Created in Salesforce Production smoke run 2026-11-12, sequence 997965, account emailopenedprod, dev org saleshandy-dev-ed. 13 of 13 tests passed over two runs (12 checks and Restore). All rows Pass as drafted, QA approved the wording.",
+  "sent": {
+    "key": "AL-4143",
+    "url": "https://saleshandy.atlassian.net/browse/AL-4143",
+    "problems": [],
+    "at": "2026-11-12T08:31:16.262Z"
+  }
+}

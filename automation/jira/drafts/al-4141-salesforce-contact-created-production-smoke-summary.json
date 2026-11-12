@@ -1,0 +1,12 @@
+{
+  "type": "comment",
+  "ticket": "AL-4141",
+  "body": "**Verification:** Production testing is done. Smoke tested the Contact is created in Salesforce trigger on Production, all 11 checks:\n\n| # | Activity | What was checked | Status |\n| --- | --- | --- | --- |\n| 1 | Activities list | The list opens with 9 activities in order: Add Prospect, Move, Unsubscribed, Finished, Replied, Paused, Resume, Tag, Blacklist. No \"No Data\" box and no \"Select a list\" field. | Pass |\n| 2 | Add Prospect | Workflow COMPLETED. One prospect with First Name, Last Name, Email, Phone Number and Department as mapped, Latest Status Inactive. | Pass |\n| 3 | Add Prospect | A Contact with a Last Name only is imported with the Last Name kept and First Name empty. | Pass |\n| 4 | Move Prospect to another Sequence | A new Contact's prospect is in the sequence. | Pass |\n| 5 | Assign a tag to Prospect | A new Contact's prospect is imported and tagged TagA. | Pass |\n| 6 | Mark Prospect as Paused | Latest Status Paused. Activities shows \"has been paused for 1 days for sequence <sequence name>\". | Pass |\n| 7 | Mark Prospect as Resume(Un-pause) | A paused prospect becomes Active again. | Pass |\n| 8 | Mark Prospect as Replied | Latest Status Replied. | Pass |\n| 9 | Mark Prospect as Finished | Latest Status Finished. | Pass |\n| 10 | Mark Prospect as Unsubscribed | Latest Status Unsubscribed. | Pass |\n| 11 | Blacklist a Domain | The domain is on the Do Not Contact list and no prospect is imported. | Pass |",
+  "waitingFor": "QA to send via npm run jira. Source: Contact is created in Salesforce Production smoke run 2026-11-12, sequence 997962, account emailopenedprod, dev org saleshandy-dev-ed. 11 of 11 checks passed at least once (checks 2 and 3 passed on a rerun after their first workflow runs ERRORED at Loop on Contacts, an old no-Email Contact in the window). QA approved the wording and asked to leave the Note out.",
+  "sent": {
+    "key": "AL-4141",
+    "url": "https://saleshandy.atlassian.net/browse/AL-4141",
+    "problems": [],
+    "at": "2026-11-12T06:52:01.042Z"
+  }
+}

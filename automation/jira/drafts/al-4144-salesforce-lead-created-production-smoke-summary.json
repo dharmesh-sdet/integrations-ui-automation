@@ -1,0 +1,12 @@
+{
+  "type": "comment",
+  "ticket": "AL-4144",
+  "body": "**Verification:** Production testing is done. Smoke tested the Lead is Created in Salesforce trigger on Production, all 9 activities:\n\n| # | Activity | What was checked | Status |\n| --- | --- | --- | --- |\n| 1 | Add Prospect | The Select a list box opens and lists six views (AL-4224). | Pass |\n| 2 | Add Prospect | A new Lead with Company, Job Title and Phone creates one prospect with the mapped values, status Inactive. | Pass |\n| 3 | Add Prospect | With the list Today's Leads, the Lead is imported with the mapped values. | Pass |\n| 4 | Move Prospect to another Sequence | A new Lead is imported and is in the chosen sequence at Step 1. | Pass |\n| 5 | Mark Prospect as Unsubscribed | A Lead with the email of a prospect in the sequence sets Latest Status to Unsubscribed. | Pass |\n| 6 | Mark Prospect as Finished | The same setup sets Latest Status to Finished. | Pass |\n| 7 | Mark Prospect as Replied | The same setup sets Latest Status to Replied. | Pass |\n| 8 | Mark Prospect as Paused | The same setup sets Latest Status to Paused, and Activities shows the number of days. | Pass |\n| 9 | Mark Prospect as Resume(Un-pause) | A paused prospect goes back to Latest Status Active. | Pass |\n| 10 | Assign a tag to Prospect | A new Lead is imported and tagged. | Pass |\n| 11 | Blacklist a Domain | A new Lead on a test domain adds the domain to the Do Not Contact list, and no prospect is imported. | Pass |",
+  "waitingFor": "QA to send via npm run jira. Source: Lead is Created in Salesforce Production smoke run 2026-11-12, sequence 997962, account emailopenedprod, dev org saleshandy-dev-ed. 12 of 12 tests passed (11 checks and Restore). All rows Pass as drafted, QA approved the wording.",
+  "sent": {
+    "key": "AL-4144",
+    "url": "https://saleshandy.atlassian.net/browse/AL-4144",
+    "problems": [],
+    "at": "2026-11-12T06:48:15.089Z"
+  }
+}

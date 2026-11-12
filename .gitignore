@@ -30,3 +30,6 @@ automation/.mcp.json
 
 # Per-run Playwright output folders (traces, videos; may hold session data)
 automation/test-results-*/
+
+# Throwaway probes and screenshots
+automation/scratch/

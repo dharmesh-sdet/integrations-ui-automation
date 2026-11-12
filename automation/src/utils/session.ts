@@ -30,8 +30,9 @@ export function assertSessionFresh(platform: Platform, account: Account, browser
   const ageMs = Date.now() - fs.statSync(file).mtimeMs;
   if (ageMs > MAX_SESSION_AGE_MS) {
     const days = Math.floor(ageMs / (24 * 60 * 60 * 1000));
+    fs.rmSync(file, { force: true }); // an expired session file is useless; the login command writes a new one
     throw new Error(
-      `${platform} session${isSharedPlatform(platform) ? '' : ` for ${account}`} (${browser}) expired (saved ${days} days ago), ${loginHint}`,
+      `${platform} session${isSharedPlatform(platform) ? '' : ` for ${account}`} (${browser}) expired (saved ${days} days ago, file deleted), ${loginHint}`,
     );
   }
   return file;

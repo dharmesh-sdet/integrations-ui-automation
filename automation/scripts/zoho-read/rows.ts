@@ -1,10 +1,12 @@
 import { chromium } from 'playwright';
+import { exitIfExpired } from '../../src/utils/profile.ts';
 const root = '/home/dharmesh/Desktop/Dharmesh/Saleshandy/repo/local project/automation';
 const [url, needle, sortHint] = process.argv.slice(2);
 const ctx = await chromium.launchPersistentContext(root + '/auth/mcp-zoho-profile', { headless: false, viewport: { width: 1440, height: 900 } });
 const p = ctx.pages()[0] ?? await ctx.newPage();
 await p.goto(url);
 await p.waitForTimeout(12000);
+await exitIfExpired(ctx, p, 'mcp-zoho-profile', 'npm run mcp:open -- mcp-zoho-profile https://crm.zoho.com');
 console.log('URL', p.url());
 const t = await p.locator('body').innerText();
 console.log('TOTAL', (t.match(/Total Records\s*(\d+)/) || [])[1]);

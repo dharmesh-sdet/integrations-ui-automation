@@ -1,0 +1,253 @@
+// Production smoke test: Contact is created in Salesforce (AL-4141, parent AL-4131). No fixed bug ticket: a baseline.
+// Checklist: notes/production-testing/29-salesforce-contact-created.md (approved by QA 2026-11-12): 11 checks and a
+// last test that turns the trigger off. Each check follows the staging row of the same activity in
+// tests/salesforce/contact-created.spec.ts (30 rows, commit 66dc4fe). Same shape as the Opportunity smoke
+// (tests/salesforce/opportunity-created-smoke.spec.ts). Differences from staging:
+//  - the account `emailopenedprod` points at production (src/config/environments.ts); the Salesforce org is the same
+//    dev org (saleshandy-dev-ed);
+//  - the sequence is the day's smoke sequence (SMOKE_SEQUENCE_NAME, made by the setup spec), nothing production is
+//    hard-coded; "Stop sending follow-ups" is off, so Replied stays Replied;
+//  - the Logs tab is not opened (the run status comes from run-now). A prospect still missing after 3 minutes fails the
+//    check and QA decides if it is a bug;
+//  - other triggers are never switched (KEEP_OTHER_TRIGGERS). Every check stops before it saves or runs when any
+//    trigger besides this one is on, so no step 1 send starts another workflow;
+//  - the window of the run is kept in its own file (CONTACT_LAST_RUN_FILE), so staging runs do not move it. A check that
+//    would reach other people's Contacts (Move, Unsubscribed, Blacklist) is skipped, not failed. A Contact with no
+//    Email in the window would make the run ERROR at "Loop on Contacts", so it makes the check skip too;
+//  - a status check acts on a prospect that is already in the sequence, so it creates a second Contact with the same
+//    email (a run reads only Contacts created since the last run, Refold query proven 2026-11-12);
+//  - each Move run is one send, counted against SEND_CAP. No production setting is changed. The last test turns the
+//    Contact trigger off so the 3-hour cron does not import the org's Contacts. CONTACT_TRIGGER_NAME overrides the name.
+// The checks do not delete what they create, except the Blacklist domain. The smoke runs alone: it does not share the
+// org window with the Lead, Opportunity or Account smokes (QA 2026-11-12).
+//
+// Run through scripts/run-salesforce-contact-created-smoke.sh (npm run smoke:salesforce-contact-created), which
+// runs the gate and the setup spec first. Needs, once:
+//   npm run login:saleshandy -- emailopenedprod
+// The Salesforce REST login needs a trusted IP (Setup > Network Access).
+process.env.KEEP_OTHER_TRIGGERS ??= '1';
+
+import { expect, test } from '../../src/fixtures/index.ts';
+import { checkSendCap, recordSend } from '../../src/data/send-cap.ts';
+import { CONTACT_TRIGGER, contactsInWindow, runContactNow } from '../../src/flows/salesforce-contact-created.ts';
+import { expectProspect } from '../../src/flows/salesforce-lead-created.ts';
+import { ACTIVITY, RUN_STAMP, pausedIn, sequence, tagged, useActivities, type Pick } from '../../src/flows/salesforce-to-saleshandy.ts';
+import type { SalesforceIntegrationPage } from '../../src/pages/saleshandy/salesforce-integration.page.ts';
+import { SalesforceApi } from '../../src/utils/salesforce-api.ts';
+import { untilPasses } from '../../src/utils/wait.ts';
+
+test.use({ account: 'emailopenedprod', actionTimeout: 30_000 });
+test.setTimeout(25 * 60_000);
+
+const SEQ = process.env.SMOKE_SEQUENCE_NAME ?? '';
+const TAG = 'TagA';
+type Made = { email: string; name: string; first: string; last: string; id: string };
+type Crm = Parameters<typeof expectProspect>[0];
+
+let sf: SalesforceApi;
+test.beforeAll(async () => {
+  if (!SEQ) throw new Error('SMOKE_SEQUENCE_NAME is not set. Use scripts/run-salesforce-contact-created-smoke.sh.');
+  process.env.CONTACT_LAST_RUN_FILE ??= `${process.env.TMPDIR ?? '/tmp'}/contact-created-smoke-lastrun.txt`;
+  sf = await SalesforceApi.login();
+});
+
+// A prospect that is still missing 3 minutes after the run fails the check, and QA decides if it is a bug (QA 2026-11-05).
+const expectP = (crm: Crm, email: string, fullName: string, want: Parameters<typeof expectProspect>[3]) => expectProspect(crm, email, fullName, want, 3 * 60_000);
+
+const MOVE: Pick = { activity: ACTIVITY.move, config: sequence(true, SEQ) };
+const escape = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+let counter = 0;
+
+type Person = { first?: string; last: string; local: string; domain?: string; title?: string; phone?: string; department?: string; email?: string };
+
+// One Contact. A new email on every call, unless `email` is given (a follow-up for a prospect that already exists).
+async function makeContact(p: Person): Promise<Made> {
+  counter += 1;
+  const email = p.email ?? `${p.local}.${RUN_STAMP}${counter}@${p.domain ?? 'mailinator.com'}`;
+  const first = p.first ?? '';
+  const name = `${first} ${p.last}`.trim();
+  const id = await test.step(`Create the Salesforce Contact ${name}`, () =>
+    sf.createContact({ firstName: p.first, lastName: p.last, email, title: p.title, phone: p.phone, department: p.department }),
+  );
+  return { email, name, first, last: p.last, id };
+}
+
+// Sets the trigger and its activities. Stops first when any other trigger is on: a Move run sends step 1, which would
+// start Email Sent, Email Opened or Link Clicked. Nothing was sent or saved when it stops.
+async function use(i: SalesforceIntegrationPage, picks: Pick[]): Promise<void> {
+  await i.openTriggers();
+  const others = (await i.onTriggers()).filter((name) => name !== CONTACT_TRIGGER);
+  expect(others, `Other triggers are on: ${others.join(', ')}. Turn them off and run again. Nothing was sent.`).toEqual([]);
+  await useActivities(i, CONTACT_TRIGGER, picks);
+}
+
+const names = (picks: Pick[]) => picks.map((p) => `"${p.activity}"`).join(' + ');
+
+// Skips the check when the run would reach other Contacts: the window holds more than the check's own Contact.
+async function aloneInWindow(what: string): Promise<void> {
+  const n = await contactsInWindow(sf);
+  test.skip(n > 1, `${n} Contacts are in the window since the last run (a Contact with no Email would make the run ERROR too); ${what}`);
+}
+
+// A new Contact, trigger set with `picks`, run now.
+async function newContactRun(i: SalesforceIntegrationPage, picks: Pick[], p: Person): Promise<Made> {
+  await test.step(`Select ${names(picks)} and Save`, () => use(i, picks));
+  const c = await makeContact(p);
+  await test.step('Run the workflow now and wait for COMPLETED', () => runContactNow(i.page));
+  return c;
+}
+
+// A Contact whose prospect goes into the smoke sequence. One send, counted.
+async function moveIn(i: SalesforceIntegrationPage, crm: Crm, p: Person): Promise<Made> {
+  checkSendCap();
+  await test.step(`Select ${names([MOVE])} and Save`, () => use(i, [MOVE]));
+  const c = await makeContact(p);
+  // A Move run sends step 1 for every Contact in the window, so the send count holds only if this Contact is the only one.
+  await aloneInWindow('the Move run would send step 1 for all of them');
+  await test.step('Run the workflow now and wait for COMPLETED', () => runContactNow(i.page));
+  recordSend('Contact is created smoke: Move run, step 1');
+  await test.step(`Check ${c.name} is in ${SEQ}`, () => expectP(crm, c.email, c.name, { sequence: SEQ }));
+  return c;
+}
+
+// A second Contact with the same email runs `picks` alone on a prospect that is already in the sequence.
+async function followUp(i: SalesforceIntegrationPage, c: Made, picks: Pick[], windowCheck = false): Promise<void> {
+  await test.step(`Select ${names(picks)}, second Contact for ${c.name}, run now`, async () => {
+    await use(i, picks);
+    await makeContact({ first: c.first, last: c.last, local: c.last.toLowerCase(), email: c.email });
+    if (windowCheck) await aloneInWindow('this action would reach their prospects too');
+    await runContactNow(i.page);
+  });
+}
+
+// Removes a domain from the Do Not Contact list (the Blacklist action lists the domain of every Contact in the window).
+async function clearDnc(dnc: { openGlobalList(): Promise<void>; hasEntry(e: string): Promise<boolean>; removeEntry(e: string): Promise<void> }, domains: string[]): Promise<void> {
+  for (const d of domains) {
+    await dnc.openGlobalList();
+    if (await dnc.hasEntry(d)) await dnc.removeEntry(d);
+  }
+}
+
+// The Contact fields the account maps, read on Field Mapping. A field that is not mapped is not asserted and is noted.
+async function mappedContactFields(i: SalesforceIntegrationPage, wanted: Record<string, string>): Promise<Record<string, string>> {
+  await i.openMapping('Contact');
+  const out: Record<string, string> = {};
+  const missing: string[] = [];
+  for (const [label, value] of Object.entries(wanted)) {
+    const mapped = (await i.mappedValue(label).catch(() => '')) ?? '';
+    if (mapped && !/^select/i.test(mapped.trim())) out[label] = value;
+    else missing.push(label);
+  }
+  if (missing.length) test.info().annotations.push({ type: 'Not mapped on production', description: `${missing.join(', ')} (Contact Properties). Not asserted.` });
+  return out;
+}
+
+const LIST = [ACTIVITY.add, ACTIVITY.move, ACTIVITY.unsubscribed, ACTIVITY.finished, ACTIVITY.replied, ACTIVITY.paused, ACTIVITY.resume, ACTIVITY.tag, ACTIVITY.blacklist];
+
+test.describe(`${CONTACT_TRIGGER}: production smoke`, () => {
+  test('Smoke 1: the activity list opens with nine activities in order, no "No Data" box and no "Select a list" field', async ({ salesforceIntegration: i }) => {
+    await use(i, [{ activity: ACTIVITY.add }]);
+    await i.openTriggers();
+    await i.openActivityList(CONTACT_TRIGGER);
+    const tops: number[] = [];
+    for (const name of LIST) {
+      const option = i.activityOption(name);
+      await expect(option, name).toBeVisible({ timeout: 15_000 });
+      tops.push((await option.boundingBox())?.y ?? -1);
+    }
+    expect(tops, 'activities in list order, top to bottom').toEqual([...tops].sort((a, b) => a - b));
+    await expect(i.page.getByText('No Data'), '"No Data" box').toHaveCount(0);
+    await expect(i.page.getByText('Select a list'), '"Select a list" field').toHaveCount(0);
+    await i.openTriggers();
+  });
+
+  test('Smoke 2: Add Prospect, one prospect with the mapped fields', async ({ salesforceIntegration: i, saleshandyCrm: crm }) => {
+    const wanted = { 'Job Title': 'Procurement Manager', 'Phone Number': '+1 415 555 0132', Department: 'Procurement' };
+    const fields = await test.step('Read Contact Properties on Field Mapping', () => mappedContactFields(i, wanted));
+    const c = await newContactRun(i, [{ activity: ACTIVITY.add }], { first: 'Priya', last: 'Nair', local: 'priya.nair', title: wanted['Job Title'], phone: wanted['Phone Number'], department: wanted.Department });
+    await test.step(`Check ${c.name} in Saleshandy`, () => expectP(crm, c.email, c.name, { status: 'Inactive', fields }));
+  });
+
+  test('Smoke 3: Add Prospect, a Contact with a Last Name only keeps the Last Name', async ({ salesforceIntegration: i, saleshandyCrm: crm }) => {
+    const c = await newContactRun(i, [{ activity: ACTIVITY.add }], { last: 'Solanki', local: 'solanki' });
+    await test.step(`Check ${c.name} in Saleshandy`, async () => {
+      await expectP(crm, c.email, c.name, { status: 'Inactive' });
+      await crm.search(c.email);
+      await crm.openProspect(c.name);
+      await expect(crm.page.getByRole('dialog').getByText(/Solanki/).first(), 'Last Name Solanki').toBeVisible();
+      await crm.page.keyboard.press('Escape');
+    });
+  });
+
+  test('Smoke 4: Move Prospect to another Sequence', async ({ salesforceIntegration: i, saleshandyCrm: crm }) => {
+    await moveIn(i, crm, { first: 'Marcus', last: 'Hallberg', local: 'marcus.hallberg', title: 'Logistics Director' });
+  });
+
+  test('Smoke 5: Assign a tag to Prospect', async ({ salesforceIntegration: i, saleshandyCrm: crm }) => {
+    const c = await newContactRun(i, [{ activity: ACTIVITY.tag, config: tagged }], { first: 'Fiona', last: 'Brandt', local: 'fiona.brandt', title: 'Operations Lead' });
+    await test.step(`Check ${c.name} is tagged ${TAG}`, () => expectP(crm, c.email, c.name, { tag: TAG }));
+  });
+
+  test('Smoke 6: Mark Prospect as Paused', async ({ salesforceIntegration: i, saleshandyCrm: crm }) => {
+    const c = await moveIn(i, crm, { first: 'Hannah', last: 'Lindqvist', local: 'hannah.lindqvist' });
+    await followUp(i, c, [{ activity: ACTIVITY.paused, config: pausedIn(SEQ) }]);
+    // The page renders the sequence name as a link, so the text has two spaces before it.
+    await test.step(`Check ${c.name}: Paused, with the number of days in Activities`, () =>
+      expectP(crm, c.email, c.name, { status: 'Paused', activity: new RegExp(`has been paused for \\d+ days for sequence\\s+${escape(SEQ)}`) }));
+  });
+
+  test('Smoke 7: Mark Prospect as Resume(Un-pause)', async ({ salesforceIntegration: i, saleshandyCrm: crm }) => {
+    const c = await moveIn(i, crm, { first: 'Elena', last: 'Marchetti', local: 'elena.marchetti' });
+    await followUp(i, c, [{ activity: ACTIVITY.paused, config: pausedIn(SEQ) }]);
+    await test.step(`Check ${c.name} is Paused first`, () => expectP(crm, c.email, c.name, { status: 'Paused' }));
+    await followUp(i, c, [{ activity: ACTIVITY.resume, config: sequence(false, SEQ) }]);
+    await test.step(`Check ${c.name} is Active again`, () => expectP(crm, c.email, c.name, { status: 'Active' }));
+  });
+
+  test('Smoke 8: Mark Prospect as Replied', async ({ salesforceIntegration: i, saleshandyCrm: crm }) => {
+    const c = await moveIn(i, crm, { first: 'Lucas', last: 'Moreau', local: 'lucas.moreau' });
+    await followUp(i, c, [{ activity: ACTIVITY.replied, config: sequence(false, SEQ) }]);
+    // The smoke sequence keeps sending after a reply, so the status stays Replied, not Finished.
+    await test.step(`Check ${c.name} is Replied`, () => expectP(crm, c.email, c.name, { status: 'Replied' }));
+  });
+
+  test('Smoke 9: Mark Prospect as Finished', async ({ salesforceIntegration: i, saleshandyCrm: crm }) => {
+    const c = await moveIn(i, crm, { first: 'Oliver', last: 'Grant', local: 'oliver.grant' });
+    await followUp(i, c, [{ activity: ACTIVITY.finished, config: sequence(false, SEQ) }]);
+    await test.step(`Check ${c.name} is Finished`, () => expectP(crm, c.email, c.name, { status: 'Finished' }));
+  });
+
+  test('Smoke 10: Mark Prospect as Unsubscribed, window holds only this Contact', async ({ salesforceIntegration: i, saleshandyCrm: crm }) => {
+    const c = await moveIn(i, crm, { first: 'Rahul', last: 'Mehta', local: 'rahul.mehta.unsub', title: 'Fleet Manager' });
+    await followUp(i, c, [{ activity: ACTIVITY.unsubscribed }], true);
+    await test.step(`Check ${c.name} is Unsubscribed`, () => expectP(crm, c.email, c.name, { status: 'Unsubscribed' }));
+  });
+
+  test('Smoke 11: Blacklist a Domain, new Contact on a reserved test domain, window holds only this Contact', async ({ salesforceIntegration: i, saleshandyCrm: crm, saleshandyDnc: dnc }) => {
+    const domain = `contact${Date.now().toString(36)}.example.com`;
+    await use(i, [{ activity: ACTIVITY.blacklist }]);
+    const c = await makeContact({ first: 'Greta', last: 'Lindholm', local: 'greta.lindholm', domain, title: 'Fleet Manager' });
+    await aloneInWindow('their domains would be listed too');
+    await runContactNow(i.page);
+    try {
+      await untilPasses(`${domain} not on the Do Not Contact list`, async () => {
+        await dnc.openGlobalList();
+        expect(await dnc.hasEntry(domain), `${domain} on the list`).toBe(true);
+      });
+      expect(await crm.search(c.email), 'prospects with the blacklisted domain').toBe(0);
+    } finally {
+      await clearDnc(dnc, [domain]);
+    }
+  });
+
+  // Last: the trigger goes off, so the 3-hour cron does not import the org's Contacts into the production account.
+  test('Restore: Contact is created in Salesforce is off', async ({ salesforceIntegration: i }) => {
+    await i.openTriggers();
+    await i.disable(CONTACT_TRIGGER);
+    await i.save();
+    await expect(i.savedToast(), 'save confirmation').toBeVisible();
+    await i.page.reload();
+    await i.openTriggers();
+    expect(await i.isTriggerOn(CONTACT_TRIGGER), `"${CONTACT_TRIGGER}" is on after the reload`).toBe(false);
+  });
+});

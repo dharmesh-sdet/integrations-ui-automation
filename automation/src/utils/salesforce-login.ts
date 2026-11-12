@@ -15,7 +15,7 @@ import { authFile } from './session.ts';
 const AUTOMATION_DIR = path.resolve(import.meta.dirname, '../..');
 
 // .env first (when someone made one), else .env.example. Never printed.
-function credentials(): { username: string; password: string } {
+export function credentials(): { username: string; password: string } {
   const example = Object.fromEntries(
     fs
       .readFileSync(path.join(AUTOMATION_DIR, '.env.example'), 'utf8')

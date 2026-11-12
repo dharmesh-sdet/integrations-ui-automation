@@ -10,11 +10,13 @@ export class SequenceBuilderPage extends SaleshandyPage {
     const listLoaded = this.page.waitForResponse((r) => r.url().includes('/api/edge/sequences?') && r.ok());
     await this.goto('/sequence');
     await listLoaded;
-    await this.page.getByRole('row').nth(1).waitFor();
+    // The first data row, or (account with one sequence, rows without a row role, seen 2026-11-09
+    // on sfreplyreceived) the column header.
+    await this.page.getByRole('row').nth(1).or(this.page.getByText('Sequence Name', { exact: true })).first().waitFor();
   }
 
   async exists(name: string): Promise<boolean> {
-    return (await this.page.getByRole('row').filter({ has: this.page.getByText(name, { exact: true }) }).count()) > 0;
+    return (await this.page.getByText(name, { exact: true }).count()) > 0;
   }
 
   // Id of an existing sequence, from the link in its row.
@@ -76,7 +78,8 @@ export class SequenceBuilderPage extends SaleshandyPage {
   async addEmailStep(template: string, heading: string): Promise<void> {
     await this.page.getByRole('button', { name: 'Email', exact: true }).click();
     // The editor loads after the dialog; typing earlier is lost (seen 2026-10-09).
-    await this.editor().getByRole('button', { name: 'Font sizes' }).waitFor();
+    // The font size button changed its name (seen 2026-11-09), so the Template button counts too.
+    await this.editor().getByRole('button', { name: 'Font sizes' }).or(this.editor().getByText('Template', { exact: true })).first().waitFor();
     await this.editor().getByText('Template', { exact: true }).click();
     const picker = this.page.getByRole('dialog').filter({ hasText: 'Email Templates' });
     await picker.getByText('Saleshandy Library', { exact: true }).click();
@@ -88,7 +91,18 @@ export class SequenceBuilderPage extends SaleshandyPage {
     // stayed on screen for good; Escape closes it.
     await expect(picker).toBeHidden({ timeout: 20_000 }).catch(async () => {
       await this.page.keyboard.press('Escape');
-      await expect(picker).toBeHidden({ timeout: 10_000 });
+      // 2026-11-09 (sfemailopened): Escape did not close it either, the template was already in the
+      // body. The dialog's close button (the first, unnamed one next to the title) does.
+      await expect(picker).toBeHidden({ timeout: 5_000 }).catch(async () => {
+        await picker.getByRole('button').first().click();
+        // Still on screen (the fade never ends): the template is in the body, so drop the stuck dialog and its backdrop.
+        await expect(picker).toBeHidden({ timeout: 5_000 }).catch(async () => {
+          await this.page.evaluate(() => {
+            document.querySelectorAll('.template-modal, .modal-backdrop').forEach((e) => e.remove());
+            document.body.classList.remove('modal-open');
+          });
+        });
+      });
     });
     // The template fills the body in more than one pass; text typed in between
     // was lost (seen 2026-10-09). Wait until two reads a second apart match.
@@ -112,8 +126,12 @@ export class SequenceBuilderPage extends SaleshandyPage {
     await expect(this.body()).toContainText(heading);
     await this.page.keyboard.press('Control+Home');
     await this.page.keyboard.press('Shift+End');
-    await this.editor().getByRole('button', { name: 'Font sizes' }).click();
-    await this.page.getByRole('menuitemcheckbox').last().click();
+    // The heading size is cosmetic. The font size button now shows the size ("13px", seen
+    // 2026-11-09), so a miss here must not stop the step from being saved.
+    await this.editor().getByRole('button', { name: 'Font sizes' }).click({ timeout: 5_000 }).then(
+      () => this.page.getByRole('menuitemcheckbox').last().click({ timeout: 5_000 }),
+      () => {},
+    );
 
     await this.editor().getByRole('button', { name: 'Save', exact: true }).click();
     await this.page.getByRole('alert').filter({ hasText: 'Sequence step created successfully.' }).waitFor();
@@ -201,7 +219,7 @@ export class SequenceBuilderPage extends SaleshandyPage {
     const created = await toast.waitFor({ timeout: 3_000 }).then(() => true, () => false);
     if (!created && (await this.editor().count()) > 0) {
       await save.click();
-      await toast.waitFor();
+      await toast.waitFor({ timeout: 30_000 });
     }
     await expect(this.editor()).toHaveCount(0);
   }

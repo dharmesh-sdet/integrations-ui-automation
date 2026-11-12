@@ -87,6 +87,18 @@ export const sequences: Partial<Record<Account, SequenceSetup[]>> = {
     { name: 'Sequence A', steps: [{ step: 1, variant: 'A', template: 1 }] },
     { name: 'Sequence B', steps: [{ step: 1, variant: 'A', template: 1 }] },
   ],
+  // Salesforce "... is created" regression (QA 2026-11-09): Move and the status activities
+  // need two sequences. Both stay Draft.
+  sfreplyreceived: [
+    { name: 'Sequence A', steps: [{ step: 1, variant: 'A', template: 1 }] },
+    { name: 'Sequence B', steps: [{ step: 1, variant: 'A', template: 1 }] },
+  ],
+  // Contact is created in Salesforce regression (QA 2026-11-09): Sequence A stops follow-ups on a
+  // reply (toggle ON), Sequence B keeps sending (toggle OFF). Set by hand after creating them.
+  sfemailopened: [
+    { name: 'Sequence A', steps: [{ step: 1, variant: 'A', template: 1 }] },
+    { name: 'Sequence B', steps: [{ step: 1, variant: 'A', template: 1 }] },
+  ],
   // Prospect is Unsubscribed (AL-4015): one step; sender and activation are
   // done in the exploration and in the spec, not here.
   unsubscribed: [

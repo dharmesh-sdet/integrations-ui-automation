@@ -12,6 +12,7 @@ import path from 'node:path';
 import { readCsv, type Row } from './csv.ts';
 import { EXTRA_NATIONALITIES, type Nationality } from './countries.ts';
 import { MORE_NAMES } from './more-names.ts';
+import { FOOTBALLER_NAMES } from './footballers.ts';
 import { pipedriveIndustry } from './pipedrive-industries.ts';
 
 export const dataDir = path.resolve(import.meta.dirname, '../../test-data');
@@ -74,8 +75,13 @@ for (const [country, more] of Object.entries(MORE_NAMES)) {
 
 // Countries of the people made before 2026-10-13. Kept in NATIONALITIES because
 // refreshUsed looks an existing row's country up there, but not used for new people.
-const RETIRED_COUNTRIES = new Set(['United States', 'Spain', 'Greece', 'Japan', 'Italy', 'South Korea', 'Brazil', 'France', 'India', 'Sweden', 'United Arab Emirates']);
-const FRESH_NATIONALITIES = NATIONALITIES.filter((n) => !RETIRED_COUNTRIES.has(n.country));
+// 2026-11-05 (QA): new people take their names from international footballers of each nation, until 2026.
+// See footballers.ts. The country's cities come from its entry above; the names are replaced.
+const FRESH_NATIONALITIES: Nationality[] = Object.entries(FOOTBALLER_NAMES).map(([country, names]) => {
+  const nat = NATIONALITIES.find((n) => n.country === country);
+  if (!nat) throw new Error(`footballers.ts: no country "${country}" in NATIONALITIES`);
+  return { ...nat, first: names.first, last: names.last };
+});
 
 export type Role = { title: string; senior: string; department: string };
 export const ROLES: Role[] = [

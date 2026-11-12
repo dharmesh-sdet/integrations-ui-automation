@@ -30,7 +30,9 @@ const TRIGGER = 'Reply is Received in Saleshandy';
 const SEQUENCE_ID = process.env.SMOKE_SEQUENCE_ID ?? '';
 const CSV = 'salesforce/reply-received-smoke.csv';
 // The Task subject on the Contact timeline holds the step 1 subject. The runner sets it from the setup spec.
-const EMAIL_SUBJECT = process.env.SMOKE_STEP1_SUBJECT || 'Salesforce Reply Received Smoke';
+// The Task the integration logs on the Contact is titled with the workflow name, not the step 1 subject (QA looked at
+// the Contact on production, 2026-11-05). The sequence name, sender and prospect email are in its Description.
+const TASK_TITLE = 'Reply is received in Saleshandy';
 
 const CL = 'Create a Lead in Salesforce';
 const UL = 'Update a Lead in Salesforce';
@@ -50,6 +52,17 @@ const leadOf = (w: World) => whenFound(() => w.salesforce.leads.countByEmail(w.r
 const contactOf = (w: World) => whenFound(() => w.salesforce.contacts.countByEmail(w.row['Email']), () => w.salesforce.contacts.contactFields(w.row['Email']));
 const leadCount = (w: World) => () => w.salesforce.leads.countByEmail(w.row['Email']);
 const contactCount = (w: World) => () => w.salesforce.contacts.countByEmail(w.row['Email']);
+// A Contact the product creates can take a minute to show in the Salesforce list (Attach Note, 2026-11-05: 0 Contacts
+// right after Success in Logs, the Contact was there later), so look again for up to a minute.
+async function contactCountWhenListed(w: World): Promise<number> {
+  let count = 0;
+  for (let attempt = 1; attempt <= 6; attempt++) {
+    count = await contactCount(w)();
+    if (count > 0) break;
+    await new Promise((resolve) => setTimeout(resolve, 10_000));
+  }
+  return count;
+}
 const opportunityCount = (w: World) => () => w.salesforce.opportunities.countByName(w.row['Email']);
 
 const digits = (text: string) => text.replace(/\D/g, '');
@@ -240,7 +253,7 @@ const SCENARIOS: ReplyScenario[] = [
       const status = await w.logStatus();
       w.verdict('Logs status', status, 'Success');
       if (status !== 'Success') return;
-      w.verdict('Contacts for the email', await contactCount(w)(), 1);
+      w.verdict('Contacts for the email', await contactCountWhenListed(w), 1);
       const body = await w.salesforce.contacts.noteBody(w.row['Email'], 'reply-received');
       w.verdict('A Note "reply-received" is on the Contact', body !== '', true);
       w.verdict('Note Body names the prospect email', body.includes(w.row['Email']), true);
@@ -257,9 +270,21 @@ const SCENARIOS: ReplyScenario[] = [
     check: async (w) => {
       w.observe('Logs status', await w.logStatus());
       await w.salesforce.contacts.openRecord(w.row['Email']);
-      const timeline = await w.salesforce.contacts.activityText();
+      // The Contact page has two tab sets: Related and Details on the left, Activity and Chatter on the right. The
+      // Activity panel is the one with "Upcoming & Overdue" (2026-11-05: reading the first visible tab panel gave the
+      // Related list, so the timeline looked empty).
+      const page = w.salesforce.contacts.page;
+      const activity = page.getByRole('tabpanel').filter({ hasText: 'Upcoming & Overdue' });
+      await activity.waitFor({ timeout: 20_000 });
+      await page.waitForTimeout(3_000);
+      const timeline = (await activity.innerText()).replace(/\s+/g, ' ').trim();
       w.observe('Contact Activity timeline', timeline.slice(0, 400));
-      w.verdict('The timeline shows one Task with the email subject', timeline.split(EMAIL_SUBJECT).length - 1 >= 1, true);
+      w.verdict(`The timeline shows one email activity "${TASK_TITLE}"`, timeline.split(TASK_TITLE).length - 1, 1);
+      await page.getByRole('link', { name: 'Expand All' }).click({ timeout: 10_000 }).catch(() => {});
+      await page.waitForTimeout(2_000);
+      const expanded = (await activity.innerText()).replace(/\s+/g, ' ').trim();
+      w.observe('Contact Activity timeline, expanded', expanded.slice(0, 700));
+      w.verdict('The Description shows the prospect email', expanded.includes(`Prospect Email: ${w.row['Email']}`), true);
     },
   },
 ];

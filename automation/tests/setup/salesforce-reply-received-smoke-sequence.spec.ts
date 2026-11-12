@@ -1,4 +1,5 @@
 import { expect, test } from '../../src/fixtures/index.ts';
+import { addListedSender } from '../../src/flows/smoke-sender.ts';
 import { libraryTemplates } from '../../src/config/account-setup.ts';
 
 // Production setup for the Salesforce "Reply is Received in Saleshandy" smoke run
@@ -9,10 +10,10 @@ import { libraryTemplates } from '../../src/config/account-setup.ts';
 // in Settings > Email Account, then activated. If today's sequence is already in the list it is
 // reused. A production write, so it only runs with SETUP_SMOKE_SEQUENCE=1 and is never retried.
 //   SETUP_SMOKE_SEQUENCE=1 REPORT_OPEN=never npx playwright test tests/setup/salesforce-reply-received-smoke-sequence.spec.ts --project=chromium --workers=1
-// SMOKE_EMAIL_ACCOUNTS=a@x.com,b@y.com overrides the email accounts.
+// SMOKE_EMAIL_ACCOUNTS=a@x.com,b@y.com overrides the preferred senders (QA, 2026-11-03: a preferred sender is used when the Add dialog lists it, else the listed account with the fewest active sequences).
 const NAME = `Salesforce Reply Received Smoke ${new Date().toISOString().slice(0, 10)}`;
 const TEMPLATE = libraryTemplates[0];
-const EMAIL_ACCOUNTS = (process.env.SMOKE_EMAIL_ACCOUNTS ?? 'Rachelgreen47sh+3@gmail.com,rudra+emailsentprod@saleshandy.com').split(',').map((e) => e.trim());
+const PREFERRED = (process.env.SMOKE_EMAIL_ACCOUNTS ?? 'Rachelgreen47sh+3@gmail.com,rudra+emailsentprod@saleshandy.com').split(',').map((e) => e.trim());
 
 test.describe('Production setup: Salesforce Reply Received smoke sequence', () => {
   test.skip(process.env.SETUP_SMOKE_SEQUENCE !== '1', 'Set SETUP_SMOKE_SEQUENCE=1 to create the production sequence');
@@ -34,8 +35,8 @@ test.describe('Production setup: Salesforce Reply Received smoke sequence', () =
         await builder.addEmailStep(TEMPLATE, `${NAME} step 1`);
       });
     }
-    await test.step(`Add the email accounts ${EMAIL_ACCOUNTS.join(' and ')}`, async () => {
-      await builder.addEmailAccounts(id, EMAIL_ACCOUNTS);
+    await test.step(`Add a sender from the accounts the dialog lists (preferred: ${PREFERRED.join(' or ')})`, async () => {
+      console.log(`SENDER=${await addListedSender(builder.page, id, PREFERRED)}`);
     });
     await test.step('Activate the sequence', async () => {
       await saleshandySequence.resumeSequence(id);

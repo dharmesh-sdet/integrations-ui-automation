@@ -1,71 +1,32 @@
-# Reply is Received in Saleshandy: Regression scenarios
+# Reply is Received in Saleshandy (Salesforce): Regression scenarios
 
-Environment: Staging (pyxis.lifeisgoodforlearner.com). Account:
-`sfreplyreceived`, Salesforce connected to the shared dev org
-(saleshandy-dev-ed). This workflow has no Jira tickets, so Ticket is None for
-every row. Scope is the trigger "Reply is Received in Saleshandy" with the
-single activity "Create a Lead in Salesforce", plus 3 baseline rows. Create a
-Lead has no Extra Configuration modal.
+Environment: staging (pyxis.lifeisgoodforlearner.com), account `sfreplyreceived`, Salesforce org `saleshandy-dev-ed`. Workflow ticket AL-4133 (parent AL-4131). This workflow has no sub-bugs, so Ticket is None for every row. QA approved this file on 2026-11-04 (37 rows, all 10 activities).
 
-Rows marked "(proposed, unconfirmed)" (Create a Lead 4 to 11) have an Expected
-that is not documented. Run them and record what really happens; a different
-result is not automatically a failure. The Lead is always verified in
-Salesforce itself, because a Success row in Logs does not prove the Lead
-exists.
+Expected results come from the developer log (`integration-skills/test-logs/salesforce/reply-received-in-saleshandy.md`, Refold v3 signed off) and the dev kit (`knowledge-base/product/workflow-behaviour-dev-kit.md`). A row marked (proposed, unconfirmed) has no source. Run it, record what happens, and report it. A different result is not an automatic failure. A row marked (accepted) shows behavior the developer accepted, so it is not filed as a bug.
 
-Not covered, still open: none known. Other triggers and activities are out of
-scope.
+Not covered, still open: the Note holds no reply text (accepted) and the Note sequence link uses the production host (draft in `jira/drafts`). Do not treat these as failures.
+
+This file replaces the earlier drafts `reply-received-all-activities.md` and `reply-received-other-activities-proposal.md`, which stay as reference only.
 
 ## Test data setup
 
-- Field mapping (Settings > Integrations > Salesforce > Field Mapping > Lead
-  Properties) is saved before the scenarios: Last Name, First Name, Email,
-  Phone Number, Job Title, Company, City to the matching Salesforce Lead
-  properties (Last Name, First Name, Email, Phone, Title, Company, City).
-  Nothing was mapped on this account before.
-- In Settings > Integrations > Salesforce > Triggers & Activity, turn every
-  other trigger off and enable only "Reply is Received in Saleshandy" with
-  only "Create a Lead in Salesforce" selected. Save. The Salesforce success
-  message text was not seen (HubSpot shows "Configuration Updated
-  Successfully"; the same is expected, unconfirmed).
-- Each row uses its own brand-new prospect (unique name and email, unique
-  prefix per run), not in Salesforce, added to a launched sequence with Add
-  Prospects (one at a time). Wait until step 1 shows Sent. Created data
-  stays (KEEP_TEST_DATA=1) and existing Salesforce records are never edited.
-  The prospect CSV does not exist yet.
-- "Mark as Replied" means: Emails tab > the prospect's row > three dots >
-  "Mark as replied". Not seen on this account yet (the sequence was a draft
-  with no prospects), so the exact label and path are unconfirmed.
-- Logs: Settings > Integrations > Salesforce > Logs. Refresh 15 s after Mark
-  as Replied, then every 10 s, up to 3 min. Entries are not opened. The Logs
-  row layout and workflow name for this trigger were not seen (the Logs tab
-  was empty).
-- Verify in Salesforce: Leads tab, find the Lead by the unique email or last
-  name. Lead list columns: Name, Title, Company, Phone, Mobile, Email, Lead
-  Status, Owner Alias. Required on the New Lead form: Last Name, Company,
-  Lead Status.
-- Lead Status picklist in the org: --None--, Open - Not Contacted, Working -
-  Contacted, Closed - Converted, Closed - Not Converted. Default is Open - Not
-  Contacted.
-- Sender email "Salesforce Testing": 40 to 50 s between emails, daily limit
-  150. No change needed.
-- Run order (QA, 2026-10-16): Create a Lead 7 runs first, while the mapping is
-  still empty, before Trigger behavior row 3 saves the 7 fields. Rows that
-  change the Lead Properties mapping afterwards (Create a Lead 8 and 13) run
-  last, so the other rows never see a half-mapped state.
-- Create a Lead 4 (QA, 2026-10-16): check the not-mapped case only (Lead
-  Status = "Open - Not Contacted"). The mapped-Status part is added once QA
-  names the Saleshandy field.
-- Create a Lead 9 and 10 (QA, 2026-10-16): run them and record what happens;
-  the org duplicate rule was not read.
+- Each row has its own new prospect with a unique name and email, added to the launched sequence. Wait for step 1 to show Sent in the Emails tab. Then Mark as replied. Use Emails tab > row > three dots. Or use Sequence > Prospects > tick the prospect > Mark as Replied icon.
+- A record a row needs first (Lead, Contact, Account, Opportunity) is created by hand in Salesforce with the prospect's email. At least one value differs from the prospect's.
+- Update a Account finds the Account by the prospect's full name, not by Company. Update a Opportunity finds the newest Opportunity whose Name is the prospect's email.
+- After Mark as replied, wait 15 s and look in Salesforce. If the record is missing, wait 5 s, hard refresh and look again, then open Logs. A Logs Error is reported to QA, not failed.
+- Every other trigger is off. Per section, select only the activities in its heading, then Save. Check the activity chips again after each save, because the Extra Configuration popup rewrites them.
+- Mapping saved on the account: Lead (7 fields) and Contact. Account: Company to Account Name, plus Website, City, State, Country, Industry, Size, Revenue, Founded Year, Company Phone and HQ Location. Opportunity: Prospect Overview to Description, Deal Value to Amount, Closing Date to Close Date.
+- Unmap Closing Date on the Opportunity mapping before the Opportunity rows. Restore it after.
+- The live Refold version on staging is not known. Read it from the run steps of the first row. Rows that depend on v5 or later (an unmapped field stays untouched) are Update a Lead 2 and Create a Contact 1.
 
 ## Trigger behavior (baseline)
 
 | # | Scenario | Do | Expected | Ticket |
 |---|---|---|---|---|
-| 1 | Trigger off, activity list unopened | Turn on "Reply is Received in Saleshandy", open activity dropdown, choose "Create a Lead in Salesforce", click the chip (do not Save) | Dropdown lists 10 activities (Create/Update Account, Contact, Lead, Opportunity, Attach Note, Record(log) Email Activity). "Create a Lead in Salesforce" appears as a chip with x. No Extra Configuration modal opens | None |
-| 2 | All other triggers off, only "Create a Lead in Salesforce" selected | Turn on "Reply is Received in Saleshandy", click Save | Success message shown. After reload, toggle is on and "Create a Lead in Salesforce" chip persists | None |
-| 3 | Lead Properties mapping empty (Save disabled) | Map Last Name, First Name, Email, Phone Number, Job Title, Company, City to their Salesforce counterparts, click Save, reload | 44 Saleshandy fields listed. Mapping saved and persists after reload | None |
+| 1 | New tester opens Triggers & Activity for the first time. Reply Received is on, no activity picked yet | Open the activity dropdown and pick "Create a Lead in Salesforce". Do not Save | Dropdown lists 10 activities. A chip with x shows the pick. No Extra Configuration opens | None |
+| 2 | Only "Create a Lead in Salesforce" is selected and every other trigger is off | Click Save, then reload the page | Success message shows. The toggle is on and the chip is still there after reload | None |
+| 3 | Lead Properties mapping is empty and Save is disabled | Map the 7 fields, Save, reload | The mapping is saved and still there after reload | None |
+| 4 | The sales manager switched Reply Received off and saved. A prospect, Marcus Oyelaran, has step 1 Sent | Mark as replied | No Logs entry after 3 min. No record in Salesforce | None |
 
 ## Create a Lead in Salesforce
 
@@ -73,16 +34,110 @@ Extra Configuration: None.
 
 | # | Scenario | Do | Expected | Ticket |
 |---|---|---|---|---|
-| 1 | New prospect (First Name, Last Name, Email, Phone, Job Title, Company, City filled), not in Salesforce | Mark as Replied | Success within 3 min. Exactly one Lead with Last Name, First Name, Email, Phone, Title, Company, City matching prospect values | None |
-| 2 | Prospect has Department, Industry, Website filled (unmapped) | Mark as Replied | Success. Lead has no values for unmapped fields (Industry, Website empty) | None |
-| 3 | Trigger turned off and saved | Mark as Replied | No Logs row after 3 min. No Lead in Salesforce | None |
-| 4 | Lead Status unmapped; then mapped to "Working - Contacted" | Mark as Replied (each state) | (proposed, unconfirmed) Unmapped: Lead Status = "Open - Not Contacted" (Salesforce default). Mapped: Lead Status = "Working - Contacted" | None |
-| 5 | New prospect, Lead created | Mark as Replied, open Lead in Salesforce | (proposed, unconfirmed) Lead Owner = connected Salesforce user | None |
-| 6 | Company mapped, prospect Company empty | Mark as Replied | (proposed, unconfirmed) Logs shows Error, or a default Company is used. Record actual result | None |
-| 7 | Lead Properties mapping empty, trigger on | Mark as Replied | Success. Exactly one Lead with Salesforce defaults (Lead Status "Open - Not Contacted", Company "HubSpot", Owner Alias "ChintanS") (QA, 2026-10-16) | None |
-| 8 | Only Last Name and Email mapped (Company unmapped), prospect has Company | Mark as Replied | (proposed, unconfirmed) No Lead created (Company required), Logs shows Error | None |
-| 9 | Same prospect as row 1 | Mark as Replied again | (proposed, unconfirmed) No duplicate Lead: still exactly one Lead for the email. Org duplicate rule unread. Record actual result | None |
-| 10 | Lead with same email exists (from row 1) | Add second prospect with same email, Mark as Replied | (proposed, unconfirmed) No duplicate Lead; existing Lead updated or unchanged | None |
-| 11 | Contact with same email exists (e.g. converted Lead) | Mark as Replied | (proposed, unconfirmed) No new Lead created | None |
-| 12 | First name has accent, last name has apostrophe, 60-char company name | Mark as Replied | Success. Lead shows exact values. If Salesforce rejects, record Logs status and confirm no Lead exists | None |
-| 13 | Row 1 passed, Job Title mapping changed from Title to Description | Mark as Replied (new prospect) | New Lead has Job Title in Description, Title empty. Row 1 Lead unchanged | None |
+| 1 | New prospect José Peña-O'Brien, Revenue Operations Manager at Brightline Logistics, with email, phone and city filled. Not in Salesforce | Mark as replied | Success within 3 min. Exactly one Lead with the 7 mapped values as entered, accents and apostrophe included | None |
+| 2 | Prospect Amelia Kowalski was imported from a CSV with no Company | Mark as replied | Logs shows Error and no Lead is created (Company is required, accepted). Report the Logs text to QA | None |
+| 3 | Lead mapping is empty. Prospect Tobias Lindqvist, Company Northgate Freight | Mark as replied | Success. One Lead. Lead Status "Open - Not Contacted" and Owner Alias "ChintanS" (QA, 2026-10-16). Company is the prospect's own Company, Northgate Freight (QA, 2026-11-04: the "HubSpot" seen on 2026-10-16 was that prospect's Company, not a default) | None |
+| 4 | A rep already saved prospect Fatima Rahman as a Contact after a call | Mark as replied | Success. No Lead is created. The Contact is unchanged | None |
+| 5 | A rep already created a Lead for prospect Daniel Okafor, with Job Title "Office Manager". The prospect now has Job Title "Head of Operations" | Mark as replied | Still exactly one Lead for the email. Job Title shows "Head of Operations" (proposed, unconfirmed) | None |
+
+## Update a Lead in Salesforce
+
+Extra Configuration: None.
+
+| # | Scenario | Do | Expected | Ticket |
+|---|---|---|---|---|
+| 1 | Lead for Chloe Bergmann exists with an old Job Title, Phone and Company. The prospect has new values for all three | Mark as replied | Success within 3 min. Still one Lead. The mapped fields show the prospect's values | None |
+| 2 | Lead for Ravi Menon is at Lead Status "Working - Contacted". The prospect has a new Job Title | Mark as replied | Success. Title is updated. Lead Status stays "Working - Contacted" because it is not mapped | None |
+| 3 | Prospect Hannah Whitcombe replies. Nobody created a Lead or Contact for her email | Mark as replied | Logs Success. No Lead is created (accepted) | None |
+
+## Create a Contact in Salesforce
+
+Extra Configuration: None.
+
+| # | Scenario | Do | Expected | Ticket |
+|---|---|---|---|---|
+| 1 | New prospect Sofia Marchetti, Procurement Lead at Alder & Finch Textiles, with phone, department and city filled. Not in Salesforce | Mark as replied | Success. One Contact with Name, Email, Business Phone, Department and Other Address. Title and Account Name stay empty (not mapped). No Lead | None |
+| 2 | A Contact for Elijah Brandt already exists with an old Phone. The prospect has a new Phone | Mark as replied | Success. Still one Contact. Business Phone shows the new value (found by email, so it is updated) | None |
+| 3 | A Lead for Naomi Castellano exists from a trade show. No Contact | Mark as replied | Logs Error DUPLICATES_DETECTED. No Contact is created. The Lead is unchanged (accepted: the Salesforce duplicate rule matches a Contact with a Lead) | None |
+
+## Update a Contact in Salesforce
+
+Extra Configuration: None.
+
+| # | Scenario | Do | Expected | Ticket |
+|---|---|---|---|---|
+| 1 | Contact for Liam Ashworth exists with an old Phone and Department. The prospect has new values. The Contact has a Title | Mark as replied | Success. One Contact. Business Phone and Department show the new values. Title is unchanged | None |
+| 2 | Prospect Zainab Hakimi replies. No Contact exists for her email | Mark as replied | Logs Success. No Contact is created (accepted) | None |
+
+## Create a Account in Salesforce
+
+Extra Configuration: None.
+
+| # | Scenario | Do | Expected | Ticket |
+|---|---|---|---|---|
+| 1 | New prospect Dana Whitfield, Company Harbourline Marine Supplies, with phone and city. No such Account | Mark as replied | Success. One Account with the mapped Company, phone and city. Record its Name (Company or "Dana Whitfield") for QA, because the developer log and the dev kit differ | None |
+| 2 | An Account named like the new prospect's Company, Pinecrest Dental Group, already exists | Mark as replied | Record whether a second Account appears (proposed, unconfirmed) | None |
+| 3 | Prospect Oskar Nilsson has no Company | Mark as replied | Record the Logs status. No Account without a name (proposed, unconfirmed) | None |
+
+## Update a Account in Salesforce
+
+Extra Configuration: None.
+
+| # | Scenario | Do | Expected | Ticket |
+|---|---|---|---|---|
+| 1 | An Account named "Priya Venkataraman" (the prospect's full name) exists with an old Phone and City. The prospect has new values | Mark as replied | Success. One Account. Mapped values show the prospect's | None |
+| 2 | An Account named after the prospect's Company, Redstone Packaging, exists. No Account has the prospect's full name | Mark as replied | Logs Success. The Account is unchanged and none is created (accepted, it matches by full name) | None |
+| 3 | Prospect Gareth Lloyd replies. No Account matches him | Mark as replied | Logs Success. No Account is created | None |
+
+## Create a Opportunity in Salesforce
+
+Extra Configuration: Closing date 7 days, stage "Prospecting". Closing Date is unmapped first.
+
+| # | Scenario | Do | Expected | Ticket |
+|---|---|---|---|---|
+| 1 | New prospect Isabella Moreau, Deal Value 12000. Nothing in Salesforce | Mark as replied | Success. One Contact and one Opportunity linked to it. Close Date 7 days out, Stage "Prospecting", Amount 12000 | None |
+| 2 | Isabella Moreau already replied once and her first Opportunity exists | Mark as replied again on the same step 1 email | A second Opportunity is created and none is updated (by design) | None |
+| 3 | A tester opens the Extra Configuration and leaves Opportunity Stage empty | Click Save in the dialog | Save is blocked or a message names the missing stage. Record which (proposed, unconfirmed) | None |
+
+## Update a Opportunity in Salesforce
+
+Extra Configuration: Closing date 14 days, stage "Negotiation/Review" ("while updating").
+
+| # | Scenario | Do | Expected | Ticket |
+|---|---|---|---|---|
+| 1 | Prospect Mateo Fernandez has two Opportunities named with his email: a stale one from last quarter and a new one. Both are in "Qualification" | Mark as replied | Only the newest changes: Stage "Negotiation/Review", Close Date 14 days out. The older one is unchanged | None |
+| 2 | Prospect Yuki Tanaka has one Opportunity named with her email, Stage "Qualification" | Mark as replied | Success. Stage and Close Date change. Still one Opportunity | None |
+| 3 | Prospect Connor Reilly replies. No Opportunity has his email as Name | Mark as replied | Logs Success. No Opportunity is created (accepted) | None |
+
+## Attach Note in Salesforce (with Create a Contact)
+
+Extra Configuration: None. Check Logs first, then the Note on the Contact.
+
+| # | Scenario | Do | Expected | Ticket |
+|---|---|---|---|---|
+| 1 | New prospect Leila Haddad, outcome "Add Outcome". Create a Contact and Attach Note are selected | Mark as replied | Success. One Contact and one Note. Title "reply-received", Body with sequence, step, sender and email details. No reply text (accepted). Latest Outcome empty | None |
+| 2 | Same setup, but a Contact for Henrik Solberg already exists | Mark as replied | Success. Still one Contact, updated. A new Note on it | None |
+| 3 | The rep sets prospect Amara Obi's outcome to "Interested" before she replies | Change the outcome, then Mark as replied | The Note Body shows Latest Outcome "Interested" (QA, 2026-10-20) | None |
+
+## Record(log) an Email Activity in Salesforce
+
+Extra Configuration: Select Object. Check the Task in Salesforce.
+
+| # | Scenario | Do | Expected | Ticket |
+|---|---|---|---|---|
+| 1 | Select Object "Contact". Contact for Wei Zhang exists | Mark as replied | Success. One completed Email Task linked to the Contact. Description can be empty, because Mark as replied has no reply text. "Email body:" can be empty (accepted) | None |
+| 2 | Select Object "Lead". Lead for Patrick Doyle exists | Mark as replied | Success. One Task linked to the Lead | None |
+| 3 | Select Object "Opportunity". Two Opportunities are named with Sienna Ward's email | Mark as replied | Success. One Task, linked to the newest Opportunity only | None |
+| 4 | Select Object is left empty. Contact for Omar Haddad exists | Mark as replied | Logs Success. No Task and no crash | None |
+
+## Combined activities
+
+| # | Scenario | Do | Expected | Ticket |
+|---|---|---|---|---|
+| 1 | A rep selects Create a Account and Create a Contact together. New prospect Julian Okoro, Company Silverbrook Hardware | Mark as replied | One Account and one Contact. Record whether the Contact is linked to the Account (proposed, unconfirmed) | None |
+
+## Regression set (every release)
+
+Only rows with a confirmed Expected can fail. These rows run every release: Baseline 1 to 4. Create a Lead 1, 3 and 4. Update a Lead 1 and 3. Create a Contact 1 and 3. Update a Opportunity 1. Attach Note 1. Record(log) 4. If something changes or QA asks, the other rows run too.
+
+Rows total: 4 baseline + 32 activity + 1 combined = 37.

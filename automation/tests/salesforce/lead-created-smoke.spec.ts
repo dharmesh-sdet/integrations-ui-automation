@@ -32,6 +32,10 @@ import type { SalesforceIntegrationPage } from '../../src/pages/saleshandy/sales
 import { SalesforceApi, type LeadInput } from '../../src/utils/salesforce-api.ts';
 import { untilPasses } from '../../src/utils/wait.ts';
 
+// SIBLING_TRIGGERS: triggers of a parallel smoke run (scripts/run-salesforce-lead-opportunity-pair-smoke.sh), comma separated.
+// They may be on while this check saves and runs. Any other trigger still stops the check.
+const SIBLINGS = (process.env.SIBLING_TRIGGERS ?? '').split(',').map((n) => n.trim()).filter(Boolean);
+
 test.use({ account: 'emailopenedprod', actionTimeout: 30_000 });
 test.setTimeout(25 * 60_000);
 
@@ -59,7 +63,7 @@ const escape = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 // Lead could make Leads in the org that the window check then sees. Nothing was sent or saved when it stops.
 async function use(i: SalesforceIntegrationPage, picks: Pick[], lists: string[] = []): Promise<void> {
   await i.openTriggers();
-  const others = (await i.onTriggers()).filter((name) => name !== TRIGGER);
+  const others = (await i.onTriggers()).filter((name) => name !== TRIGGER && !SIBLINGS.includes(name));
   expect(others, `Other triggers are on: ${others.join(', ')}. Turn them off and run again. Nothing was sent.`).toEqual([]);
   await useActivities(i, picks, lists);
 }

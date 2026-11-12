@@ -1,6 +1,6 @@
 # Lead is created in Salesforce: Smoke scenarios
 
-Approved by QA 2026-11-12. Script written, not run.
+Approved by QA 2026-11-12. Production smoke run 2026-11-12: 12 of 12 passed, PRODUCTION APPROVED by QA.
 
 Environment: production (my.saleshandy.com), account `emailopenedprod`, Salesforce dev org `saleshandy-dev-ed`. Workflow ticket AL-4144 (parent AL-4131). Fixed ticket: AL-4224. This is a baseline of every activity plus the AL-4224 check, built from the 32 staging rows (`test-cases/salesforce/lead-created.md`, QA approved 2026-11-11). It has 11 checks and a gate. The workflow is not published on production yet, so QA runs it after the publish.
 

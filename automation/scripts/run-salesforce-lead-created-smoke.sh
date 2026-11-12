@@ -25,6 +25,13 @@
 set -u
 cd "$(dirname "$0")/.."
 
+# Keeps the laptop awake for the whole run (a sleeping laptop froze a run on 2026-11-11). The runner starts itself again
+# under systemd-inhibit once. SMOKE_AWAKE marks the second start, and child runners of a pair inherit it.
+if [ -z "${SMOKE_AWAKE:-}" ] && command -v systemd-inhibit >/dev/null; then
+  export SMOKE_AWAKE=1
+  exec systemd-inhibit --what=sleep:idle --who="Salesforce smoke" --why="Production smoke run" bash "$0" "$@"
+fi
+
 notify() { command -v notify-send >/dev/null && notify-send "Salesforce Lead Created smoke" "$1"; }
 
 session=auth/saleshandy-emailopenedprod-chromium.json

@@ -90,6 +90,7 @@
     "typecheck": "tsc --noEmit",
     "report": "node scripts/render-report.ts",
     "mcp:open": "node scripts/open-mcp-browser.ts",
+    "clean:runs": "node scripts/clean-runs.ts",
     "profiles:prune": "xvfb-run -a -s \"-screen 0 1440x900x24\" node scripts/prune-profiles.ts",
     "jira": "node --env-file-if-exists=.env jira/server/server.ts",
     "jira:build": "npm --prefix jira/web install && npm --prefix jira/web run build",

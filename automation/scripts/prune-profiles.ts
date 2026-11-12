@@ -14,11 +14,14 @@ const args = process.argv.slice(2);
 const doDelete = args.includes('--delete');
 const only = args.filter((a) => !a.startsWith('--'));
 
-// The platform is read from the profile name; a profile with an unknown name is skipped, not guessed.
+// Only profiles we know are checked. Any other name is skipped, never guessed,
+// because --delete would remove a live profile that was tested on the wrong platform.
+const HUBSPOT = new Set(['mcp-companycreated-profile', 'mcp-emailopened-profile']);
+const SALESHANDY = new Set(['mcp-localproject-profile', 'mcp-chromium-profile']);
 function urlFor(name: string): string | undefined {
-  if (name.includes('zoho')) return 'https://crm.zoho.com/crm/ShowHomePage.do';
-  if (/companycreated|emailopened|hubspot/.test(name)) return 'https://app-na2.hubspot.com/';
-  if (/localproject|chromium|saleshandy/.test(name)) return 'https://pyxis.lifeisgoodforlearner.com/crm/list';
+  if (/^(mcp-)?zoho-/.test(name) || name.startsWith('mcp-zoho')) return 'https://crm.zoho.com/crm/ShowHomePage.do';
+  if (HUBSPOT.has(name)) return 'https://app-na2.hubspot.com/';
+  if (SALESHANDY.has(name)) return 'https://pyxis.lifeisgoodforlearner.com/crm/list';
   return undefined;
 }
 

@@ -60,6 +60,11 @@ Rules that apply only to smoke:
    file if there is no RESUME.md), `00-overview.md`, `<workflow>.md`, the
    saved cases for the mode and the existing specs in
    `automation/tests/<platform>/`. Use the `saleshandy-knowledge` skill.
+   Also read `knowledge-base/product/workflow-behaviour-dev-kit.md` and, if it
+   exists, `integration-skills/test-logs/<platform>/<workflow>.md` (the
+   developer's API test log, with the Refold workflow version and the known
+   bugs). They come from API-only runs, so check a fact on staging before a
+   UI test depends on it.
 2. Run `ListAgents`. If another session owns this workflow, say so and stop.
 3. Platform rules:
    - **Pipedrive, Salesforce:** hand-write the spec. Do not use the Playwright
@@ -85,6 +90,10 @@ Rules that apply only to smoke:
   would actually run. No AI-jargon scenarios, no padding.
 - Regression: one section per action available for the trigger, plus the real
   UI rows.
+- Take Expected results and known bug tickets from the dev kit and the
+  developer's test log. A row they do not cover stays marked
+  "(proposed, unconfirmed)". Do not draft a row for a known bug as a new
+  finding. Link its ticket.
 - For behaviour not known on this platform, take the rows from the HubSpot
   and Salesforce files with the same trigger, then explore the platform on
   staging in the browser like a real person. Use the project Playwright MCP
@@ -108,6 +117,11 @@ Rules that apply only to smoke:
   `src/pages/<platform>/` and the flow in `src/flows/saleshandy-to-<platform>.ts`.
   Explore the platform only for what is missing, and add it to the shared
   page objects. Do not duplicate.
+- When QA names other workflows to reuse (for example "Lead is created and
+  Opportunity are approved, look there"), compare more than their helpers.
+  Read how each spec checks every expected result (status, Activities text,
+  Do Not Contact, errors) and how it sets up and cleans data. List what Contact
+  or the new workflow lacks, and fix it before the first run.
 - Create the CSV under `automation/test-data/<platform>/`.
 - Keep specs short. Respect `SEND_CAP`. Regression: fix wrong sender interval
   and limits on staging yourself, then verify after reload. Smoke: do not

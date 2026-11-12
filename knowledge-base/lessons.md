@@ -15,6 +15,18 @@ Entry shape:
 - Status: Proposed | Applied | Rejected
 ```
 
+## 2026-11-12: Reused only the helpers of the approved workflows, not how they check results (Salesforce Contact created)
+- What went wrong: QA told me twice to look at Lead created and Opportunity created, both staging approved. I took the Do Not Contact fix, the Setup row and the follow-up record, and said the rest did not carry over. I did not compare how they check each expected result. Contact Unsubscribed 3 and the Paused rows read only Latest Status, so one extra failed run happened, and QA had to point to the Activities section.
+- Why: nothing in the skill says to compare expected-result checks and cleanup, only "reuse the page objects and flows".
+- Change: `.claude/skills/workflow-testing/SKILL.md`, section 2 Script, new bullet: when QA names other workflows to reuse, read how each spec checks every expected result and sets up and cleans data, list what the new workflow lacks, and fix it before the first run.
+- Status: Applied (QA OK 2026-11-12), now in `.claude/skills/workflow-testing/SKILL.md` section 2 Script.
+
+## 2026-11-05: Salesforce-side runs must use the run-now API and script-made data (Salesforce created workflows)
+- What went wrong: I explored the four "created in Salesforce" workflows through screens and planned a live probe that waits for the 3-hour cron. I did not start from the developer's run-now API.
+- Why: the API (`npm run sf:run-now`) is described in `workflow-behaviour-dev-kit.md` section 3, but no rule says a regression or production script must use it. I did not read that page before planning.
+- Change: `knowledge-base/testing/how-to-test.md`, new rule: "Salesforce-side workflows (Lead V1, Contact, Opportunity, Account created): the script creates the data and starts the run with `sf:run-now`. It never waits for the 3-hour cron. QA only verifies the prospect in Saleshandy." Same line in the `workflow-testing` skill, regression and smoke steps. Memory `salesforce-created-run-now-api` is saved.
+- Status: Proposed
+
 ## 2026-11-02: Setup spec refreshed every workflow's test data (Zoho Email Bounced sequence setup)
 - What went wrong: I ran `tests/setup/zoho-email-bounced-sequence.spec.ts` about 7 times with no `KEEP_TEST_DATA=1` or `TEST_DATA_ONLY`. Each run found no CSV for that spec and replaced the rows of every CSV (HubSpot, Pipedrive, Zoho, others) and emptied their `*.used.txt` files, from 18:5x to 19:08. It used up the name pool (`_generated-emails.txt` at 17558 lines, then "Could not find a fresh name after 600 tries"). A live Reply Received run (started 18:35) had its `reply-received.csv` replaced under it, so its later failures can be false.
 - Why: rule 11 and the 2026-10-14 lesson were already Applied, but I did not apply them to a setup spec, because it creates a sequence and "uses no test data". The rule only helps when read. `global-setup.ts` still treats a spec with no CSV as "refresh all" (change 4 of the 2026-10-14 lesson, still Proposed).

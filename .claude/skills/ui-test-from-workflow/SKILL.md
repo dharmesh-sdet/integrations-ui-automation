@@ -5,6 +5,8 @@ description: Turn one integration workflow (any platform: HubSpot, Salesforce or
 
 # UI test from workflow
 
+> Status 2026-11-12: QA decided that all specs are hand-written on every platform. Do not start the planner, generator or healer agents unless QA asks for them (`../plan.md` section 0 rule 12). Use this skill for the scenario stages and for the failure summary. For the spec, follow `workflow-testing`, step "Platform rules". The agent stages below apply only when QA asks for them.
+
 One workflow per run of this skill. Four stages. The Playwright test agents
 do the planning, the spec writing and the fixing (QA, 2026-10-14, `../plan.md`
 section 0 rule 12): start them with the Agent tool, `subagent_type`

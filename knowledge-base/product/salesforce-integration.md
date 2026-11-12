@@ -1,8 +1,10 @@
 # Salesforce integration: how it works and how a user runs it
 
 Context for writing Salesforce test cases. Built from online documentation
-only, collected 2026-10-15. Nothing here has been checked on staging yet, so
-treat every fact as unconfirmed until a test or walkthrough confirms it.
+only, collected 2026-10-15, before the staging work. Treat every fact here as
+unconfirmed until a test or walkthrough confirms it. Facts seen on staging are
+in `../../automation/context/salesforce/00-overview.md` and the other
+Salesforce pages in this folder. If they differ from this page, they win.
 
 Source tags (see [../README.md](../README.md)):
 `[public docs]` = docs.saleshandy.com or the Saleshandy blog.

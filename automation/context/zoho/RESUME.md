@@ -1,58 +1,36 @@
 # Zoho: resume
 
-Date: 2026-10-29. QA answers (2026-10-29): hand-written specs; Email Sent first; logins run and `dharmesh+gzoho@saleshandy.com` exists; modules Leads, Contacts, Accounts, Deals in org 941113438 (to confirm in Zoho CRM). Fixed 2026-10-29: MCP server `playwright-zoho` (`.mcp.json`, visible window, profile `auth/mcp-zoho-profile`) keeps the Zoho login. Zoho CRM org 941113438 opens without the relogin page. Modules seen in the top menu: Leads, Contacts, Accounts, Potentials (Deals), Tasks, Events, Calls, Campaigns, Documents, Visits, Projects. Old blocker (cookie file only): a headless run with the session saved 08:46 still ends on `accounts.zoho.com/account/v1/relogin` ("Verify your identity"), so Zoho CRM is not reachable by script. Phase: Saleshandy side of the staging walkthrough done (`staging-walkthrough.md`, trigger dropdowns added 2026-10-29). Zoho CRM side not reached. No test cases, no specs yet.
+Updated: 2026-11-12. All 7 Zoho workflows passed their production smoke and QA approved them (QA, 2026-11-04). Nothing is left to run. The status table is in `PROGRESS.md`. Per-workflow detail is in `<workflow>-progress.md`. History before 2026-11-12 stays in git.
 
-## Done
+## How we test Zoho
 
-- Second Zoho login (2026-10-29): `auth/mcp-zoho-not-email-sent-profile` is a copy of `auth/mcp-zoho-profile`, made while the first was open (lock files and caches left out). MCP server `playwright-zoho-not-email-sent` in `.mcp.json` uses it, for account `notemailsentzoho` (all workflows except Email Sent). A headed run on the copy opened `crm.zoho.com/crm/org941113438/tab/Contacts` with no relogin page. The session needs a restart to load the new MCP server.
+- Specs are hand-written (QA, 2026-10-29), in `tests/zoho/`, with flows in `src/flows/zoho-*.ts` and page objects in `src/pages/zoho/`.
+- Email Sent runs on the Saleshandy account `gzoho`. The other six workflows run on `notemailsentzoho`, each with its own sequence, mailbox and prospects, in parallel (QA, 2026-10-30).
+- Zoho CRM org is 941113438 (US data center, `crm.zoho.com`). The modules are Leads, Contacts, Accounts, Deals (shown as Potentials), Tasks and Notes.
+- Zoho CRM cannot be read headless. It ends on "Verify your identity" at `accounts.zoho.com/account/v1/relogin`. A saved cookie file does not help. A saved browser profile does, in a headed browser on a virtual display (`xvfb-run`). See `scripts/zoho-read/README.md`.
+- QA 2026-10-29: never read the Logs tab for Zoho. Look at the Zoho record only.
 
-- Login setup. Platform `zoho` in `src/config/environments.ts` (login URL from QA, US data center). Account `gzoho` in `src/config/accounts.ts`. Script `npm run login:zoho -- gzoho`. QA has not run the logins yet.
-- Public research: `research.md` (26 manual test ideas).
-- Context from developer logs: `00-overview.md` and seven workflow files. Source is `integration-skills/test-logs/zoho/`.
+## Logins (deleted on 2026-11-12, log in again before the next Zoho run)
 
-- Field mapping, trigger state and the first Email Sent run (QA, 2026-10-29): `field-mapping.md`. Deal stages, Task fields and modules: `staging-walkthrough.md`.
+The disk cleanup of 2026-11-12 deleted every saved Zoho browser profile, because all of them had expired. Progress files and production notes still name them, as history.
 
-## Not done
+- Production smokes: run `npm run mcp:open -- mcp-zoho-not-email-sent-profile https://crm.zoho.com` and log in. Each `run-zoho-*-smoke.sh` script copies this profile into its own `auth/zoho-<workflow>-smoke-profile` on the first run. Without it the script stops with "Missing".
+- Zoho reads and the Email Sent staging run: run `npm run mcp:open -- mcp-zoho-profile https://crm.zoho.com` and log in.
+- Saleshandy sessions: `npm run login:saleshandy -- <account>`. Zoho session file: `npm run login:zoho -- <account>`.
+- A script that finds an expired Zoho profile now deletes it and stops with "Login expired" (exit code 3). `npm run profiles:prune` lists expired profiles.
 
-- QA runs `npm run login:saleshandy -- gzoho` and `npm run login:zoho -- gzoho`.
-- QA confirms that `dharmesh+gzoho@saleshandy.com` exists on staging.
-- QA chooses the Zoho field mapping for the tests.
-- Staging walkthrough of the Zoho screens in Saleshandy (connect, Field Mapping, Triggers & Activity, Logs).
-- Page objects in `src/pages/zoho/` and a flow `src/flows/saleshandy-to-zoho.ts`.
-- Test cases (`/workflow-testing <workflow>, Zoho, regression`). The skill first asks whether you want a hand-written spec or the Playwright agents.
+## Open items
 
-## Open questions for QA
+- `OPENED_TRIGGER` in `src/flows/zoho-link-clicked.ts` says "Sequence Email is Opened in Saleshandy". The screen says "Email is Opened in Saleshandy". Link Clicked Combined 2 depends on it.
+- Bugs QA filed: AL-4198 (empty Task Subject keeps the old Subject), AL-4199 (Deal Pipelines and Stages not selectable), AL-4218 (Account and Deal make two accounts), AL-4219 (Reply Received). Check Jira for their current state.
+- Email Sent Combined 1 failed in 1 of 2 runs with a double execution (one email, 2 executions). If it repeats, QA files it.
+- Not set up on purpose: Conversation Category gate 5 needs a real reply in Unified Inbox (QA, 2026-10-31).
+- Jira comment drafts for the smokes are in `jira/drafts/`. QA sends them with `npm run jira`.
 
-1. Hand-written specs (as for Pipedrive and Salesforce) or the Playwright agents?
-2. Which workflow first? Suggested: Email Sent, because it has the most developer evidence.
-3. Does the Zoho test org have Leads, Contacts, Accounts and Deals enabled? Which org?
-4. Are the bugs Z-1 to Z-6 still the same on current staging?
-5. Jira: no Zoho workflow tickets exist. Which epic holds the new ones (AL-3982?)
-6. Answered 2026-10-29: QA pasted the Triggers & Activity list. Seven workflows (Email Sent, Reply Received, Link Clicked, Email Opened, Conversation Category Updated, Email Bounced, Prospect Unsubscribed). No "Prospect is Finished" workflow, so none is needed.
+## Files
 
-- 2026-10-29, QA: no bug from the first Email Sent run. Ten of 11 mapped Contact fields synced. Phone Number was empty on the prospect. The company fields are a mapping gap on the Contact type. Next: duplicate rules, then Email Sent test cases.
-
-- 2026-10-29: Email Sent exploration, see `email-sent-progress.md`. Open: duplicate Task and Deal records per event (QA decision), Task second event, test cases not yet saved.
-
-- 2026-10-29, QA OK: Email Sent test cases saved in `test-cases/zoho/email-sent.md` (24 rows). Next: page objects in `src/pages/zoho/`, flow `src/flows/saleshandy-to-zoho.ts`, spec `tests/zoho/email-sent.spec.ts` (hand-written). Zoho reads need a headed browser (xvfb) with `auth/mcp-zoho-profile`. QA decision pending: duplicate Task and Deal records when the contact is new.
-
-- 2026-10-29, end of day, Email Sent: spec `tests/zoho/email-sent.spec.ts` (15 rows), flow `src/flows/zoho-email-sent.ts`, data script `scripts/make-zoho-email-sent-data.ts` written. `Lead: 1` passes. The other 14 rows have not run (stopped for low memory, about 4 emails sent). Next: free memory, run the rows in small groups, then write the rows that need a hand-made Zoho record. Details: `email-sent-progress.md`, sections "Code written" and "Run status". QA decision pending: duplicate Task and Deal records when the contact is new.
-
-- 2026-10-30, QA OK: Email Opened test cases saved in `test-cases/zoho/email-opened.md` (25 rows, account `notemailsentzoho`, Mailinator open). Progress and next steps: `email-opened-progress.md`. Next: sequence "Zoho Email Opened QA", then the hand-written spec `tests/zoho/email-opened.spec.ts`. No page objects, flow, data or spec yet.
-
-- 2026-10-30, QA OK: Email Bounced test cases saved in `test-cases/zoho/email-bounced.md` (23 rows after the cuts, account `notemailsentzoho`, Mark as bounced plus 1 real bounce). Progress and next steps: `email-bounced-progress.md`. Next: sequence "Zoho Email Bounced QA", then the hand-written spec `tests/zoho/email-bounced.spec.ts`. No sequence, data or spec yet.
-
-- 2026-10-30: QA wants one account and parallel workflows (`notemailsentzoho`, own sequence and prospects each). Link Clicked test cases saved in `test-cases/zoho/link-clicked.md` (23 rows after cuts), QA "looks good" received. Progress: `link-clicked-progress.md`. Track email opens is OFF in the Link Clicked sequence so a click does not fire Email Opened; the first run checks it.
-
-- Progress table: `PROGRESS.md` in this folder (QA format, 2026-10-30). Show it when QA asks for progress.
-- 2026-10-30: Link Clicked spec written (23 tests, typechecks), sequence waits for a sender mailbox. See `link-clicked-progress.md` "Parallel-run notes".
-
-- 2026-10-30, QA OK ("looks great"): Prospect Unsubscribed test cases saved in `test-cases/zoho/prospect-unsubscribed.md` (20 rows, account `notemailsentzoho`, UI unsubscribe plus 3 link rows). QA asked for cases only, no script yet. Progress: `prospect-unsubscribed-progress.md`.
-
-- 2026-10-30, QA OK: Conversation Category Updated test cases saved in `test-cases/zoho/conversation-category-updated.md` (20 rows, account `notemailsentzoho`). QA wants test cases only, no script yet. Progress: `conversation-category-updated-progress.md`.
-- 2026-11-02 night, Reply Received: 7 passed, 26 failed, 1 skipped. Blocked on QA OK to read Zoho Logs once. Resume section: `reply-received-progress.md` "Resume here (saved 2026-11-02 night)".
-- 2026-11-03, QA: Link Clicked is LIVE on production. Production smoke 8 of 8 passed (note `notes/production-testing/17-zoho-link-clicked.md`, sequence 988717), AL-4194 comment sent, sheet row 25 written. Nothing left to run. See `link-clicked-progress.md` "LIVE on production".
-- 2026-11-03: Reply Received production smoke written (note 19, spec, run script, data), sequence 989765, headless read-only walk-through done (no script change), not run: waits for the AL-4219 deploy, QA runs `npm run smoke:zoho-reply-received` (login first). Read reply-received-progress.md "Production walk-through".
-- 2026-11-04: Conversation Category production smoke written (note 20, spec, setup, data, run script), typechecked, not run: the workflow is not deployed on production. QA runs `npm run smoke:zoho-conversation-category-updated` after the deploy (login first). Read conversation-category-updated-progress.md "Production smoke".
-- 2026-11-04: Prospect Unsubscribed production smoke written (note 21, spec, setup, data, run script), typechecked, not run. Sequence 990987 now has step 2 and Unsubscribe as Link. QA runs `npm run smoke:zoho-prospect-unsubscribed` (login first). Read prospect-unsubscribed-progress.md "Production smoke".
-- 2026-11-04, QA: all Zoho workflows are production approved. Prospect Unsubscribed smoke 8 of 8 passed (note 21), sheet row 26 Released, AL-4196 draft written, QA sends. Nothing left to run for Unsubscribed.
+- `00-overview.md`: how the integration works and the seven workflows.
+- `field-mapping.md` and `staging-walkthrough.md`: field mapping, trigger state, deal stages, Task fields.
+- `research.md`: 26 manual test ideas.
+- `EXPLORATION-RESUME.md`: the exploration of 16 unconfirmed rows (done, kept for reference).
+- Test cases: `test-cases/zoho/<workflow>.md`. Production notes: `notes/production-testing/16` to `21`.

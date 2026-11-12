@@ -67,13 +67,12 @@ Rules that apply only to smoke:
    UI test depends on it.
 2. Run `ListAgents`. If another session owns this workflow, say so and stop.
 3. Platform rules:
-   - **Pipedrive, Salesforce:** hand-write the spec. Do not use the Playwright
-     planner, generator or healer (QA 2026-10-19, 2026-10-24).
+   - **Every platform:** hand-write the spec. Do not use the Playwright
+     planner, generator or healer unless QA asks for them (QA 2026-10-19,
+     2026-10-24, 2026-10-29 and, for every platform, 2026-11-12).
    - **HubSpot:** regression is released and out of scope. Smoke on HubSpot
      already exists for the workflows in `notes/production-testing/`. Confirm
      with QA before touching either.
-   - **Any other platform:** ask QA once. Default is `ui-test-from-workflow`
-     (`plan.md` section 0 rule 12).
 4. Regression, Pipedrive: account is `gpipedrive`, all workflows in parallel
    with their own data. Email Sent must be OFF for the sibling workflows.
    Regression, Salesforce: use the account listed in `src/config/accounts.ts`

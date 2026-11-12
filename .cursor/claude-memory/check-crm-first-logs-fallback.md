@@ -16,3 +16,5 @@ Also: scripts must stay short (QA does not want ~80 min specs). Batch setup, gro
 
 **Why:** Logs polling adds minutes per row, and a Logs Success does not prove the record is right.
 **How to apply:** in new specs, check the CRM record first; open Logs only as a fallback; record Error as a question for QA. The older ui-test-from-workflow wording (Refresh Logs 15 s after the action) still says Logs first; propose updating it, do not edit the skill without QA's OK.
+
+QA, 2026-10-28: if the data is not in the CRM after the wait, open Logs and read the entry for errors. A RUNNING entry means Refold has not finished (it reports late): refresh, never report it as a finding. Success does not prove the record. Error is asked, not failed. Applied in ui-test-from-workflow Stage 4 step 2.

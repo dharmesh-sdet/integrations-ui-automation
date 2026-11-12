@@ -1,21 +1,18 @@
 - [Check live sessions on resume](check-live-sessions-on-resume.md) — ListAgents + ps + file mtimes first, then propose an unowned workflow
-- [Resume pointers](resume-pointers.md) — files that hold project state and the current phase (Link Clicked: link-clicked-progress.md; Reply Received: reply-received-progress.md; Prospect Outcome: prospect-outcome-updated-progress.md)
 - [No unnecessary stops](no-unnecessary-stops.md) — keep going once data is given; log refresh 15s then 10s
 - [Ask before assuming](ask-before-assuming.md) — batch questions up front for any open point (scope, layout, meaning), then work
-- [Multi-account plan](multi-account-plan.md) — one Saleshandy account per workflow for parallel runs; built, see context/project.md
 - [QA only runs the script](qa-only-runs-script.md) — Claude runs specs, fixes script failures, handles data; do not wait on QA
 - [Notify when blocked](notify-when-blocked.md) — PushNotification + notify-send (PushNotification is skipped while terminal is active) whenever Claude needs QA or a run QA waits on ends
 - [Jira: verify, then draft](jira-verify-then-draft.md) — bugs only: ask QA bug-or-not first, draft from template to jira/drafts, one-click send
-- [Jira comments via chat, not draft files](jira-comments-via-chat-not-draft-files.md) — comments go through chat confirm + direct MCP post
+- [Jira comments via chat, not draft files](jira-comments-via-chat-not-draft-files.md) — comments are written as jira/drafts/*.json and sent with npm run jira, never posted from chat
 - [Set sender settings myself](set-sender-settings-myself.md) — fix wrong sender interval/limits on staging, no stop; verify after reload
 - [Do not open report.html](dont-open-report-html.md) — never show/open report.html mid-task; QA reviews it after the task is done
 - [Log product issues, do not wait](log-product-issues-dont-wait.md) — note product failures in the progress file, keep running, QA reviews later
 - [Jira Environment = Production](jira-environment-production.md) — bug drafts: Environment Production, Note says 'Affected Environment - Staging'
 - [Realistic test data](realistic-test-data-dont-bend.md) — never rename test data to make the product pass; prove causes from logs, not data changes
-- [Unsubscribed workflow plan](unsubscribed-workflow-plan.md) — AL-4015: MCP explore, test agents plan/generate/heal, QA gates before any script
 - [Drafts human readable](drafts-human-readable.md) — show drafts as rendered text, not in a code block
 - [Minimal, accurate updates](minimal-accurate-updates.md) — short status, verified facts only, no long recaps
-- [Use Playwright agents for workflows](use-playwright-agents-for-workflows.md) — from 2026-10-14 planner/generator/healer for every new workflow, not hand-written specs
+- [Use Playwright agents for workflows](use-playwright-agents-for-workflows.md) — SUPERSEDED QA 2026-11-12: all specs hand-written on every platform, no agents unless QA asks
 - [Salesforce: hand-write specs](salesforce-hand-written-specs.md) — QA 2026-10-19: no planner/generator/healer for Salesforce workflows; hand-write like HubSpot, overrides the line above
 - [Rerun failed rows, not whole suite](run-failed-rows-not-whole-suite.md) — run once to learn errors, then only failed/unrun rows with KEEP_TEST_DATA; QA runs the full script
 - [Compact at 120K, cheap subagents](compact-at-130k-cheap-subagents.md) — at 120K: notify both ways, stop subagents, ask QA to switch model and /compact
@@ -26,3 +23,20 @@
 - [Check the CRM first, Logs fallback](check-crm-first-logs-fallback.md) — wait 15s, look in CRM; Logs only if missing; Error is asked, not failed; keep specs short
 - [Salesforce bug links](jira-salesforce-links-parent-first.md) — links AL-4131 first, then the trigger ticket (AL-4132...)
 - [Usage-limit handoff](usage-limit-handoff.md) — at QA's 95% weekly usage call, write HANDOFF.md for Cursor, keep progress files current
+- [Pipedrive: hand-write specs](pipedrive-hand-written-specs.md) — QA 2026-10-24: no planner/generator/healer; one account gpipedrive, sessions saved
+- [No Pipedrive cleanup](no-pipedrive-cleanup.md) — QA 2026-10-26: specs never delete records after a row; peers told
+- [Simple English replies](simple-english-replies.md) — QA 2026-10-27: every reply uses the simple-english plugin, short, accurate, no extra information
+- [Scenario names, not numbers](scenario-names-not-numbers.md) — QA 2026-10-27: describe cases by real scenario; leave Trigger behavior 2, 4, 5 out of reports
+- [No "Legacy" names in test data](no-legacy-names-in-test-data.md) — QA 2026-10-28: real prospect name and realistic deal titles; spec change pending QA answer
+- [Zoho: no logs](zoho-no-logs.md) — QA 2026-10-29: never read the Logs tab for Zoho, check the Zoho record only
+- [Zoho reads without focus](zoho-read-without-focus.md) — QA 2026-10-29: no visible window; read Zoho yourself with xvfb + saved profile (scripts/zoho-read)
+- [CSV refresh gotcha](global-setup-csv-refresh.md) — spec with no matching CSV refreshes every CSV; run with KEEP_TEST_DATA=1
+- [Open/click wait times](open-click-wait-times.md) — staging 10 s first/later; production open 60/120, click 90/180; wait before every open or click
+- [Zoho progress table](zoho-progress-table.md) — QA 2026-10-30: when asked for progress, update and show context/zoho/PROGRESS.md (7-workflow table)
+- [QA "looks good" is the gate](qa-looks-good-is-the-gate.md) — QA 2026-10-30: "QA looks good" equals "looks good", start the script, do not re-ask
+- [No Co-Authored-By](no-co-authored-by.md) — STRICT, QA 2026-11-02 and again 2026-11-03: no Co-Authored-By Claude line and no "Generated with Claude Code" line in any commit or PR, any session; old commits stay
+- [Smoke covers latest-deal update](smoke-cover-latest-deal-update.md) — QA 2026-11-02: next production smokes include newest-deal update check
+- [Setup specs refresh all CSVs](setup-spec-refreshes-all-csvs.md) — 2026-11-02 incident: always KEEP_TEST_DATA=1, even for setup specs; lesson Proposed, QA OK pending
+- [Use listed senders](use-listed-senders-adapt.md) — QA 2026-11-03: smoke setup picks a sender from the Add dialog list, no fixed addresses, no stopping to ask
+- [Salesforce-side: use run-now API](salesforce-created-run-now-api.md) — QA 2026-11-05: regression and prod scripts use sf:run-now and create the data by script; QA only verifies in Saleshandy; record-creation API not found, asked
+- [Salesforce tab must stay open](salesforce-tab-must-stay-open.md) — QA 2026-10-19: keep a Salesforce browser tab open for the whole Salesforce script test

@@ -6,11 +6,10 @@
 - Knowledge base: `knowledge-base/README.md` (how the product works, how we
   test, reusable code, UI gotchas, lessons). Use the `saleshandy-knowledge`
   skill before product or testing work.
-- Playwright agents: any new workflow, on any platform (HubSpot, Salesforce,
-  others), is planned with `playwright-test-planner`, its spec written with
-  `playwright-test-generator` and its script failures fixed with
-  `playwright-test-healer`, through the `ui-test-from-workflow` skill. Do not
-  hand-write new specs. Full rule: `plan.md` section 0, rule 12.
+- Specs are hand-written, like the HubSpot ones, on every platform (QA,
+  2026-11-12). Do not use `playwright-test-planner`, `playwright-test-generator`
+  or `playwright-test-healer` unless QA asks for them. Full rule: `plan.md`
+  section 0, rule 12.
 - Mistakes: use the `learn-from-mistake` skill. Propose the change; apply it
   only after QA's OK.
 - Replies: before the first reply of a session, Read

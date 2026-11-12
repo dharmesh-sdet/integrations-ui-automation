@@ -1,6 +1,6 @@
 ---
 name: use-playwright-agents-for-workflows
-description: "From 2026-10-14 every new workflow uses the Playwright test agents (planner, generator, healer) for planning and spec files, not hand-written specs"
+description: "SUPERSEDED 2026-11-12: all specs are hand-written on every platform, no planner/generator/healer unless QA asks (agents take too much time)"
 metadata:
   node_type: memory
   type: feedback
@@ -8,7 +8,9 @@ metadata:
   modified: 2026-10-14T15:37:10.316Z
 ---
 
-QA rule (2026-10-14): from now on, invoke the Playwright test agents
+SUPERSEDED. QA 2026-11-12: "I prefer to write the hand-written specs cause playwright agents uses loads of time." All specs are hand-written on every platform. Do not use the agents unless QA asks. See [[salesforce-hand-written-specs]] and [[pipedrive-hand-written-specs]]. The text below is history only.
+
+Old rule (2026-10-14): from now on, invoke the Playwright test agents
 (`playwright-test-planner`, `playwright-test-generator`, `playwright-test-healer`,
 installed in `.claude/agents/`, seed `automation/tests/seed.spec.ts`, plans in
 `automation/specs/`) for all remaining workflows, both planning and generating

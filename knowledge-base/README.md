@@ -9,7 +9,10 @@ Read the page you need, not all of them.
 |---|---|
 | What a Saleshandy area does and what to test in it | [product/saleshandy.md](product/saleshandy.md) |
 | HubSpot integration: screens, names, URLs seen on staging | [product/hubspot-integration.md](product/hubspot-integration.md) |
-| Salesforce integration: how it works, user journeys, what is not known yet (online docs only, not yet checked on staging) | [product/salesforce-integration.md](product/salesforce-integration.md) |
+| Salesforce integration, from online docs (2026-10-15, written before staging work): how it works, user journeys. For what we saw on staging, read the Salesforce overview below first | [product/salesforce-integration.md](product/salesforce-integration.md) |
+| Salesforce workflows: intended behavior, field mapping, status per workflow | [../automation/context/salesforce/00-overview.md](../automation/context/salesforce/00-overview.md) (single source, not copied here) |
+| Pipedrive integration: workflows, activities, intended behavior, current state | [../automation/context/pipedrive/00-overview.md](../automation/context/pipedrive/00-overview.md) and `RESUME.md` (single source, not copied here) |
+| Zoho integration: workflows, field mapping, intended behavior, current state | [../automation/context/zoho/00-overview.md](../automation/context/zoho/00-overview.md) and `RESUME.md` (single source, not copied here) |
 | Salesforce Leads: form fields, required fields, Lead record layout, actions (from hands-on exploration) | [product/salesforce-leads.md](product/salesforce-leads.md) |
 | Salesforce Opportunities: form, Stage values, success message behavior | [product/salesforce-opportunities.md](product/salesforce-opportunities.md) |
 | Salesforce Contacts: related lists, campaign membership, Notes & Attachments | [product/salesforce-contacts.md](product/salesforce-contacts.md) |
@@ -17,7 +20,7 @@ Read the page you need, not all of them.
 | HubSpot integration: workflows, activities, intended behavior, field mapping | [../automation/context/hubspot/00-overview.md](../automation/context/hubspot/00-overview.md) (single source, not copied here) |
 | Start here before testing any workflow: how it is fired, what correct looks like, accepted behaviour, known bugs, which workflows affect each other (developer API test runs, all 33 logs in `../integration-skills/test-logs/`) | [product/workflow-behaviour-dev-kit.md](product/workflow-behaviour-dev-kit.md) |
 | How we test: environments, data, timing, verification, false failures | [testing/how-to-test.md](testing/how-to-test.md) |
-| Reusable test code and the checklist for a new integration (Salesforce next) | [testing/reusable-building-blocks.md](testing/reusable-building-blocks.md) |
+| Reusable test code and the checklist for a new integration | [testing/reusable-building-blocks.md](testing/reusable-building-blocks.md) |
 | Production smoke: scope, rules, setup, checklists per workflow | [../automation/notes/production-testing/README.md](../automation/notes/production-testing/README.md) (single source, not copied) |
 | UI traps that broke tests or walkthroughs | [testing/ui-gotchas.md](testing/ui-gotchas.md) |
 | Mistakes made and the rule each one produced | [lessons.md](lessons.md) |

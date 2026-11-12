@@ -1,8 +1,10 @@
 # Improvement plan: faster test runs and a faster workflow process
 
 Written 2026-10-08, after the first workflow (Contact Updated in HubSpot).
-Use it once Contact Updated passes a full run. Nothing here is built yet;
-each item needs QA's go-ahead before it is done.
+Sections 1 to 7 are the original plan and are kept as written. Sections 8 and
+9 hold the status. Section 10 is the status on 2026-11-12. Read section 10
+first: it says which items are built and which are not. Each item that is not
+built needs QA's go-ahead before it is done.
 
 ## 1. Where we are
 
@@ -182,3 +184,28 @@ clash with R and P above.
 2. Q9, Q10 and Q13 before the next workflow.
 3. Q14, Q16 and Q17 when convenient.
 4. Q15 when QA decides about accounts.
+
+## 10. Status (2026-11-12)
+
+QA said the integration automation is done (2026-11-12). Salesforce Import Prospects is still waiting for a developer. Specs on every platform are hand-written (QA, 2026-11-12), so any item above that assumes the Playwright agents no longer applies.
+
+Checked in the repo on 2026-11-12:
+
+| Item | Status |
+|---|---|
+| Q7 (`npm run row`) | Not built. There is no `row` script in `automation/package.json` |
+| Q9 (`SHARED-FILES.md`) | Not built. The file does not exist |
+| Q13 (`npm run status`) | Not built. There is no `status` script |
+| P6 (screen catalogue `context/hubspot/screens.md`) | Not built. The file does not exist |
+| P11 (nightly run) | Not built. The repo has no `.github` folder and no scheduler configuration |
+| P10 (login detection) | Built, in `src/pages/base.page.ts` (a `/login` path fails at once) |
+
+Not checked on 2026-11-12: R4, P2, P8, Q8, Q10, Q11, Q12, Q14, Q15, Q16 and Q17. Check the code before you rely on or build any of them.
+
+Built after this plan and not in it:
+
+- A daily send cap for real email (`SEND_CAP`, default 40 of the 150 a day the mailbox allows).
+- Expired-login handling (2026-11-12): `assertSessionFresh` deletes an expired session file. `exitIfExpired` in `src/utils/profile.ts` deletes an expired Zoho browser profile and stops with exit code 3.
+- `npm run profiles:prune` lists or deletes expired browser profiles in `auth/`.
+- `npm run clean:runs` lists or deletes old run output (`test-results-*` and `reports/`), and refuses while a Playwright run is active.
+- `npm run sync:cursor-memory` rebuilds `.cursor/claude-memory/` from Claude's memory.

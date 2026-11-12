@@ -3,7 +3,7 @@ name: salesforce-tab-must-stay-open
 description: Keep a Salesforce browser tab open throughout Salesforce script testing; closing it can break the Saleshandy<->Salesforce connection
 metadata:
   node_type: memory
-  type: project
+  type: feedback
   originSessionId: ba9d1940-165d-49b0-978a-abed8fbd25b2
   modified: 2026-10-19T11:00:13.355Z
 ---

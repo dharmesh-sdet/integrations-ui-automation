@@ -1,7 +1,7 @@
 # Reusable building blocks
 
 What already exists in `automation/`, so a new workflow or a new integration
-(Salesforce next) reuses it instead of rebuilding it. Check here before
+(as Salesforce, Pipedrive and Zoho did) reuses it instead of rebuilding it. Check here before
 writing any helper, page object or fixture.
 
 ## Reuse as is (integration-agnostic)
@@ -44,6 +44,14 @@ From `tests/hubspot/contact-updated.spec.ts`:
 
 These three helpers live in the spec today. When a second spec needs them,
 move them to `src/flows/` (improvement-plan.md item P7) rather than copying.
+
+## Scripts with no npm command
+
+Run these with `bash` or `node` from `automation/`. Each has a comment at the top.
+
+- `scripts/run-zoho-prospect-unsubscribed.sh`: runs the Zoho Prospect Unsubscribed staging spec in the background and writes `reports/zoho-prospect-unsubscribed-run.log`. It ends with DONE.
+- `scripts/login-salesforce-api.ts`: logs in to Salesforce through the API and opens a visible browser on the Lead list. It saves nothing.
+- `scripts/read-field-mapping.ts`: a one-off probe that reads a Saleshandy field mapping with the session `auth/saleshandy-sfreplyreceived-chromium.json`. It has no comment and no other reference.
 
 ## HubSpot-specific (do not reuse for Salesforce)
 

@@ -1,5 +1,7 @@
 # Zoho: exploration of the unconfirmed rows, resume
 
+Status 2026-11-12: this exploration is finished. Its findings are in the case, context and progress files. The profiles `auth/zoho-explore-a-profile` and `auth/zoho-explore-b-profile` were deleted on 2026-11-12 because they expired. Kept for reference.
+
 Saved 2026-10-30, 13:36. QA asked to explore every row marked "proposed, unconfirmed". QA also asked to record the findings in each workflow. Nothing from this work is committed.
 
 ## Rules QA gave

@@ -166,11 +166,11 @@ Order is the Triggers & Activity list on staging. "Create a Lead in Salesforce" 
 | 5 | Link is Clicked in Saleshandy | AL-4136 | Done, live. Smoke 13 of 13 (2026-11-05), AL-4136 comment sent |
 | 6 | Prospect is Unsubscribed in Saleshandy | AL-4137 | Done, live. Staging 30 of 30 passed at least once, smoke 9 of 9 on production (2026-11-05, check 1 passed on the second attempt), sheet row 13 written, AL-4137 comment draft for QA to send (`prospect-unsubscribed-progress.md`) |
 | 7 | Email is Bounced in Saleshandy | AL-4138 | Done, live. Staging 34 of 34 passed at least once, smoke 9 of 9 on production (2026-11-05, check 9 passed after a script fix), sheet row 14 written, AL-4138 comment draft for QA to send (`email-bounced-progress.md`) |
-| 8 | Lead is created in Salesforce (V1) | AL-4144 | Old draft, exploring on staging (`salesforce-created-progress.md`) |
+| 8 | Lead is created in Salesforce (V1) | AL-4144 | Staging approved (QA, 2026-11-11). 32 cases plus a setup test, every case passed at least once in partial reruns, no full single run yet. Not committed. Production smoke cases approved by QA 2026-11-12 (`notes/production-testing/27-salesforce-lead-created.md`), script written, not run, waits for the production publish (`salesforce-created-progress.md` "Lead created production smoke") Production smoke 12 of 12 passed (2026-11-12, sequence 997962), PRODUCTION APPROVED by QA, AL-4144 comment draft written, QA sends (`salesforce-created-progress.md` "Lead created PRODUCTION APPROVED") |
 | 9 | Import Prospects from Salesforce | none | Not started |
 | 10 | Contact is created in Salesforce | AL-4141 | Old draft, Select box shows "No Data" (P1) |
-| 11 | Opportunity is created in Salesforce | AL-4142 | Old draft, Select box shows "No Data" (P1) |
-| 12 | Account is created in Salesforce | AL-4143 | Old draft, not opened yet |
+| 11 | Opportunity is created in Salesforce | AL-4142 | Staging 27 cases passed at least once (commit 992e7a1). Production smoke 13 of 13 passed (2026-11-12, sequence 997965), PRODUCTION APPROVED by QA, AL-4142 comment draft written, QA sends (`salesforce-created-progress.md` "Opportunity created PRODUCTION APPROVED") |
+| 12 | Account is created in Salesforce | AL-4143 | Test cases written (29 rows, QA looks good 2026-11-09), spec generated, not run on staging. Blocked on QA's headed login for `sfemailsent` (`salesforce-created-progress.md` "Account created") |
 | 13 | Call Logged in Saleshandy | AL-4139 | Not started |
 | 14 | Call Outcome Updated in Saleshandy | AL-4140 | Not started |
 

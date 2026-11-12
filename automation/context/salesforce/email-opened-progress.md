@@ -61,3 +61,14 @@
 - Commands: `npm run smoke:salesforce-email-opened` (alone), `npm run smoke:salesforce-pair` (with Reply Received, QA 2026-11-04). QA runs them; the workflow is probably not published on production yet.
 - Parallel risk: Reply Received unmaps Closing Date for its Opportunity rows and maps it again after row 8. Check 7 and 8 here also need it unmapped. If the Reply run maps it back in between, rerun checks 7 and 8 only.
 - Not run. Typecheck: no errors in the new files (only old errors in `jira/web`).
+
+## 2026-11-05: production smoke run (note 23), sequence 992152
+- Run 1 stopped in setup: the Add email accounts dialog said "No email account available" (accounts already on the sequence). Fixed in `src/flows/smoke-sender.ts` (not committed): the dialog is cancelled and the senders on the page are read. Sender read: rudra+pipedrive@saleshandy.com. QA had activated the sequence.
+- Run 2 (33.0 min): Checks 1 to 11 all passed. One helper step failed: "Opportunity checks: unmap Closing Date on the Opportunity mapping" (`unmapField` click on Closing Date timed out at 30 s, `salesforce-integration.page.ts:373`). Checks 7, 8 and 11 passed after it. Cause not read yet; the screenshot shows a Field Mapping page without a Closing Date row, so it may already have been unmapped by the Reply Received session. Not a product failure.
+- Not committed.
+- Jira comment draft written 2026-11-05: jira/drafts/al-4135-salesforce-email-opened-production-smoke-summary.json (QA approved the wording, QA sends).
+
+## 2026-11-05: PRODUCTION APPROVED and LIVE (QA)
+- QA said Salesforce Sequence Email is Opened (AL-4135) is production approved and live. Production smoke: 11 of 11 passed on sequence 992152. AL-4135 summary comment sent by QA at 2026-11-05 07:03 UTC.
+- Sheet "Integration wfs" row 11 written: E "Released", F "21 Oct: Not started.\n\n5 Nov: Production smoke passed. Live." D "5 Nov 2026" unchanged.
+- Nothing left to run for this workflow. Open: commit of `src/flows/smoke-sender.ts` and this file (QA asks, no Co-Authored-By); QA look at Closing Date mapping; sender confirmation (rudra+pipedrive@saleshandy.com).

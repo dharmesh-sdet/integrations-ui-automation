@@ -363,3 +363,80 @@ Run: `REPORTS_DIR=reports/contact-final KEEP_TEST_DATA=1 SEQUENCES_PAUSED=1 CI= 
 - Cause of the "Loop on Contacts" errors in Status 4 and Unsubscribed 2: no-Email Contacts created by `account-created.spec.ts` on the same Salesforce org, read by the Contact run. Run Account and Contact one after the other.
 - Lesson applied: when QA names other workflows to reuse, compare how they check every expected result (lessons.md 2026-11-12).
 - Trigger "Contact is created in Salesforce" on `sfemailopened`: state not checked after the last Restore row. Production smoke not started.
+
+## Account created: all 28 cases passed at least once (2026-11-12), sfemailsent
+- Refold query proven (2026-11-12): `SELECT FIELDS(ALL), (SELECT FIELDS(ALL) FROM Contacts LIMIT 200) FROM Account WHERE CreatedDate>={{timestamp}} LIMIT 200`, timestamp = run start minus 3 hours. A run reads only Accounts of the last 3 hours, not the whole org (dev log A4 contradicted). Of 47 org Contacts with an email, 25 sit on Accounts older than 63 hours.
+- Spec/case changes: Status 1 dropped; `againOn` before each follow-up run; Unsubscribed 1 two-step; Blacklist 2 records the second run (ERRORED at "Blacklist Domains (Bulk)" as on Lead); Add Prospect 7 asserts old Contacts are NOT imported (sample of 5); read-set guard uses Accounts of the last 4 hours and treats run-stamped emails as test people; Status 5 checks the Activities text first; Blacklist 4 rewritten to two new Accounts on two domains (like Opportunity). Cases now 28.
+- Runs: run 1 (partial) and runs 2 to 6 in reports/account-created-run1 to run6. Each case passed at least once; no single full run. Run 6: Status 5, Blacklist 4, Restore passed.
+- Status 5 stayed Active twice before it passed with the Activities check added. Cause of the earlier failures not proven (not a script fault found).
+- Do Not Contact box refuses emails with `&` (`b.levy@expressl&t.net`, `j.davis@expressl&t.net`); Setup skips them (`addEntries` returns the refused ones).
+- Not committed. Throwaway probes deleted. Trigger is OFF on sfemailsent (Restore passed). Production smoke not started.
+- Next: QA reviews, optional full single run (`KEEP_TEST_DATA=1 ACCEPT_SENDS=1 npx playwright test --project=chromium tests/salesforce/account-created.spec.ts`), commit, then production smoke cases.
+
+## Contact created production smoke (2026-11-12), script written, not run
+
+- QA approved 11 checks 2026-11-12 (`notes/production-testing/29-salesforce-contact-created.md`, README row 30). QA says the workflow is NOT published on production yet, so QA runs it after the publish. AL-4141 has no linked bug, so it is a baseline. QA: runs alone, one at a time (no pair with Lead, Opportunity or Account), day's 4-step sequence with Stop on reply OFF, default scope (no no-Email row, no special-name row).
+- Files: `tests/salesforce/contact-created-smoke.spec.ts` (11 checks + Restore), `src/flows/salesforce-contact-created.ts` (own last-run file `CONTACT_LAST_RUN_FILE`, run-now, `contactsInWindow`), `tests/setup/salesforce-contact-created-smoke-sequence.spec.ts`, `scripts/run-salesforce-contact-created-smoke.sh`, npm `smoke:salesforce-contact-created`. Typechecked (no errors in these files), listed (12 tests per project), runner syntax checked, never run.
+- Rules in the script: account `emailopenedprod`, run-now, any other trigger on stops the check before it saves, Move/Unsubscribed/Blacklist skip when the window holds another Contact (a no-Email Contact in the window makes the run ERROR), follow-up rows create a second Contact with the same email, up to 6 sends counted against SEND_CAP, no Logs (3 min wait), last test turns the Contact trigger off. `CONTACT_TRIGGER_NAME` overrides the trigger name.
+- Needs QA: `npm run login:saleshandy -- emailopenedprod`, Salesforce Network Access for this machine's IP, Contact workflow published on production. Run: `npm run smoke:salesforce-contact-created`.
+- Not verified: first-run window on production, the Sequence Associated cell shows the full sequence name, TagA on production, Contact Phone Number and Department mapped on production (read by the script, not asserted if unmapped), prospect name locator with an empty First Name (check 3, passed on staging through another helper).
+- Peer session `local-project-ee` was busy when this started; its workflow is unknown. Do not run Account, Lead or Opportunity smokes in parallel with this one.
+- Not committed. No Jira draft yet (after the run, from `04-production-smoke-summary.md`).
+
+## Account created production smoke (2026-11-12), run finished with 2 failed checks
+- QA approved 12 checks 2026-11-12 ("looks good"), answers: baseline only (Jira AL-4143 links did not load, connection error twice); the workflow was not published when the cases were approved, then became available for this run. Cases: `notes/production-testing/30-salesforce-account-created.md`, README row 30.
+- Files: `tests/salesforce/account-created-smoke.spec.ts` (12 checks + Restore), `src/flows/salesforce-account-created.ts`, `tests/setup/salesforce-account-created-smoke-sequence.spec.ts`, `scripts/run-salesforce-account-created-smoke.sh`, npm `smoke:salesforce-account-created`. Typechecked, listed (14 tests per project), run 2026-11-12.
+- Design change from the approved wording: a run reads Accounts of the last 3 hours, so it re-reads the smoke's own Accounts. The window check counts only Accounts without the run stamp in the name, and skips Move, Unsubscribed and Blacklist (all of check 12 before it starts) when there is one. Blacklist removes every Do Not Contact entry it added (before/after diff).
+- Not verified: a Move run re-reading earlier smoke Accounts may not re-send step 1 (staging showed the Blacklist run listed only the new domain); Company Website, Phone, Industry mapped on production; TagA on production.
+- Run result [QA 2026-11-12]: checks 1, 4, 5 and 7 passed; checks 6, 8-12 skipped; Restore passed. No Move run or sends occurred. The window guard skips these checks before creating or running anything when a non-smoke Account is in the 3-hour window.
+- Checks 2 and 3 failed because run-now returned `ERRORED` with node `group (Errored)`, not because of a Playwright locator/assertion failure. Run IDs: `6af5624fe1fba522a3381641` (check 2) and `6af5627a659820d6a7e7c4fc` (check 3). The saved result does not contain the underlying workflow error; do not change expected results or rerun until the cause is reviewed.
+- The run is no longer active. `.last-run.json` lists only checks 2 and 3 as failed. Exact window counts and underlying run errors were not saved.
+- Not committed. No Jira draft yet (after the run).
+
+## Lead created PRODUCTION APPROVED (QA, 2026-11-12)
+
+- Production smoke on account `emailopenedprod`, sequence 997962: 12 of 12 passed (11 checks and Restore, 16.3 min), log `reports/lead-only-20261112-111813.log`. Run alone with `KEEP_TEST_DATA=1`.
+- QA approved the result and the Jira comment wording. Draft `jira/drafts/al-4144-salesforce-lead-created-production-smoke-summary.json` (no note). QA sends it with `npm run jira`.
+- Caveat: sequence 997962 has only 2 steps. When a sequence of that name exists, the setup spec skips adding steps and only checks the switch, the sender and the activation. A run for a full 4-step sequence is not done.
+- The Lead script has the same sender-step code that failed for Opportunity (sender already attached, dialog lists none). It did not fail for Lead because the setup was skipped. Not changed.
+- The first pair run (Lead plus Opportunity in parallel) did not complete: both runs hit a step Save that never confirmed, then the guard "Other triggers are on" stopped Lead. QA turned Prospect is Unsubscribed in Saleshandy and Email is Bounced in Saleshandy off on production. They are still off and must be turned back on.
+
+## Opportunity created PRODUCTION APPROVED (QA, 2026-11-12)
+
+- Production smoke on account `emailopenedprod`, sequence 997965: 13 of 13 passed (12 checks and Restore, 13.6 min), log `reports/opportunity-only-20261112-113624.log`. Setup passed in 25.7 s on the third try.
+- Fix made on the way: the sender step in `tests/setup/salesforce-opportunity-created-smoke-sequence.spec.ts` returns "already on the sequence" when the Settings button reads "Add more email accounts", and `check()` stops after 15 s. The 30 s limit on the step Save wait is in `src/pages/saleshandy/sequence-builder.page.ts`. Both not committed.
+- QA approved the result and the Jira comment wording. Draft `jira/drafts/al-4142-salesforce-opportunity-created-production-smoke-summary.json` (no note). QA sends it with `npm run jira`.
+- Caveat: sequence 997965 has 3 of 4 steps (same setup-skip reason as Lead).
+
+## Contact created production smoke RUN (2026-11-12)
+- Full run 12:02 to 12:14 (12.3 min, `reports/contact-only-20261112-120257.log`), sequence 997962 (the Lead smoke's, reused by the runner; gate and setup skipped): 10 passed, 2 failed. Smoke 1, 4 to 11 and Restore passed.
+- Smoke 2 and 3 (Add Prospect): Refold run ERRORED at "Loop on Contacts" (runs 6af55dd9a40f5842896c19f5 and 6af55e08e1fba522a3372897). Smoke 2 cause: the first window held five old staging Contacts with no Email (Karan Iyer, created 03:58 to 05:50 UTC); no-Email Contact makes the run ERROR, expected (QA). Smoke 3 cause not proven (Solanki has an Email, Salesforce read showed no no-Email Contact in its window).
+- Rerun of Smoke 2, 3 and Restore (`reports/contact-only-rerun-*.log`, KEEP_TEST_DATA=1): 3 passed in 2.0 min. So 11 of 11 checks and the trigger-off test passed at least once. Trigger is OFF on `emailopenedprod`.
+- Not committed. Jira draft for AL-4141 shown to QA, not written to file. A no-Email Contact in the window makes an Add run ERROR: keep in mind before the next production run (spec does not count them).
+
+## Contact created RELEASED and LIVE (QA, 2026-11-12)
+- QA 2026-11-12: Contact is created in Salesforce is production approved and live. Smoke 11 of 11 passed at least once (note 29, sequence 997962).
+- Done: sheet "Integration wfs" row 17 written (E "Released", F "12 Nov: Production smoke passed. Live.", D left at 9 Nov). Jira draft `jira/drafts/al-4141-salesforce-contact-created-production-smoke-summary.json` (no Note, QA's rule), QA sends with `npm run jira`.
+- Open: README row number 29 is used by both Account and Contact (QA picks), commit, send the AL-4141 draft. Nothing left to run.
+
+## Account created production smoke, first run (2026-11-12, started 06:52 UTC), account emailopenedprod
+- QA asked for the run. Sequence 997965 (Opportunity's, 3 of 4 steps). Gate skipped (passed earlier today). 13 tests, 4.1 min: 5 passed (1, 4, 5, 7, Restore), 2 failed, 6 skipped. No sends (no Move run happened). Trigger is off (Restore passed).
+- Failed, checks 2 and 3: `runAccountNow` got a Refold run ERRORED, step "group" Errored (runs 6af5624fe1fba522a3381641 and 6af5627a659820d6a7e7c4fc, workflow named "Account is created in Salesforce"). Checks 4, 5 and 7 completed 2 to 5 minutes later. Cause not proven. Candidate: a Contact with no email on an Account of the window (staging Account "Iyer Textiles mwd1lej6", 04:25 UTC, NO-EMAIL, inside the 3-hour window of 06:52). Staging Contact notes say a no-Email Contact errors at "Loop on Contacts" (QA: not a bug). Against it: the window of checks 4 and 7 held the same Account. Screenshots and traces in `test-results-salesforce-account-created-smoke/`. QA decides bug or not.
+- Skipped, checks 6, 8 to 12: the window guard. Read-only SOQL after the run (08:01 UTC) shows the staging Account session made Accounts until 05:56 UTC ("mwd4ts29"), inside 3 h 15 min of 06:52. So the skips are the guard working, not a product result. They can run from about 09:15 UTC if nobody creates Accounts in the org before (the Account regression and Contact sessions use the same org).
+- Not tested so far: Move, Paused, Resume, Replied, Finished, Unsubscribed, Blacklist. Not verified: the "Move re-reads earlier Accounts" send count.
+- Next: QA OK to rerun only checks 2, 3, 6, 8 to 12 after 09:15 UTC with no Account created in the org in the 3 hours before. Command: `npm run smoke:salesforce-account-created` runs all 13 again, so run the failed and skipped rows by `-g`. No Jira draft yet (the summary waits for the rerun).
+- 2026-11-12 cause analysis (Refold runs and Saleshandy executions API, read-only): production Account workflow `682d7790bcc93496f890a253` reads Accounts since its last run, not 3 hours. Run 6af5624f... (06:53:03) read 38 Accounts and 29 Contacts (9 batches errored of 29). Run 6af5627a... (06:53:46) read 1 Account (Marta Kowalski's) although 37 staging Accounts were under 3 hours old. The 6 skips came from my window guard assuming 3 hours. Guard changed to since-last-run (file `test-data/salesforce/account-created-smoke-lastrun.txt`, seeded 06:55:33Z, the last Account run on production). Move send count uses the same window.
+- Errors of checks 2 and 3: step "group" (the per-Contact Add Prospect batch) Errored. The batch error text is not in the executions API (only "group node failed: N batch(es) errored"). Checks 2 and 3 are the two that carry phone and mapped extra fields (check 2: Contact Phone and Department, check 3: Account Phone, Website, Industry); checks 4 and 7 (title only) passed. Not proven. Next: read the batch error in the Logs tab or rerun.
+- Also seen: the Contact smoke ran on the same production account 06:36 to 06:43 UTC, one Error and many Success runs.
+
+## Account created production smoke, rerun (2026-11-12 after QA reconnected Salesforce)
+- Rerun of checks 2, 3, 6, 8 to 12 and Restore: 9 passed, 0 failed, 11.7 min. With run 1 (1, 4, 5, 7 passed), all 13 tests passed at least once. Sends 18 to 24 (6). Trigger off (Restore passed).
+- The first rerun attempt (checks 2, 3, 6, 8, 9 failed in about 37 s each, stopped by hand) happened while Salesforce showed disconnected: Field Mapping page blank. QA reconnected, then all passed. So the 2 failures of run 1 (step "group" errored) are not reproduced and their cause stays unproven (run 1 read 29 staging Contacts, 9 batches errored).
+- Open: the Move run of check 6 counted 2 Contacts to move (1 expected); not checked which. Field Mapping read has no reload or fallback (planned: reload once, then note and continue). Lead and Opportunity read mapping the same way.
+- Not committed. Jira summary draft not written yet (waits for QA).
+
+## Account created production smoke, rerun (2026-11-12 after QA reconnected Salesforce)
+- Note renumbered to 30 (the Contact session also used 29). Rerun of checks 2, 3, 6, 8 to 12 and Restore: 9 passed, 0 failed, 11.7 min. With run 1 (1, 4, 5, 7 passed), all 13 tests passed at least once. Sends 18 to 24 (6). Trigger off (Restore passed).
+- A first rerun attempt (checks 2, 3, 6, 8, 9 failed in about 37 s each, stopped by hand) happened while Salesforce showed disconnected: Field Mapping page blank. QA reconnected, then all passed. The 2 failures of run 1 (step "group" errored) are not reproduced and their cause stays unproven (run 1 read 29 staging Contacts, 9 batches errored).
+- Open: the Move run of check 6 counted 2 Contacts to move (1 expected), not checked which. The Field Mapping read has no reload or fallback (planned: reload once, then note and continue). Lead and Opportunity read mapping the same way.
+- Not committed. Jira summary draft not written yet (waits for QA).

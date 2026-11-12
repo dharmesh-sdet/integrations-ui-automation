@@ -60,3 +60,5 @@
 - AL-4168 result: Update a Opportunity dialog with Closing date 0 Days shows a red field and Save disabled (QA screenshot 2026-11-05). Create dialog checked by the script, same.
 - Run with KEEP_OTHER_TRIGGERS=1 beside the other run: no clash seen on Bounced checks 1 to 8.
 - Not committed. Jira comment and sheet row not written (QA approval pending).
+
+- QA 2026-11-05: RELEASED and LIVE. Sheet row 14 written (E Released, F "5 Nov: Production smoke passed. Live."). Jira comment draft AL-4138 in jira/drafts, QA sends. Committed 9f280fc.

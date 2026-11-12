@@ -31,3 +31,5 @@ QA approved staging. 30 of 30 automated rows passed at least once (29 valid, Cre
 - Result: 9 of 9 checks passed at least once, no single full run. One missed Lead on the first attempt, not repeated. Logged for QA, not filed. Same shape as staging trigger row 2 (one missed event).
 - Possible clash with the Email is Bounced run (trigger saves on the same page) not proven. Checks 2 to 9 passed beside it.
 - Not committed. Jira comment (AL-4137) and sheet row not written (QA approval pending).
+
+- QA 2026-11-05: RELEASED and LIVE. Sheet row 13 written (E Released, F "5 Nov: Production smoke passed. Live."). Jira comment draft AL-4137 in jira/drafts, QA sends. Committed 9f280fc.

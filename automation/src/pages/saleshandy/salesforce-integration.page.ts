@@ -80,6 +80,15 @@ export class SalesforceIntegrationPage extends SaleshandyPage {
     return this.triggerRow(name).locator('input[name="Switch"]').isChecked();
   }
 
+  // Names of every trigger that is switched on (the smoke stops when one besides its own is on).
+  async onTriggers(): Promise<string[]> {
+    const names: string[] = [];
+    for (const row of await this.triggerRows().all()) {
+      if (await row.locator('input[name="Switch"]').isChecked()) names.push((await row.innerText()).trim());
+    }
+    return names;
+  }
+
   protected async setTrigger(row: Locator, on: boolean): Promise<void> {
     const checkbox = row.locator('input[name="Switch"]');
     if ((await checkbox.isChecked()) === on) return;

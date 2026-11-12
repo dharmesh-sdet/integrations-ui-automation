@@ -25,6 +25,7 @@
     "smoke:salesforce-email-bounced": "bash scripts/run-salesforce-email-bounced-smoke.sh",
     "smoke:salesforce-prospect-unsubscribed": "bash scripts/run-salesforce-prospect-unsubscribed-smoke.sh",
     "smoke:salesforce-bounced-unsubscribed-pair": "bash scripts/run-salesforce-bounced-unsubscribed-pair-smoke.sh",
+    "smoke:salesforce-lead-created": "bash scripts/run-salesforce-lead-created-smoke.sh",
     "smoke:pipedrive-email-sent": "bash scripts/run-pipedrive-email-sent-smoke.sh",
     "smoke:pipedrive-outcome-updated": "bash scripts/run-pipedrive-outcome-updated-smoke.sh",
     "smoke:pipedrive-link-clicked": "bash scripts/run-pipedrive-link-clicked-smoke.sh",

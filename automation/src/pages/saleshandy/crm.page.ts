@@ -15,6 +15,11 @@ export class SaleshandyCrmPage extends SaleshandyPage {
     // the total to change (all prospects, e.g. 136, to the search result). On an
     // account with one prospect it stays "out of 1", so give up after 10 s.
     await expect(total).not.toHaveText(before, { timeout: 10_000 }).catch(() => {});
+    // A search with no match shows "No results found" and no "out of N" counter (seen 2026-11-09),
+    // so without this the read below waited for the whole test timeout.
+    const empty = this.page.getByText('No results found', { exact: true });
+    await total.or(empty).first().waitFor({ timeout: 30_000 });
+    if (await empty.isVisible()) return 0;
     return Number((await total.innerText()).replace('out of ', ''));
   }
 

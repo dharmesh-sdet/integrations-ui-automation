@@ -41,6 +41,7 @@ export const ACTIVITY = {
   move: 'Move Prospect to another Sequence in Saleshandy',
   tag: 'Assign a tag to Prospect in Saleshandy',
   paused: 'Mark Prospect as Paused in Saleshandy',
+  resume: 'Mark Prospect as Resume(Un-pause) in Saleshandy',
   replied: 'Mark Prospect as Replied in Saleshandy',
   finished: 'Mark Prospect as Finished in Saleshandy',
   unsubscribed: 'Mark Prospect as Unsubscribed in Saleshandy',
@@ -48,8 +49,9 @@ export const ACTIVITY = {
 } as const;
 
 // Same names and values as the HubSpot-side rows (tests/hubspot/company-created.spec.ts).
-const SEQ_A = 'Sequence A';
-const TAG = 'TagA'; // tags cannot have spaces
+export const SEQ_A = 'Sequence A';
+export const SEQ_B = 'Sequence B';
+export const TAG = 'TagA'; // tags cannot have spaces
 const PAUSE_DAYS = '1';
 const STEP_1 = 'Step 1 - Day 1';
 // A run can read up to 200 records and import each one; give it room.
@@ -80,25 +82,25 @@ export type SalesforceSideWorkflow = {
   readsWholeOrg: boolean;
 };
 
-type Config = (i: SalesforceIntegrationPage) => Promise<void>;
-type Pick = { activity: string; config?: Config };
+export type Config = (i: SalesforceIntegrationPage) => Promise<void>;
+export type Pick = { activity: string; config?: Config };
 // `dnc`: the domain is on the Do Not Contact list and no prospect was made (blacklist
 // skips the import, lead-created:163 "No prospect imported (as designed)").
-type Want = { status?: string; sequence?: string; tag?: string; dnc?: string };
+export type Want = { status?: string; sequence?: string; tag?: string; dnc?: string };
 
-const sequence = (step = false): Config => async (i) => {
-  await i.chooseConfigOption('Sequence', SEQ_A);
+export const sequence = (step = false, name = SEQ_A): Config => async (i) => {
+  await i.chooseConfigOption('Sequence', name);
   if (step) await i.chooseConfigOption('Sequence Steps', STEP_1);
 };
-const pausedIn: Config = async (i) => {
-  await i.chooseConfigOption('Sequence', SEQ_A);
+export const pausedIn = (name = SEQ_A): Config => async (i) => {
+  await i.chooseConfigOption('Sequence', name);
   await i.pauseDays().fill(PAUSE_DAYS);
 };
-const tagged: Config = async (i) => i.createAndSelectTag(TAG);
+export const tagged: Config = async (i) => i.createAndSelectTag(TAG);
 
 // Only `picks` selected under the trigger (activities add up, so others are removed),
 // each with its Extra Configuration, the trigger on and every other trigger off, saved.
-async function useActivities(i: SalesforceIntegrationPage, trigger: string, picks: Pick[]): Promise<void> {
+export async function useActivities(i: SalesforceIntegrationPage, trigger: string, picks: Pick[]): Promise<void> {
   await i.openTriggers();
   await i.enableOnly(trigger);
   for (const chip of await i.selectedActivities(trigger)) {
@@ -122,7 +124,7 @@ async function useActivities(i: SalesforceIntegrationPage, trigger: string, pick
 
 // Starts the workflow now, waits for the run to end and returns its id. An ERRORED run
 // fails here with the steps that did not complete.
-async function runNow(page: Page, trigger: string): Promise<string> {
+export async function runNow(page: Page, trigger: string): Promise<string> {
   const refold = await RefoldRunNow.open(page);
   const workflowId = await refold.workflowId(trigger);
   const id = await refold.run(workflowId);
@@ -134,8 +136,22 @@ async function runNow(page: Page, trigger: string): Promise<string> {
   return id;
 }
 
+// Like runNow, but the run is expected to end ERRORED at exactly the named step (QA 2026-11-12:
+// a Contact with no Email makes "Loop on Contacts" error, and that is not a bug). Returns the run id.
+export async function runNowExpectingError(page: Page, trigger: string, step: string): Promise<string> {
+  const refold = await RefoldRunNow.open(page);
+  const workflowId = await refold.workflowId(trigger);
+  const id = await refold.run(workflowId);
+  const run = await refold.waitForEnd(id, RUN_TIMEOUT_MS);
+  test.info().annotations.push({ type: 'Refold run', description: `${id} of workflow ${workflowId}: ${run.status}` });
+  const errored = (run.nodes ?? []).filter((n) => /error/i.test(n.node_status ?? '')).map((n) => n.node_name);
+  expect(run.status, `Refold run ${id}`).toBe('ERRORED');
+  expect(errored, `steps that errored in run ${id}`).toEqual([step]);
+  return id;
+}
+
 // That same run shows Success in Saleshandy > Integrations > Salesforce > Logs.
-async function expectLogSuccess(i: SalesforceIntegrationPage, trigger: string, runId: string): Promise<void> {
+export async function expectLogSuccess(i: SalesforceIntegrationPage, trigger: string, runId: string): Promise<void> {
   await i.openLogs();
   await untilPasses(`Logs did not show run ${runId} as Success`, async () => {
     await i.refreshLogs();
@@ -144,15 +160,47 @@ async function expectLogSuccess(i: SalesforceIntegrationPage, trigger: string, r
   });
 }
 
-async function expectProspect(crm: SaleshandyCrmPage, row: Row, fields: Record<string, string>): Promise<void> {
-  await untilPasses(`Prospect ${row['Email']} did not show the mapped values`, async () => {
-    expect(await crm.search(row['Email']), `prospects with ${row['Email']}`).toBe(1);
+// Two short waits, not one long one (QA 2026-11-09, Contact Add Prospect 1 waited 174 s for a
+// Job Title that was never mapped). First the prospect must show up in the CRM list (a probe
+// found one in 7 s after the run). Then its fields are read, and every wrong field is reported
+// together. The fields arrive with the prospect, so the second wait is short. A row that
+// updates a prospect that already exists passes a longer fieldsMs.
+export const FIND_PROSPECT_MS = 90_000;
+export const PROSPECT_FIELDS_MS = 30_000;
+
+const squash = (s: string) => s.replace(/\s+/g, ' ').trim();
+const NAME_LABELS = new Set(['First Name', 'Last Name']);
+
+export async function expectProspect(
+  crm: SaleshandyCrmPage,
+  row: Row,
+  fields: Record<string, string>,
+  wait: { findMs?: number; fieldsMs?: number } = {},
+): Promise<void> {
+  const email = row['Email'];
+  await untilPasses(`Prospect ${email} did not show in the CRM list`, async () => {
+    expect(await crm.search(email), `prospects with ${email}`).toBe(1);
+  }, wait.findMs ?? FIND_PROSPECT_MS);
+  await untilPasses(`Prospect ${email} did not show the mapped values`, async () => {
+    await crm.search(email);
     await crm.openProspect(fullName(row));
-    for (const [label, value] of Object.entries(fields)) await expect(crm.field(label), label).toHaveText(value);
-  });
+    const wrong: string[] = [];
+    for (const [label, value] of Object.entries(fields)) {
+      // First Name and Last Name are not fields of the prospect dialog (seen 2026-11-09): the name
+      // shows in the list row and the dialog header. The match is case-sensitive, so the lowercase
+      // email (for example solanki.mw98@...) does not count as the name.
+      const got = NAME_LABELS.has(label)
+        ? (await crm.page.getByText(new RegExp(value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))).first().waitFor({ state: 'visible', timeout: 3_000 }).then(() => true).catch(() => false))
+          ? squash(value)
+          : '(name not shown)'
+        : squash(await crm.field(label).innerText({ timeout: 3_000 }).catch(() => '(field not shown)'));
+      if (got !== squash(value)) wrong.push(`${label}: expected "${value}", got "${got}"`);
+    }
+    expect(wrong, `Wrong fields for ${email}: ${wrong.join('; ')}`).toEqual([]);
+  }, wait.fieldsMs ?? PROSPECT_FIELDS_MS);
 }
 
-async function expectState(crm: SaleshandyCrmPage, dnc: DoNotContactPage, email: string, want: Want): Promise<void> {
+export async function expectState(crm: SaleshandyCrmPage, dnc: DoNotContactPage, email: string, want: Want): Promise<void> {
   await untilPasses(`Prospect ${email} did not reach the expected state`, async () => {
     if (want.dnc) {
       expect(await dnc.hasEntry(want.dnc), `${want.dnc} on the Do Not Contact list`).toBe(true);
@@ -168,7 +216,7 @@ async function expectState(crm: SaleshandyCrmPage, dnc: DoNotContactPage, email:
 
 // A proposed result is checked but only recorded (annotation "Needs QA"), as the Salesforce
 // Email Sent rows do for unconfirmed Expected results.
-async function check(proposed: boolean, what: string, assertion: () => Promise<void>): Promise<void> {
+export async function check(proposed: boolean, what: string, assertion: () => Promise<void>): Promise<void> {
   if (!proposed) return assertion();
   try {
     await assertion();
@@ -273,7 +321,7 @@ export function salesforceSideTests(w: SalesforceSideWorkflow): void {
     // A new prospect is in no sequence, so the status rows move it into Sequence A in the
     // same run: the workflow adds it to the step, then applies the status
     // (contact-created:13-25; lead-created:144 "add-in-step + finished").
-    actionRow(SALESFORCE_SIDE_SCENARIOS[3], [move, { activity: ACTIVITY.paused, config: pausedIn }], { status: 'Paused' }, { sendsEmail: true });
+    actionRow(SALESFORCE_SIDE_SCENARIOS[3], [move, { activity: ACTIVITY.paused, config: pausedIn() }], { status: 'Paused' }, { sendsEmail: true });
     // Lead run R1 gave status Replied (lead-created:141), but with "stop sending follow-ups
     // on a reply" a replied prospect ends Finished (QA, HubSpot-side, 2026-10-15): recorded.
     actionRow(SALESFORCE_SIDE_SCENARIOS[4], [move, { activity: ACTIVITY.replied, config: sequence() }], { status: 'Replied' }, { sendsEmail: true, proposed: true });

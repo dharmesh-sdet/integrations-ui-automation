@@ -114,7 +114,7 @@ export class RefoldRunNow {
     const deadline = Date.now() + timeout;
     for (;;) {
       const run = await this.execution(executionId);
-      if (run.status !== 'RUNNING' && run.status !== 'STOPPING') return run;
+      if (run.status !== 'RUNNING' && run.status !== 'STOPPING' && run.status !== 'QUEUED') return run;
       if (Date.now() > deadline) throw new Error(`Refold run ${executionId} was still ${run.status} after ${timeout / 1000} s.`);
       await new Promise((r) => setTimeout(r, 10_000));
     }

@@ -39,6 +39,36 @@ export class DoNotContactPage extends SaleshandyPage {
     return cells.filter(Boolean);
   }
 
+  // Adds emails or domains to the global list. Walked on staging 2026-11-12: the global list page has an
+  // inline box "Add entries with comma, semicolon, space or line breaks". Enter turns the text into chips and
+  // only then the Save button is enabled. Every prospect matching an entry is blacklisted in all sequences.
+  async addEntries(entries: string[]): Promise<string[]> {
+    if (entries.length === 0) return [];
+    // 25 entries at once showed "Invalid entrie(s) found" and kept Save disabled (2026-11-12, run 3). A batch of 10
+    // then saved and the next batch was rejected again, so the box refuses some single addresses (the four tried alone
+    // were accepted: a_young@dickenson.com, mujoshi+03949@gmail.com, nikita@saleshandy.com, rudra+sf-cc-i1@saleshandy.com).
+    // A rejected batch is added one entry at a time. Returns the entries the box refused.
+    const rejected: string[] = [];
+    const save = this.page.getByRole('button', { name: 'Save', exact: true });
+    const tryAdd = async (batch: string[]): Promise<boolean> => {
+      await this.openGlobalList();
+      const box = this.page.getByRole('textbox', { name: /Add entries with comma/ });
+      await box.fill(batch.join(', '));
+      await box.press('Enter');
+      const enabled = await expect(save).toBeEnabled({ timeout: 8_000 }).then(() => true, () => false);
+      if (!enabled) return false;
+      await save.click();
+      await expect(this.entryRows().filter({ hasText: batch[batch.length - 1] }).first()).toBeVisible({ timeout: 30_000 });
+      return true;
+    };
+    for (let i = 0; i < entries.length; i += 10) {
+      const batch = entries.slice(i, i + 10);
+      if (await tryAdd(batch)) continue;
+      for (const entry of batch) if (!(await tryAdd([entry]))) rejected.push(entry);
+    }
+    return rejected;
+  }
+
   // Removes one entry (an email or a domain) from the global list.
   async removeEntry(entry: string): Promise<void> {
     await this.openGlobalList();

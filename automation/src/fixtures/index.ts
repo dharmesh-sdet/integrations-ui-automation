@@ -13,6 +13,7 @@ import { SequenceBuilderPage } from '../pages/saleshandy/sequence-builder.page.t
 import { SaleshandySequencePage } from '../pages/saleshandy/sequence.page.ts';
 import { HubSpotIntegrationPage } from '../pages/saleshandy/hubspot-integration.page.ts';
 import { SalesforceIntegrationPage } from '../pages/saleshandy/salesforce-integration.page.ts';
+import { SalesforceProspectsImportPage } from '../pages/saleshandy/salesforce-prospects-import.page.ts';
 import { PipedriveIntegrationPage } from '../pages/saleshandy/pipedrive-integration.page.ts';
 import { ZohoIntegrationPage } from '../pages/saleshandy/zoho-integration.page.ts';
 import { PipedriveDealsPage } from '../pages/pipedrive/deals.page.ts';
@@ -53,6 +54,7 @@ type Fixtures = {
   pipedriveLeads: PipedriveLeadsPage;
   pipedriveOrganizations: PipedriveOrganizationsPage;
   salesforceIntegration: SalesforceIntegrationPage;
+  salesforceProspectsImport: SalesforceProspectsImportPage;
   salesforceLeads: SalesforceLeadsPage;
   salesforceEmailSent: SalesforceEmailSentPage;
   salesforceOutcome: SalesforceOutcomePage;
@@ -180,6 +182,8 @@ export const test = base.extend<Options & Fixtures, WorkerFixtures>({
   pipedriveOrganizations: async ({ pipedrivePage }, use) => use(new PipedriveOrganizationsPage(pipedrivePage)),
   salesforceIntegration: async ({ saleshandyPage, sessionContexts, account }, use, testInfo) =>
     use(new SalesforceIntegrationPage(saleshandyPage, reconnectFor(saleshandyPage, sessionContexts, account, testInfo))),
+  salesforceProspectsImport: async ({ saleshandyPage, sessionContexts, account }, use, testInfo) =>
+    use(new SalesforceProspectsImportPage(saleshandyPage, reconnectFor(saleshandyPage, sessionContexts, account, testInfo))),
   salesforceLeads: async ({ salesforcePage }, use) => use(new SalesforceLeadsPage(salesforcePage)),
   salesforceEmailSent: async ({ saleshandyPage, sessionContexts, account }, use, testInfo) =>
     use(new SalesforceEmailSentPage(saleshandyPage, reconnectFor(saleshandyPage, sessionContexts, account, testInfo))),

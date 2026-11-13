@@ -15,8 +15,7 @@ Created 2026-10-16.
   `712020:c7dedb58-9cb3-4450-a98f-5b5b56f6556b`). No Priority, no Test cases
   Status. Environment is not offered on the Sub-task create screen
   (createJiraIssue rejected it), so it is empty.
-- "Import Prospects from Salesforce" (sheet row 14) has no sub-task: QA said not
-  to create it.
+- "Import Prospects from Salesforce" (sheet row 14) has the sub-task AL-4227 (QA, 2026-11-13, parent AL-4131).
 
 | Sub-task | Workflow (trigger) | Planned Prod release (sheet) |
 |---|---|---|
@@ -33,7 +32,7 @@ Created 2026-10-16.
 | AL-4142 | Opportunity is Created in Salesforce | 20 Oct 2026 |
 | AL-4143 | Account is Created in Salesforce | 20 Oct 2026 |
 | AL-4144 | Lead is Created in Salesforce | 21 Oct 2026 |
-| none | Import Prospects from Salesforce | 21 Oct 2026 |
+| AL-4227 | Import Prospects from Salesforce | 13 Nov 2026 |
 
 Buffer day Thu 22 Oct 2026 for fixes and re-tests; a slip goes in the sheet's
 "Updated Prod Release date".
@@ -167,7 +166,7 @@ Order is the Triggers & Activity list on staging. "Create a Lead in Salesforce" 
 | 6 | Prospect is Unsubscribed in Saleshandy | AL-4137 | Done, live. Staging 30 of 30 passed at least once, smoke 9 of 9 on production (2026-11-05, check 1 passed on the second attempt), sheet row 13 written, AL-4137 comment draft for QA to send (`prospect-unsubscribed-progress.md`) |
 | 7 | Email is Bounced in Saleshandy | AL-4138 | Done, live. Staging 34 of 34 passed at least once, smoke 9 of 9 on production (2026-11-05, check 9 passed after a script fix), sheet row 14 written, AL-4138 comment draft for QA to send (`email-bounced-progress.md`) |
 | 8 | Lead is created in Salesforce (V1) | AL-4144 | Staging approved (QA, 2026-11-11). 32 cases plus a setup test, every case passed at least once in partial reruns, no full single run yet. Not committed. Production smoke cases approved by QA 2026-11-12 (`notes/production-testing/27-salesforce-lead-created.md`), script written, not run, waits for the production publish (`salesforce-created-progress.md` "Lead created production smoke") Production smoke 12 of 12 passed (2026-11-12, sequence 997962), PRODUCTION APPROVED by QA, AL-4144 comment draft written, QA sends (`salesforce-created-progress.md` "Lead created PRODUCTION APPROVED") |
-| 9 | Import Prospects from Salesforce | none | Not started |
+| 9 | Import Prospects from Salesforce | AL-4227 | STAGING APPROVED (QA, 2026-11-13). 21 rows on the fresh account `importprospects`: 18 passed (row 15 by hand), row 21 shows bug AL-4228, rows 19 and 20 skipped on purpose. AL-4228 (chip comes back) and AL-4229 (import update not in Activities) are post release. Not committed, no production smoke (`import-prospects-progress.md`) |
 | 10 | Contact is created in Salesforce | AL-4141 | Old draft, Select box shows "No Data" (P1) |
 | 11 | Opportunity is created in Salesforce | AL-4142 | Staging 27 cases passed at least once (commit 992e7a1). Production smoke 13 of 13 passed (2026-11-12, sequence 997965), PRODUCTION APPROVED by QA, AL-4142 comment draft written, QA sends (`salesforce-created-progress.md` "Opportunity created PRODUCTION APPROVED") |
 | 12 | Account is created in Salesforce | AL-4143 | Test cases written (29 rows, QA looks good 2026-11-09), spec generated, not run on staging. Blocked on QA's headed login for `sfemailsent` (`salesforce-created-progress.md` "Account created") |

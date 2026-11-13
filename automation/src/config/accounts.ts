@@ -26,6 +26,9 @@ export const accounts = {
   // notemailsentzoho (same login), now connected to Salesforce. Its sessions are copies of
   // auth/saleshandy-notemailsentzoho-chromium.json and auth/salesforce-sfreplyreceived-chromium.json.
   sfemailopened: { saleshandy: 'dharmesh+noemailsent@saleshandy.com' },
+  // Import Prospects from Salesforce (QA, 2026-11-13). Fresh account: no prospects, no saved activity. For the baseline and empty-field rows.
+  // Saleshandy session: auth/saleshandy-importprospects-chromium.json (QA logs in headed).
+  importprospects: { saleshandy: 'dharmesh+importprospects@saleshandy.com' },
   // Link is Clicked in Saleshandy, Salesforce (QA, 2026-11-04). Account dharmesh+zohointegration, Salesforce connected by QA.
   // Saleshandy session: auth/saleshandy-sflinkclicked-chromium.json (QA logs in headed). Salesforce session: copy of auth/salesforce-sfreplyreceived-chromium.json.
   sflinkclicked: { saleshandy: 'dharmesh+zohointegration@saleshandy.com' },

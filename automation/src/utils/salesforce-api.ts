@@ -26,6 +26,8 @@ export type ContactInput = {
   phone?: string;
   department?: string;
   accountId?: string;
+  // Not mapped to any Saleshandy field. Import Prospects uses it as the List View filter (QA 2026-11-13).
+  mailingCity?: string;
 };
 
 export class SalesforceApi {
@@ -92,8 +94,14 @@ export class SalesforceApi {
       Phone: c.phone,
       Department: c.department,
       AccountId: c.accountId,
+      MailingCity: c.mailingCity,
     }, { 'Sforce-Duplicate-Rule-Header': 'allowSave=true' });
     return r.id;
+  }
+
+  // Changes fields of a Contact the caller made (Import Prospects: a Title changed in Salesforce, QA 2026-11-13).
+  async updateContact(id: string, fields: { Title?: string; Phone?: string; Department?: string }): Promise<void> {
+    await this.call('PATCH', `/sobjects/Contact/${id}`, fields, { 'Sforce-Duplicate-Rule-Header': 'allowSave=true' });
   }
 
   // Deletes a Contact by Id (a row deletes only a Contact it created itself a moment before).

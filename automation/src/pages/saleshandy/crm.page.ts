@@ -3,6 +3,14 @@ import { SaleshandyPage } from './saleshandy.page.ts';
 
 // CRM > All Prospects list and the prospect details dialog.
 export class SaleshandyCrmPage extends SaleshandyPage {
+  // The "out of N" total of All Prospects with no search. A new account has no prospects and no counter, so 0.
+  async total(): Promise<number> {
+    await this.goto('/crm/list');
+    const total = this.page.getByText(/^out of \d+$/);
+    if (!(await total.waitFor({ timeout: 20_000 }).then(() => true, () => false))) return 0;
+    return Number((await total.innerText()).replace('out of ', ''));
+  }
+
   // Searches by email and returns the "Showing N out of M" total.
   async search(email: string): Promise<number> {
     await this.goto('/crm/list');
@@ -50,6 +58,8 @@ export class SaleshandyCrmPage extends SaleshandyPage {
   }
 
   async openProspect(fullName: string): Promise<void> {
+    // The expanded sidebar can cover the name (seen 2026-11-13, Import Prospects second import).
+    await this.closeSidebar();
     await this.page.getByRole('button', { name: fullName, exact: true }).click();
     await this.page.getByRole('dialog').waitFor();
   }

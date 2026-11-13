@@ -1,0 +1,29 @@
+{
+  "type": "bug",
+  "project": "AL",
+  "priority": "Medium",
+  "environment": "Production",
+  "epic": "AL-3982",
+  "assignee": {
+    "name": "Rudra Chauhan",
+    "accountId": "712020:a24ee286-dfc7-4be1-9a49-4d9ba8799676"
+  },
+  "qa": {
+    "name": "Dharmesh Patel",
+    "accountId": "712020:c7dedb58-9cb3-4450-a98f-5b5b56f6556b"
+  },
+  "links": [
+    "AL-4131",
+    "AL-4227",
+    "AL-4226"
+  ],
+  "attachments": [],
+  "summary": "Import Prospects from Salesforce: updating an existing prospect adds no \"Profile field updated\" entry to its Activities",
+  "description": "**Prerequisites:**\n- Staging account with Salesforce connected.\n- Field Mapping: Contact Properties > Job Title is mapped to Title.\n- On Settings > Integrations > Salesforce > Prospects Import, the toggle is on and \"Add Prospect in Saleshandy\" is saved with a List View that holds the Contact below.\n\n**Steps to Reproduce:**\n1. In Salesforce, create a Contact (first name Tomas, last name Berg, an email, Title \"Finance Manager\") that is in the selected List View.\n2. In Saleshandy, go to Settings > Integrations > Salesforce > Prospects Import and click \"Import Prospects\".\n3. Open CRM > All Prospects, search the email, and open the prospect. Job Title shows \"Finance Manager\". Activities shows \"<email> added as Prospect via API by <user>\".\n4. In Salesforce, change the Title of the same Contact to \"Head of Finance Operations\".\n5. In Saleshandy, click \"Import Prospects\" again and wait about 30 seconds.\n6. Open the same prospect and check Job Title and Activities.\n\n**Actual Result:**\n- Job Title shows \"Head of Finance Operations\" in the header and in the field, so the update works.\n- Activities still lists only \"added as Prospect via API\". It has no \"Profile field updated\" entry for Job Title.\n- The same happens for Anna Van Dyke (Title changed to \"Director of Finance Operations\", then imported again).\n- A manual edit of Job Title on the prospect does add \"Profile field updated by <user> - Job Title\".\n- A screenshot will be attached to the ticket manually.\n\n**Expected Result:**\n- When the import changes a field of an existing prospect, the prospect's Activities shows an entry for the change, like a manual edit.\n\n**Note:**\n- Affected Environment - Staging.",
+  "sent": {
+    "key": "AL-4229",
+    "url": "https://saleshandy.atlassian.net/browse/AL-4229",
+    "problems": [],
+    "at": "2026-11-13T08:44:00.489Z"
+  }
+}

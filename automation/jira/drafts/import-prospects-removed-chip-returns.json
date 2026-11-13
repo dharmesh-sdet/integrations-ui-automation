@@ -1,0 +1,27 @@
+{
+  "type": "bug",
+  "project": "AL",
+  "priority": "Medium",
+  "environment": "Production",
+  "epic": "AL-3982",
+  "assignee": {
+    "name": "Rudra Chauhan",
+    "accountId": "712020:a24ee286-dfc7-4be1-9a49-4d9ba8799676"
+  },
+  "qa": {
+    "name": "Dharmesh Patel",
+    "accountId": "712020:c7dedb58-9cb3-4450-a98f-5b5b56f6556b"
+  },
+  "links": [
+    "AL-4131"
+  ],
+  "attachments": [],
+  "summary": "Import Prospects from Salesforce: removed activity chip comes back after reloading the Prospects Import tab",
+  "description": "**Prerequisites:**\n- Staging account with Salesforce connected.\n- On Settings > Integrations > Salesforce > Prospects Import, the toggle \"Import Prospects from Salesforce\" is on and the activity \"Add Prospect in Saleshandy\" is saved. Select it and save the dialog.\n\n**Steps to Reproduce:**\n1. Go to Settings > Integrations > Salesforce > Prospects Import.\n2. Click the X on the \"Add Prospect in Saleshandy\" chip. The chip disappears.\n3. Reload the page.\n\n**Actual Result:**\n- The \"Add Prospect in Saleshandy\" chip is back after the reload.\n- Clicking the X sends no request, and the tab has no Save button, so the saved activity cannot be removed.\n\n**Expected Result:**\n- After clicking the X and reloading, the chip stays removed and the import no longer runs that activity.\n\n**Note:**\n- Affected Environment - Staging.",
+  "sent": {
+    "key": "AL-4228",
+    "url": "https://saleshandy.atlassian.net/browse/AL-4228",
+    "problems": [],
+    "at": "2026-11-13T08:06:44.671Z"
+  }
+}

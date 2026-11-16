@@ -232,3 +232,9 @@ QA 2026-11-13: Row 15 verified by hand (Add Prospect with "My Contacts", all pro
 ## STAGING APPROVED 2026-11-13 (QA)
 
 21 rows: 18 passed (row 15 verified by hand by QA), row 21 shows the product bug AL-4228, rows 19 and 20 skipped on purpose. Post release bugs: AL-4228 (removed chip comes back) and AL-4229 (import update adds no Profile field updated entry to Activities, priority Low). Tracking ticket AL-4227. Not committed. No production smoke yet. Sheet row 14 note not written.
+
+Committed 2026-11-13: 123f891 on branch rudra-saleshandy (not pushed). The old 34 row draft `import-prospects-cases-draft.md` is left untracked, it is replaced by the 21 row cases file.
+
+## Production smoke 2026-11-13 (QA): RELEASED and LIVE
+
+Manual verification completed by QA. Production approved and live. Google Sheet updated. Verification comment posted on the ticket. No smoke cases file, spec or script is needed.

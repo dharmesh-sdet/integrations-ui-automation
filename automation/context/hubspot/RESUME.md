@@ -1,4 +1,6 @@
-# Resume: the 4 HubSpot workflows in progress (saved 2026-10-13, afternoon)
+# Resume: HubSpot workflows (snapshot of 2026-10-13 to 2026-10-15, kept as history)
+
+> Status 2026-11-12: HubSpot is released and out of scope for status and pending lists (QA, 2026-10-24). The table below is a snapshot from 2026-10-13 to 2026-10-15, not the current state. For the state of a workflow, read its `*-progress.md` (last section first) and `00-overview.md`. The claim "nothing committed since 03923bb" is out of date: there have been 110 commits since. HubSpot sessions in `auth/` last about 7 days, then the next run deletes the file and says to log in again.
 
 **Before picking a workflow: check what is live.** This file goes stale. Run
 `ListAgents`, then `ps -eo pid,etime,args | grep "playwright test"`, and look

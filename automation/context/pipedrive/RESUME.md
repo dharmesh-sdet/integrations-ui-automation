@@ -1,4 +1,6 @@
-# Pipedrive: resume (saved 2026-10-23, State section updated 2026-10-30)
+# Pipedrive: resume (saved 2026-10-23, State section updated 2026-10-30, checked 2026-11-12)
+
+> Status 2026-11-12: the "State" table is current. Every section below it is history from 2026-10-23 and 2026-10-24 and some of it is out of date: sessions are saved (a session file older than 7 days is deleted on the next run, then log in with `npm run login:saleshandy -- gpipedrive` and `npm run login:pipedrive -- gpipedrive`), the Email Sent staging run passed 33 rows (see the table), and specs are hand-written on every platform (QA, 2026-11-12), not built with the Playwright agents.
 
 Staging, workflow version v2. Rules and behaviour: `00-overview.md` and one file per workflow in this folder.
 
@@ -55,7 +57,7 @@ Mapping Organization to Saleshandy Company makes the workflow fail with a wrong 
 - QA: confirm account addresses and one Pipedrive company per workflow.
 - QA: bug-or-not on the Organization finding, then whether to add its rows.
 - Siblings: real-bounce cap of 1, outcome list on Pipedrive (Interested / Not Interested / Closed assumed), trigger methods copied from HubSpot/Salesforce.
-- Workflow approach: CLAUDE.md rule 12 says Playwright agents. Zoho workflows come later.
+- Workflow approach: answered. Specs are hand-written (QA, 2026-10-24, and for every platform 2026-11-12). The Zoho workflows are done too.
 - QA manual per account: create Saleshandy account, OTP off in Settings, connect Pipedrive, then `npm run login:saleshandy -- <account>` and `npm run login:pipedrive -- <account>`.
 
 ## Seen on staging 2026-10-24 (read-only walkthrough, Triggers & Activity, nothing saved)
